@@ -1,0 +1,519 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>코딩 대결 - 게임 종료</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .card {
+            background-color: #1e293b;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .code-block {
+            background-color: #0f172a;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #1e293b;
+        }
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .chat-container::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: #475569;
+            border-radius: 20px;
+        }
+        .chat-message {
+            border-radius: 1rem;
+            max-width: 80%;
+        }
+        .chat-message.mine {
+            background-color: #3b82f6;
+            margin-left: auto;
+        }
+        .chat-message.others {
+            background-color: #334155;
+        }
+        .player-avatar {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #475569;
+            transition: all 0.2s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #334155;
+            transform: translateY(-2px);
+        }
+        .progress-bar {
+            height: 8px;
+            background-color: #475569;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 1s ease;
+        }
+        .xp-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .result-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        .result-badge.success {
+            background-color: #10b981;
+            color: white;
+        }
+        .result-badge.warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .result-badge.error {
+            background-color: #ef4444;
+            color: white;
+        }
+        .tab-active {
+            border-bottom: 2px solid #3b82f6;
+            color: #3b82f6;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 50%;
+            animation: fall 5s ease-out forwards;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col">
+        <header class="bg-slate-800 py-4 px-6 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                <h1 class="text-xl font-bold">코딩 대결</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-400">방 ID: ABCD1234</span>
+                <div class="flex items-center ml-4">
+                    <div class="player-avatar bg-green-500 text-white">나</div>
+                    <div class="ml-2">
+                        <div class="text-sm font-medium">코딩마스터</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 p-6 flex flex-col">
+            <div class="mb-6 text-center">
+                <h2 class="text-3xl font-bold mb-2">게임 종료!</h2>
+                <p class="text-gray-400">모든 참가자가 문제 풀이를 완료했습니다.</p>
+            </div>
+
+            <div class="flex gap-6 flex-1">
+                <!-- 왼쪽: 문제 풀이 결과 -->
+                <div class="w-3/5 flex flex-col">
+                    <div class="card p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">문제: 두 수의 합</h3>
+                            <div class="result-badge success">정답</div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h4 class="font-medium mb-2">채점 결과</h4>
+                            <div class="grid grid-cols-4 gap-4 text-center">
+                                <div class="bg-slate-700 p-3 rounded-lg">
+                                    <div class="text-sm text-gray-400">실행 시간</div>
+                                    <div class="font-bold">56ms</div>
+                                    <div class="text-xs text-green-400">상위 85%</div>
+                                </div>
+                                <div class="bg-slate-700 p-3 rounded-lg">
+                                    <div class="text-sm text-gray-400">메모리 사용</div>
+                                    <div class="font-bold">42.5MB</div>
+                                    <div class="text-xs text-green-400">상위 70%</div>
+                                </div>
+                                <div class="bg-slate-700 p-3 rounded-lg">
+                                    <div class="text-sm text-gray-400">테스트 케이스</div>
+                                    <div class="font-bold">23/23</div>
+                                    <div class="text-xs text-green-400">100% 통과</div>
+                                </div>
+                                <div class="bg-slate-700 p-3 rounded-lg">
+                                    <div class="text-sm text-gray-400">제출 시간</div>
+                                    <div class="font-bold">12:24</div>
+                                    <div class="text-xs text-blue-400">2등</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <div class="flex space-x-4 border-b border-slate-700">
+                                <button class="py-2 px-4 tab-active">내 코드</button>
+                                <button class="py-2 px-4 text-gray-400">모범 답안</button>
+                                <button class="py-2 px-4 text-gray-400">문제 해설</button>
+                            </div>
+                            <div class="mt-4">
+                                <div class="code-block p-4 text-sm">
+                                    <pre><code>/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+var twoSum = function(nums, target) {
+    const map = new Map();
+    
+    for (let i = 0; i < nums.length; i++) {
+        const complement = target - nums[i];
+        if (map.has(complement)) {
+            return [map.get(complement), i];
+        }
+        map.set(nums[i], i);
+    }
+};</code></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="font-medium mb-2">성능 분석</h4>
+                            <p class="text-sm text-gray-300 mb-4">
+                                해시맵을 사용한 O(n) 시간 복잡도 솔루션입니다. 배열을 한 번만 순회하므로 효율적입니다.
+                                메모리 사용량은 평균보다 약간 높지만 허용 범위 내입니다.
+                            </p>
+                            <div class="flex space-x-4">
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>시간 복잡도</span>
+                                        <span class="text-green-400">매우 좋음</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-green-500" style="width: 85%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between text-xs mb-1">
+                                        <span>공간 복잡도</span>
+                                        <span class="text-yellow-400">양호</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill bg-yellow-500" style="width: 70%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-6">
+                        <h3 class="text-xl font-bold mb-4">최종 순위</h3>
+                        <div class="overflow-hidden rounded-lg">
+                            <table class="min-w-full">
+                                <thead class="bg-slate-800">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">순위</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">참가자</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">제출 시간</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">실행 시간</th>
+                                        <th class="py-3 px-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">결과</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-700">
+                                    <tr class="bg-slate-700 bg-opacity-30">
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <span class="text-yellow-500">1</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="player-avatar bg-red-500 text-white">상</div>
+                                                <div class="ml-2">알고리즘왕</div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">11:45</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">48ms</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="result-badge success">정답</span>
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-blue-900 bg-opacity-20">
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <span class="text-gray-300">2</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="player-avatar bg-green-500 text-white">나</div>
+                                                <div class="ml-2">코딩마스터</div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">12:24</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">56ms</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="result-badge success">정답</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <span class="text-gray-400">3</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="player-avatar bg-yellow-500 text-white">김</div>
+                                                <div class="ml-2">코드닌자</div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">13:10</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">62ms</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="result-badge success">정답</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <span class="text-gray-400">4</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="player-avatar bg-purple-500 text-white">박</div>
+                                                <div class="ml-2">자바스크립트고수</div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 whitespace-nowrap">14:30</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">120ms</td>
+                                        <td class="py-3 px-4 whitespace-nowrap">
+                                            <span class="result-badge warning">부분 정답</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 채팅 및 경험치 -->
+                <div class="w-2/5 flex flex-col">
+                    <div class="card p-4 flex-1 mb-6">
+                        <h3 class="text-lg font-bold mb-3">풀이 전략 공유</h3>
+                        <div class="chat-container mb-4 p-2">
+                            <div class="chat-message others p-3 mb-3">
+                                <div class="flex items-center mb-1">
+                                    <div class="player-avatar bg-red-500 text-white text-xs">상</div>
+                                    <div class="ml-2 text-xs font-medium">알고리즘왕</div>
+                                </div>
+                                <div class="text-sm">
+                                    해시맵을 사용하면 O(n) 시간 복잡도로 풀 수 있어요. 배열을 한 번만 순회하면 됩니다.
+                                </div>
+                            </div>
+                            <div class="chat-message mine p-3 mb-3">
+                                <div class="text-sm">
+                                    저도 해시맵으로 풀었어요! 처음에는 이중 반복문으로 생각했는데 시간 복잡도가 O(n²)이라 비효율적이더라고요.
+                                </div>
+                            </div>
+                            <div class="chat-message others p-3 mb-3">
+                                <div class="flex items-center mb-1">
+                                    <div class="player-avatar bg-yellow-500 text-white text-xs">김</div>
+                                    <div class="ml-2 text-xs font-medium">코드닌자</div>
+                                </div>
+                                <div class="text-sm">
+                                    저는 처음에 이중 반복문으로 풀었다가 시간 초과가 나서 해시맵으로 다시 풀었어요 ㅠㅠ
+                                </div>
+                            </div>
+                            <div class="chat-message others p-3 mb-3">
+                                <div class="flex items-center mb-1">
+                                    <div class="player-avatar bg-purple-500 text-white text-xs">박</div>
+                                    <div class="ml-2 text-xs font-medium">자바스크립트고수</div>
+                                </div>
+                                <div class="text-sm">
+                                    저는 엣지 케이스를 놓쳐서 부분 정답이 나왔네요. 다음에는 더 꼼꼼하게 풀어야겠어요.
+                                </div>
+                            </div>
+                            <div class="chat-message others p-3 mb-3">
+                                <div class="flex items-center mb-1">
+                                    <div class="player-avatar bg-red-500 text-white text-xs">상</div>
+                                    <div class="ml-2 text-xs font-medium">알고리즘왕</div>
+                                </div>
+                                <div class="text-sm">
+                                    다들 수고하셨어요! 다음 문제도 같이 풀어볼까요?
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex">
+                            <input type="text" placeholder="메시지를 입력하세요..." class="flex-1 bg-slate-700 border-none rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card p-6 relative overflow-hidden">
+                        <div class="mb-6">
+                            <h3 class="text-xl font-bold mb-4">획득한 보상</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-slate-700 p-4 rounded-lg flex items-center">
+                                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-gray-400">경험치</div>
+                                        <div class="font-bold text-xl xp-animation">+120 XP</div>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-700 p-4 rounded-lg flex items-center">
+                                    <div class="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-gray-400">코인</div>
+                                        <div class="font-bold text-xl">+50 코인</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="font-medium mb-2">레벨 진행도</h4>
+                            <div class="flex items-center mb-2">
+                                <span class="text-lg font-bold mr-2">Lv. 15</span>
+                                <div class="flex-1 progress-bar mx-2">
+                                    <div class="progress-fill bg-blue-500" style="width: 75%"></div>
+                                </div>
+                                <span class="text-lg font-bold ml-2">Lv. 16</span>
+                            </div>
+                            <div class="text-center text-sm text-gray-400">
+                                다음 레벨까지 280 XP 남음
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4">
+                            <button class="btn-primary flex-1 py-3 px-4 rounded-lg font-bold text-white flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                </svg>
+                                재대결 시작
+                            </button>
+                            <button class="btn-secondary flex-1 py-3 px-4 rounded-lg font-bold text-white flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd" />
+                                </svg>
+                                방 나가기
+                            </button>
+                        </div>
+
+                        <div id="confetti-container"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 채팅창 자동 스크롤
+        const chatContainer = document.querySelector('.chat-container');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        // 경험치 애니메이션
+        const xpElement = document.querySelector('.xp-animation');
+        
+        // 탭 전환 기능
+        const tabs = document.querySelectorAll('.flex.space-x-4.border-b button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('tab-active'));
+                tabs.forEach(t => t.classList.add('text-gray-400'));
+                tab.classList.add('tab-active');
+                tab.classList.remove('text-gray-400');
+            });
+        });
+
+        // 축하 효과 (컨페티)
+        function createConfetti() {
+            const confettiContainer = document.getElementById('confetti-container');
+            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                confettiContainer.appendChild(confetti);
+                
+                // 애니메이션 종료 후 요소 제거
+                confetti.addEventListener('animationend', () => {
+                    confetti.remove();
+                });
+            }
+        }
+        
+        // 페이지 로드 시 컨페티 효과 실행
+        window.addEventListener('load', createConfetti);
+
+
+        document.querySelectorAll('.btn-secondary').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                window.location.href='3-main.html'
+            });
+        });
+        
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94121f28e349eaad',t:'MTc0NzQ3NDQ5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
