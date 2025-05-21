@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/coby.iml" filepath="$PROJECT_DIR$/.idea/coby.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/coby.iml" filepath="$PROJECT_DIR$/.idea/modules/coby.iml" />
     </modules>
   </component>
 </project>
