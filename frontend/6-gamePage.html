@@ -453,7 +453,7 @@
         alert("전송")
 
     // 1. editor-container 내부의 모든 view-line div 가져오기
-    const lines = document.querySelectorAll('#editor-container #view-line');
+    const lines = document.querySelectorAll('#editor-container .view-line');
 
     // 2. 각 div의 텍스트 내용을 줄 단위로 연결
     const code = Array.from(lines).map(line => line.textContent).join('\n');
@@ -462,11 +462,8 @@
     const selectedLanguage = getSelectedLanguage(); // 아래에서 함수로 설명
 
     // 4. 서버로 POST 요청 전송
-    fetch('http://192.168.56.1/compile', {
+    fetch('http://localhost:8080/api/submit', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
             language: selectedLanguage,  // 'python' | 'java' | 'cpp'
             code: code
@@ -488,6 +485,6 @@ function getSelectedLanguage() {
     return lang; // 'python' | 'java' | 'cpp' 중 하나
 }
 
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9411d1dd8533ea2b',t:'MTc0NzQ3MTMyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</script>
+</body>
 </html>
