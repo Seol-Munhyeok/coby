@@ -190,11 +190,10 @@
                     <div class="mb-2 flex justify-between items-center">
                         <h3 class="text-lg font-medium">코드 작성</h3>
                         <div class="flex space-x-2">
-                            <select class="bg-slate-700 text-white px-3 py-1 rounded text-sm">
-                                <option>JavaScript</option>
-                                <option>Python</option>
-                                <option>Java</option>
-                                <option>C++</option>
+                            <select id="languageSelect" class="bg-slate-700 text-white px-3 py-1 rounded text-sm">
+                                <option value="python">Python</option>
+                                <option value="java">Java</option>
+                                <option value="cpp">C++</option>
                             </select>
                             <button class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-sm">
                                 테스트 실행
@@ -202,7 +201,7 @@
                         </div>
                     </div>
                     <div id="editor-container" class="flex-1 mb-4"></div>
-                    <button class="submit-btn py-3 px-6 rounded-lg font-bold text-white self-end">
+                    <button id="submitBtn" class="submit-btn py-3 px-6 rounded-lg font-bold text-white self-end">
                         제출하기
                     </button>
                 </div>
@@ -444,12 +443,51 @@
         });
 
     
-        document.querySelectorAll('.submit-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                window.location.href='7-result.html'
-            });
-        });
+//        document.querySelectorAll('.submit-btn').forEach(btn => {
+  //          btn.addEventListener('click', function(e) {
+    //            window.location.href='7-result.html'
+      //      });
+       // });
         
+    document.getElementById('submitBtn').addEventListener('click', () => {
+        alert("전송")
+
+    // 1. editor-container 내부의 모든 view-line div 가져오기
+    const lines = document.querySelectorAll('#editor-container #view-line');
+
+    // 2. 각 div의 텍스트 내용을 줄 단위로 연결
+    const code = Array.from(lines).map(line => line.textContent).join('\n');
+
+    // 3. 전송할 언어 선택 (예: 드롭다운 등에서 선택하는 방식)
+    const selectedLanguage = getSelectedLanguage(); // 아래에서 함수로 설명
+
+    // 4. 서버로 POST 요청 전송
+    fetch('http://192.168.56.1/compile', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            language: selectedLanguage,  // 'python' | 'java' | 'cpp'
+            code: code
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('응답 결과:', data);
+        // 결과 처리
+    })
+    .catch(error => {
+        console.error('에러 발생:', error);
+    });
+});
+
+function getSelectedLanguage() {
+    // 예: 셀렉트 박스에서 선택한 언어를 가져오는 방식
+    const lang = document.querySelector('#languageSelect').value;
+    return lang; // 'python' | 'java' | 'cpp' 중 하나
+}
+
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9411d1dd8533ea2b',t:'MTc0NzQ3MTMyOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
