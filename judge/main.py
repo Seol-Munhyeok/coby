@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, Form, HTTPException
+from fastapi import FastAPI, UploadFile, Form, HTTPException, File
 from fastapi.responses import PlainTextResponse
 import os
 import shutil
@@ -26,7 +26,10 @@ LANGUAGE_TO_EXTENSIONS = {
 }
 
 @app.post("/compile")
-async def compile_code(code: UploadFile, language: str = Form(...)):
+async def compile_code(code: UploadFile = File(...), 
+                       testcase: UploadFile = File(...), 
+                       result : UploadFile = File(...),
+                       language: str = Form(...) ):
     logger.info(f"Received compilation request for language: {language}")
     
     if language not in LANGUAGE_TO_IMAGE:
@@ -44,19 +47,43 @@ async def compile_code(code: UploadFile, language: str = Form(...)):
             
         extension = LANGUAGE_TO_EXTENSIONS[language]
         filename = f"code.{extension}"
-        filepath = os.path.join(workdir, filename)
+        codefilepath = os.path.join(workdir, filename)
 
         # 파일 내용 읽기 및 저장
         content = await code.read()
         if not content:
             return PlainTextResponse("Empty code file", status_code=400)
             
-        with open(filepath, "wb") as f:
+        with open(codefilepath, "wb") as f:
+            f.write(content)
+
+        # 실행 권한 추가 (필요한 경우)
+        os.chmod(codefilepath, 0o755)
+        logger.info(f"Saved code to {codefilepath} with permissions")
+
+        extension = "txt"
+        filename = f"testcase.{extension}"
+        tcfilepath = os.path.join(workdir, filename)
+
+        # test case 파일 내용 읽기 및 저장
+        content = await testcase.read()
+        if not content:
+            return PlainTextResponse("Empty testcase file", status_code=400)
+            
+        with open(tcfilepath, "wb") as f:
+            f.write(content)
+
+        extension = "txt"
+        filename = f"result.{extension}"
+        resultfilepath = os.path.join(workdir, filename)
+        
+        content = await result.read()
+        if not content:
+            return PlainTextResponse("Empty result file", status_code=400)
+            
+        with open(resultfilepath, "wb") as f:
             f.write(content)
         
-        # 실행 권한 추가 (필요한 경우)
-        os.chmod(filepath, 0o755)
-        logger.info(f"Saved code to {filepath} with permissions")
 
         # 도커 명령 실행
         docker_cmd = [
@@ -82,7 +109,7 @@ async def compile_code(code: UploadFile, language: str = Form(...)):
             logger.info(f"STDOUT: {stdout[:200]}...")  # 첫 200자만 로깅
             logger.info(f"STDERR: {stderr[:200]}...")  # 첫 200자만 로깅
             
-            if result.returncode == 0:
+            if result.returncode == 0 :
                 return PlainTextResponse(stdout)
             else:
                 logger.error(f"Error during execution: {stderr}")
