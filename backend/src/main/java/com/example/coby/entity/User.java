@@ -1,4 +1,4 @@
-package entity;
+package com.example.coby.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
