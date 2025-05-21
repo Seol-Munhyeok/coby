@@ -1,0 +1,256 @@
+<html lang="ko"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>개발자 로그인</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&amp;family=Poppins:wght@400;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            background-color: #f0f4f8;
+            position: relative;
+        }
+        
+        .code-bg {
+            font-family: 'Fira Code', monospace;
+            color: rgba(30, 58, 138, 0.25);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .code-line {
+            position: absolute;
+            white-space: nowrap;
+            animation: float 30s linear infinite;
+            opacity: 0;
+            font-weight: 500;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(-100px);
+                opacity: 0.2;
+            }
+        }
+        
+        .typing-text {
+            font-family: 'Fira Code', monospace;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            height: 4rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .char {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        
+        .login-container {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            visibility: hidden; /* 초기에 숨김 처리 */
+        }
+        
+        .social-btn {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .social-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        
+        .logo-icon {
+            font-size: 2.5rem;
+            margin-right: 0.5rem;
+        }
+    </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.16 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width: 640px){.container{max-width:640px}}@media (min-width: 768px){.container{max-width:768px}}@media (min-width: 1024px){.container{max-width:1024px}}@media (min-width: 1280px){.container{max-width:1280px}}@media (min-width: 1536px){.container{max-width:1536px}}.z-10{z-index:10}.mb-4{margin-bottom:1rem}.mb-8{margin-bottom:2rem}.mr-2{margin-right:0.5rem}.flex{display:flex}.h-5{height:1.25rem}.min-h-screen{min-height:100vh}.w-5{width:1.25rem}.max-w-md{max-width:28rem}.flex-col{flex-direction:column}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.rounded-2xl{border-radius:1rem}.rounded-lg{border-radius:0.5rem}.border{border-width:1px}.border-gray-300{--tw-border-opacity:1;border-color:rgb(209 213 219 / var(--tw-border-opacity, 1))}.bg-\[\#24292E\]{--tw-bg-opacity:1;background-color:rgb(36 41 46 / var(--tw-bg-opacity, 1))}.bg-\[\#FEE500\]{--tw-bg-opacity:1;background-color:rgb(254 229 0 / var(--tw-bg-opacity, 1))}.bg-white{--tw-bg-opacity:1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1))}.bg-opacity-95{--tw-bg-opacity:0.95}.p-8{padding:2rem}.px-6{padding-left:5rem !important;padding-right:5rem !important}.py-2{padding-top:0.5rem;padding-bottom:0.5rem}.text-right{text-align:right}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.font-medium{font-weight:500}.text-\[\#3A1D1D\]{--tw-text-opacity:1;color:rgb(58 29 29 / var(--tw-text-opacity, 1))}.text-gray-500{--tw-text-opacity:1;color:rgb(107 114 128 / var(--tw-text-opacity, 1))}.text-gray-800{--tw-text-opacity:1;color:rgb(31 41 55 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.hover\:bg-\[\#3A3A3A\]:hover{--tw-bg-opacity:1;background-color:rgb(58 58 58 / var(--tw-bg-opacity, 1))}.hover\:bg-\[\#FFDC3C\]:hover{--tw-bg-opacity:1;background-color:rgb(255 220 60 / var(--tw-bg-opacity, 1))}.hover\:bg-gray-50:hover{--tw-bg-opacity:1;background-color:rgb(249 250 251 / var(--tw-bg-opacity, 1))}@media (min-width: 768px){.md\:mb-0{margin-bottom:0px}.md\:flex-row{flex-direction:row}}</style></head>
+<body class="flex items-center justify-center min-h-screen">
+    <!-- 배경 코드 텍스트 -->
+    <div class="code-bg" id="codeBg"><div class="code-line" style="left: 34.1089%; top: 78.5205%; font-size: 1.3106rem; opacity: 0; animation-delay: 6.17103s; animation-duration: 20.9734s; color: rgba(30, 58, 138, 0.3);">npm install --save-dev</div><div class="code-line" style="left: 50.789%; top: 31.9234%; font-size: 1.5507rem; opacity: 0; animation-delay: 13.08s; animation-duration: 22.3062s; color: rgba(79, 70, 229, 0.3);">SELECT * FROM users WHERE active = true;</div><div class="code-line" style="left: 59.4884%; top: 72.7857%; font-size: 1.75247rem; opacity: 0; animation-delay: 1.54268s; animation-duration: 25.2997s; color: rgba(30, 58, 138, 0.3);">function helloWorld() { console.log('Hello, World!'); }</div><div class="code-line" style="left: 35.6222%; top: 83.8495%; font-size: 1.87431rem; opacity: 0; animation-delay: 12.101s; animation-duration: 28.6371s; color: rgba(37, 99, 235, 0.3);">@media (max-width: 768px) { .container { padding: 1rem; } }</div><div class="code-line" style="left: 98.8359%; top: 70.2401%; font-size: 1.32617rem; opacity: 0; animation-delay: 9.62914s; animation-duration: 30.3969s; color: rgba(124, 58, 237, 0.3);">const [count, setCount] = useState(0);</div><div class="code-line" style="left: 41.0065%; top: 32.9455%; font-size: 1.36427rem; opacity: 0; animation-delay: 5.45444s; animation-duration: 35.0145s; color: rgba(30, 58, 138, 0.3);">try { throw new Error('Oops!') } catch (e) { console.error(e) }</div><div class="code-line" style="left: 18.1939%; top: 7.65555%; font-size: 1.26678rem; opacity: 0; animation-delay: 7.43849s; animation-duration: 36.64s; color: rgba(79, 70, 229, 0.3);">map(item =&gt; &lt;li key={item.id}&gt;{item.name}&lt;/li&gt;)</div><div class="code-line" style="left: 1.52962%; top: 56.3889%; font-size: 1.94408rem; opacity: 0; animation-delay: 7.07997s; animation-duration: 29.9183s; color: rgba(37, 99, 235, 0.3);">docker-compose up -d</div><div class="code-line" style="left: 39.8668%; top: 65.4394%; font-size: 1.95482rem; opacity: 0; animation-delay: 12.7275s; animation-duration: 37.6793s; color: rgba(30, 58, 138, 0.3);">python -m venv env &amp;&amp; source env/bin/activate</div><div class="code-line" style="left: 0.913%; top: 92.4476%; font-size: 1.86389rem; opacity: 0; animation-delay: 8.21961s; animation-duration: 39.0797s; color: rgba(30, 58, 138, 0.3);">const [count, setCount] = useState(0);</div><div class="code-line" style="left: 80.3256%; top: 89.6937%; font-size: 1.85871rem; opacity: 0; animation-delay: 13.2147s; animation-duration: 37.6687s; color: rgba(124, 58, 237, 0.3);">const sum = (a, b) =&gt; a + b;</div><div class="code-line" style="left: 94.5872%; top: 96.4723%; font-size: 1.84273rem; opacity: 0; animation-delay: 8.71315s; animation-duration: 26.3057s; color: rgba(124, 58, 237, 0.3);">map(item =&gt; &lt;li key={item.id}&gt;{item.name}&lt;/li&gt;)</div><div class="code-line" style="left: 69.6673%; top: 37.4327%; font-size: 1.66215rem; opacity: 0; animation-delay: 14.7908s; animation-duration: 23.0033s; color: rgba(79, 70, 229, 0.3);">export default function App() { return &lt;div&gt;Hello&lt;/div&gt;; }</div><div class="code-line" style="left: 14.8716%; top: 95.6559%; font-size: 1.35686rem; opacity: 0; animation-delay: 7.16087s; animation-duration: 39.1721s; color: rgba(79, 70, 229, 0.3);">const [count, setCount] = useState(0);</div><div class="code-line" style="left: 73.4915%; top: 18.5631%; font-size: 1.12967rem; opacity: 0; animation-delay: 5.1272s; animation-duration: 35.9712s; color: rgba(30, 58, 138, 0.3);">python -m venv env &amp;&amp; source env/bin/activate</div><div class="code-line" style="left: 94.1273%; top: 80.8439%; font-size: 1.65626rem; opacity: 0; animation-delay: 2.83782s; animation-duration: 28.4049s; color: rgba(30, 58, 138, 0.3);">async function fetchData() { const res = await fetch('/api'); }</div><div class="code-line" style="left: 46.0823%; top: 53.456%; font-size: 1.4463rem; opacity: 0; animation-delay: 13.5846s; animation-duration: 24.788s; color: rgba(79, 70, 229, 0.3);">git commit -m 'Initial commit'</div><div class="code-line" style="left: 84.9608%; top: 88.4885%; font-size: 1.36567rem; opacity: 0; animation-delay: 12.2187s; animation-duration: 21.7597s; color: rgba(37, 99, 235, 0.3);">python -m venv env &amp;&amp; source env/bin/activate</div><div class="code-line" style="left: 79.4339%; top: 55.9841%; font-size: 1.54323rem; opacity: 0; animation-delay: 4.19516s; animation-duration: 21.4894s; color: rgba(79, 70, 229, 0.3);">docker-compose up -d</div><div class="code-line" style="left: 26.2741%; top: 37.2791%; font-size: 1.80945rem; opacity: 0; animation-delay: 4.90449s; animation-duration: 23.4019s; color: rgba(37, 99, 235, 0.3);">&lt;div className='container'&gt;{children}&lt;/div&gt;</div><div class="code-line" style="left: 80.7564%; top: 71.7099%; font-size: 1.48682rem; opacity: 0; animation-delay: 8.71583s; animation-duration: 25.6433s; color: rgba(37, 99, 235, 0.3);">npm install --save-dev</div><div class="code-line" style="left: 67.2221%; top: 72.4549%; font-size: 1.66748rem; opacity: 0; animation-delay: 11.3257s; animation-duration: 36.0447s; color: rgba(124, 58, 237, 0.3);">const app = express();</div><div class="code-line" style="left: 50.2776%; top: 17.0429%; font-size: 1.98373rem; opacity: 0; animation-delay: 6.96012s; animation-duration: 34.9176s; color: rgba(30, 58, 138, 0.3);">export default function App() { return &lt;div&gt;Hello&lt;/div&gt;; }</div><div class="code-line" style="left: 55.9114%; top: 98.3046%; font-size: 1.88821rem; opacity: 0; animation-delay: 12.225s; animation-duration: 20.5147s; color: rgba(37, 99, 235, 0.3);">async function fetchData() { const res = await fetch('/api'); }</div><div class="code-line" style="left: 87.7284%; top: 32.3298%; font-size: 1.44221rem; opacity: 0; animation-delay: 9.80861s; animation-duration: 23.3478s; color: rgba(79, 70, 229, 0.3);">async function fetchData() { const res = await fetch('/api'); }</div><div class="code-line" style="left: 61.806%; top: 23.3458%; font-size: 1.79722rem; opacity: 0; animation-delay: 6.00773s; animation-duration: 27.9329s; color: rgba(30, 58, 138, 0.3);">export default function App() { return &lt;div&gt;Hello&lt;/div&gt;; }</div><div class="code-line" style="left: 36.2024%; top: 87.5005%; font-size: 1.60502rem; opacity: 0; animation-delay: 14.5589s; animation-duration: 31.9006s; color: rgba(79, 70, 229, 0.3);">python -m venv env &amp;&amp; source env/bin/activate</div><div class="code-line" style="left: 27.2462%; top: 53.0682%; font-size: 1.09909rem; opacity: 0; animation-delay: 12.9278s; animation-duration: 33.5434s; color: rgba(124, 58, 237, 0.3);">class User { constructor(name) { this.name = name; } }</div><div class="code-line" style="left: 98.1064%; top: 3.83747%; font-size: 1.8528rem; opacity: 0; animation-delay: 13.0499s; animation-duration: 20.0744s; color: rgba(30, 58, 138, 0.3);">function helloWorld() { console.log('Hello, World!'); }</div><div class="code-line" style="left: 33.0243%; top: 32.2994%; font-size: 1.15879rem; opacity: 0; animation-delay: 10.92s; animation-duration: 37.6536s; color: rgba(37, 99, 235, 0.3);">import React, { useState } from 'react';</div><div class="code-line" style="left: 88.8479%; top: 23.8907%; font-size: 1.82319rem; opacity: 0; animation-delay: 10.6387s; animation-duration: 28.6606s; color: rgba(37, 99, 235, 0.3);">&lt;div className='container'&gt;{children}&lt;/div&gt;</div><div class="code-line" style="left: 87.8926%; top: 78.3159%; font-size: 1.38081rem; opacity: 0; animation-delay: 4.83425s; animation-duration: 25.8979s; color: rgba(124, 58, 237, 0.3);">npm install --save-dev</div><div class="code-line" style="left: 39.4921%; top: 83.3961%; font-size: 1.57068rem; opacity: 0; animation-delay: 7.25615s; animation-duration: 25.235s; color: rgba(30, 58, 138, 0.3);">useEffect(() =&gt; { document.title = `Count: ${count}`; });</div><div class="code-line" style="left: 91.6031%; top: 4.9525%; font-size: 1.35976rem; opacity: 0; animation-delay: 6.61507s; animation-duration: 29.7014s; color: rgba(30, 58, 138, 0.3);">docker-compose up -d</div><div class="code-line" style="left: 0.709836%; top: 63.6178%; font-size: 1.99513rem; opacity: 0; animation-delay: 3.6514s; animation-duration: 20.2053s; color: rgba(37, 99, 235, 0.3);">npm install --save-dev</div><div class="code-line" style="left: 4.76759%; top: 50.5931%; font-size: 1.69675rem; opacity: 0; animation-delay: 6.36942s; animation-duration: 39.4444s; color: rgba(79, 70, 229, 0.3);">docker-compose up -d</div><div class="code-line" style="left: 23.9615%; top: 51.6836%; font-size: 1.9978rem; opacity: 0; animation-delay: 8.45027s; animation-duration: 32.9787s; color: rgba(37, 99, 235, 0.3);">for (let i = 0; i &lt; array.length; i++) { }</div><div class="code-line" style="left: 40.3797%; top: 18.4851%; font-size: 1.20128rem; opacity: 0; animation-delay: 14.1416s; animation-duration: 31.2757s; color: rgba(37, 99, 235, 0.3);">class User { constructor(name) { this.name = name; } }</div><div class="code-line" style="left: 37.1%; top: 42.468%; font-size: 1.00365rem; opacity: 0; animation-delay: 7.19352s; animation-duration: 28.1722s; color: rgba(79, 70, 229, 0.3);">@media (max-width: 768px) { .container { padding: 1rem; } }</div><div class="code-line" style="left: 69.0843%; top: 80.3708%; font-size: 1.12381rem; opacity: 0; animation-delay: 3.53096s; animation-duration: 29.814s; color: rgba(30, 58, 138, 0.3);">const [count, setCount] = useState(0);</div></div>
+    
+    <div class="container z-10" style="width: 650px;">
+        <!-- 타이핑 애니메이션 텍스트 -->
+        <div class="typing-text" id="typingText"><span class="char" style="color: rgb(245, 158, 11); opacity: 1; transform: translateY(0px);">H</span><span class="char" style="color: rgb(59, 130, 246); opacity: 1; transform: translateY(0px);">e</span><span class="char" style="color: rgb(59, 130, 246); opacity: 1; transform: translateY(0px);">l</span><span class="char" style="color: rgb(236, 72, 153); opacity: 1; transform: translateY(0px);">l</span><span class="char" style="color: rgb(16, 185, 129); opacity: 1; transform: translateY(0px);">o</span><span class="char" style="color: rgb(59, 130, 246); opacity: 1; transform: translateY(0px);">,</span><span class="char" style="color: rgb(236, 72, 153); opacity: 1; transform: translateY(0px);"> </span><span class="char" style="color: rgb(59, 130, 246); opacity: 1; transform: translateY(0px);">W</span><span class="char" style="color: rgb(236, 72, 153); opacity: 1; transform: translateY(0px);">o</span><span class="char" style="color: rgb(245, 158, 11); opacity: 1; transform: translateY(0px);">r</span><span class="char" style="color: rgb(236, 72, 153); opacity: 1; transform: translateY(0px);">l</span><span class="char" style="color: rgb(236, 72, 153); opacity: 1; transform: translateY(0px);">d</span><span class="char" style="color: rgb(59, 130, 246); opacity: 1; transform: translateY(0px);">!</span></div>
+        
+        <!-- 로그인 컨테이너 -->
+        <div class="login-container bg-white bg-opacity-95 rounded-2xl shadow-2xl p-8" id="loginContainer" style="opacity: 1; visibility: visible; transform: translateY(0px);">
+            <div class="flex flex-col md:flex-row items-center justify-between mb-8">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <img src="./그림1.png" width="300px" height="300px">
+                </div>
+                
+                <div class="flex flex-col space-y-4">
+                    <button class="social-btn flex items-center justify-center bg-white border border-gray-300 rounded-lg px-6 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50" onclick="window.location.href='2-nickname.html'">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+                        </svg>
+                        Google 로그인
+                    </button>
+                    
+                    <button class="social-btn flex items-center justify-center bg-[#FEE500] rounded-lg px-6 py-2 text-sm font-medium text-[#3A1D1D] hover:bg-[#FFDC3C]">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 3C7.03 3 3 6.14 3 10C3 12.08 4.02 13.97 5.72 15.28C5.67 15.72 5.4 16.98 5.16 17.82C4.9 18.67 4.68 19.29 4.68 19.31C4.57 19.55 4.65 19.84 4.87 20C4.98 20.08 5.11 20.12 5.24 20.12C5.37 20.12 5.5 20.08 5.61 20C5.62 20.01 6.97 19.26 7.86 18.73C9.14 19.27 10.53 19.58 12 19.58C16.97 19.58 21 16.44 21 12.58C21 8.72 16.97 3 12 3Z" fill="currentColor"></path>
+                        </svg>
+                        카카오 로그인
+                    </button>
+                    
+                    <button class="social-btn flex items-center justify-center bg-[#24292E] rounded-lg px-6 py-2 text-sm font-medium text-white hover:bg-[#3A3A3A]">
+                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="white">
+                            <path d="M12 2C6.477 2 2 6.477 2 12C2 16.418 4.865 20.166 8.84 21.49C9.34 21.58 9.52 21.27 9.52 21C9.52 20.77 9.51 20.14 9.51 19.31C6.73 19.91 6.14 17.97 6.14 17.97C5.68 16.81 5.03 16.5 5.03 16.5C4.12 15.88 5.1 15.9 5.1 15.9C6.1 15.97 6.63 16.93 6.63 16.93C7.5 18.45 8.97 18 9.54 17.76C9.63 17.11 9.89 16.67 10.17 16.42C7.95 16.17 5.62 15.31 5.62 11.5C5.62 10.39 6 9.5 6.65 8.79C6.55 8.54 6.2 7.5 6.75 6.15C6.75 6.15 7.59 5.88 9.5 7.17C10.29 6.95 11.15 6.84 12 6.84C12.85 6.84 13.71 6.95 14.5 7.17C16.41 5.88 17.25 6.15 17.25 6.15C17.8 7.5 17.45 8.54 17.35 8.79C18 9.5 18.38 10.39 18.38 11.5C18.38 15.32 16.04 16.16 13.81 16.41C14.17 16.72 14.5 17.33 14.5 18.26C14.5 19.6 14.49 20.68 14.49 21C14.49 21.27 14.67 21.59 15.17 21.49C19.14 20.16 22 16.42 22 12C22 6.477 17.523 2 12 2Z"></path>
+                        </svg>
+                        GitHub 로그인
+                    </button>
+                </div>
+            </div>
+            
+            <div class="text-right text-xs text-gray-500">
+                <p>Team 404</p>
+                <p>404@test.com</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 배경 코드 생성
+        const codeBg = document.getElementById('codeBg');
+        const codeSnippets = [
+            "function helloWorld() { console.log('Hello, World!'); }",
+            "const app = express();",
+            "import React, { useState } from 'react';",
+            "class User { constructor(name) { this.name = name; } }",
+            "SELECT * FROM users WHERE active = true;",
+            "git commit -m 'Initial commit'",
+            "npm install --save-dev",
+            "docker-compose up -d",
+            "for (let i = 0; i < array.length; i++) { }",
+            "addEventListener('click', () => { })",
+            "async function fetchData() { const res = await fetch('/api'); }",
+            "const sum = (a, b) => a + b;",
+            "try { throw new Error('Oops!') } catch (e) { console.error(e) }",
+            "export default function App() { return <div>Hello</div>; }",
+            "<div className='container'>{children}</div>",
+            "const [count, setCount] = useState(0);",
+            "useEffect(() => { document.title = `Count: ${count}`; });",
+            "map(item => <li key={item.id}>{item.name}</li>)",
+            "@media (max-width: 768px) { .container { padding: 1rem; } }",
+            "python -m venv env && source env/bin/activate"
+        ];
+        
+        // 페이지 로드 시 실행되는 초기화 함수
+        window.addEventListener('DOMContentLoaded', () => {
+            // 타이핑 텍스트와 로그인 컨테이너 초기화
+            const typingText = document.getElementById('typingText');
+            const loginContainer = document.getElementById('loginContainer');
+            
+            // 기존 내용 초기화
+            typingText.innerHTML = '';
+            loginContainer.style.opacity = '0';
+            loginContainer.style.visibility = 'hidden';
+            
+            // 배경에 코드 라인 생성
+            createBackgroundCode();
+            
+            // 타이핑 애니메이션 시작
+            setTimeout(() => {
+                startTypingAnimation();
+            }, 800);
+        });
+        
+        // 배경 코드 생성 함수
+        function createBackgroundCode() {
+            codeBg.innerHTML = ''; // 기존 코드 라인 제거
+            
+            for (let i = 0; i < 40; i++) {
+                const line = document.createElement('div');
+                line.className = 'code-line';
+                line.textContent = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+                line.style.left = `${Math.random() * 100}%`;
+                line.style.top = `${Math.random() * 100}%`;
+                line.style.fontSize = `${Math.random() * 1.0 + 1.0}rem`;
+                line.style.opacity = '0';
+                line.style.animationDelay = `${Math.random() * 15}s`;
+                line.style.animationDuration = `${Math.random() * 20 + 20}s`;
+                
+                // 색상 변형 추가
+                const colors = ['rgba(30, 58, 138, 0.3)', 'rgba(37, 99, 235, 0.3)', 'rgba(79, 70, 229, 0.3)', 'rgba(124, 58, 237, 0.3)'];
+                line.style.color = colors[Math.floor(Math.random() * colors.length)];
+                
+                codeBg.appendChild(line);
+            }
+        }
+        
+        // 타이핑 애니메이션 함수
+        function startTypingAnimation() {
+            const typingText = document.getElementById('typingText');
+            const loginContainer = document.getElementById('loginContainer');
+            const text = 'Hello, World!';
+            const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+            
+            let charIndex = 0;
+            
+            function typeNextChar() {
+                if (charIndex < text.length) {
+                    const char = document.createElement('span');
+                    char.className = 'char';
+                    char.textContent = text[charIndex];
+                    char.style.color = colors[Math.floor(Math.random() * colors.length)];
+                    typingText.appendChild(char);
+                    
+                    setTimeout(() => {
+                        char.style.opacity = '1';
+                        char.style.transform = 'translateY(0)';
+                    }, 50);
+                    
+                    charIndex++;
+                    setTimeout(typeNextChar, 150);
+                } else {
+                    // 타이핑 완료 후 로그인 컨테이너 표시
+                    setTimeout(() => {
+                        loginContainer.style.visibility = 'visible';
+                        loginContainer.style.opacity = '1';
+                        loginContainer.style.transform = 'translateY(0)';
+                    }, 500);
+                }
+            }
+            
+            typeNextChar();
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'93fa3942533a30a3',t:'MTc0NzIyMzkwNi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();
+</script>
+
+<iframe height="1" width="1" style="position: absolute; top: 0px; left: 0px; border: none; visibility: hidden;"></iframe>
+
+</body><whale-quicksearch translate="no" style="visibility: visible;"></whale-quicksearch></html>

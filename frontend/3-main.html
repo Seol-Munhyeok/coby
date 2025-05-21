@@ -1,0 +1,859 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COBY - Coding Online Battle with You</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .room-card {
+            transition: all 0.3s ease;
+        }
+        
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+        }
+        
+        .tier-badge {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .tier-badge::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            padding: 2px;
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+        }
+        
+        .pulse {
+            position: relative;
+        }
+        
+        .pulse::before {
+            content: '';
+            position: absolute;
+            border: 4px solid #3b82f6;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            top: -3px;
+            right: -3px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+            }
+            
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+            }
+            
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+        
+        .tab-active {
+            color: #3b82f6;
+            border-bottom: 2px solid #3b82f6;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <nav class="glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-blue-900/30">
+        <button class="flex items-center space-x-2" onclick="window.location.href='3-main.html'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+            <h1 class="text-2xl font-bold text-white">COBY</h1>
+        </button>
+        <div class="flex items-center space-x-6">
+            <button class="text-blue-300 hover:text-blue-100 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+            </button>
+            <div class="relative pulse">
+                <button class="text-blue-300 hover:text-blue-100 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                </button>
+            </div>
+            <button class="flex items-center space-x-3" onclick="window.location.href='5-myPage.html'">
+                <div class="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center">
+                    <span class="text-sm font-bold text-blue-200">다이아</span>
+                </div>
+                <span class="font-medium">코드마스터</span>
+            </ㅠ>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-6">
+        <!-- 사용자 정보 요약 섹션 -->
+        <section class="mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 프로필 카드 -->
+                <div class="glass-effect rounded-xl p-6 animate-fade-in">
+                    <div class="flex items-center space-x-4">
+                        <div class="tier-badge w-16 h-16 rounded-full bg-blue-900 flex items-center justify-center">
+                            <span class="text-lg font-bold text-blue-200">다이아</span>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">코드마스터</h2>
+                            <p class="text-blue-300">승률: 78% (승 45 / 패 13)</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+                        <div class="glass-effect rounded-lg p-2">
+                            <p class="text-xs text-blue-300">순위</p>
+                            <p class="text-xl font-bold text-white">12위</p>
+                        </div>
+                        <div class="glass-effect rounded-lg p-2">
+                            <p class="text-xs text-blue-300">포인트</p>
+                            <p class="text-xl font-bold text-white">3,842</p>
+                        </div>
+                        <div class="glass-effect rounded-lg p-2">
+                            <p class="text-xs text-blue-300">참여</p>
+                            <p class="text-xl font-bold text-white">58회</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 최근 기록 -->
+                <div class="glass-effect rounded-xl p-6 animate-fade-in" style="animation-delay: 0.1s;">
+                    <h3 class="text-lg font-semibold text-white mb-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                        </svg>
+                        최근 기록
+                    </h3>
+                    <div class="space-y-3 custom-scrollbar overflow-y-auto max-h-40">
+                        <div class="flex justify-between items-center glass-effect rounded-lg p-2 border-l-4 border-green-500">
+                            <div>
+                                <p class="font-medium text-white">알고리즘 배틀 #128</p>
+                                <p class="text-xs text-blue-300">2시간 전</p>
+                            </div>
+                            <span class="text-green-400 font-medium">승리</span>
+                        </div>
+                        <div class="flex justify-between items-center glass-effect rounded-lg p-2 border-l-4 border-green-500">
+                            <div>
+                                <p class="font-medium text-white">자료구조 마스터 #45</p>
+                                <p class="text-xs text-blue-300">어제</p>
+                            </div>
+                            <span class="text-green-400 font-medium">승리</span>
+                        </div>
+                        <div class="flex justify-between items-center glass-effect rounded-lg p-2 border-l-4 border-red-500">
+                            <div>
+                                <p class="font-medium text-white">SQL 챌린지 #12</p>
+                                <p class="text-xs text-blue-300">2일 전</p>
+                            </div>
+                            <span class="text-red-400 font-medium">패배</span>
+                        </div>
+                    </div>
+                </div>
+
+            
+            </div>
+        </section>
+
+        <!-- 방 목록 및 생성 섹션 -->
+        <section class="mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-white">참가 가능한 방</h2>
+                <div class="flex space-x-3">
+                    <button id="createRoomBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        방 만들기
+                    </button>
+                    <button id="joinRoomBtn" class="bg-blue-900/50 hover:bg-blue-800 text-white px-4 py-2 rounded-lg flex items-center transition enterBtn">
+                        빠른 시작
+                    </button>
+                </div>
+            </div>
+
+            <!-- 필터 옵션 -->
+            <div class="glass-effect rounded-xl p-4 mb-6">
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="flex items-center">
+                        <span class="text-sm text-blue-300 mr-2">문제 유형:</span>
+                        <select class="bg-blue-900/30 text-white border border-blue-800 rounded-md px-3 py-1 text-sm">
+                            <option value="all">전체</option>
+                            <option value="algorithm">알고리즘</option>
+                            <option value="datastructure">자료구조</option>
+                            <option value="dp">동적계획법</option>
+                            <option value="sql">SQL</option>
+                            <option value="frontend">프론트엔드</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-sm text-blue-300 mr-2">난이도:</span>
+                        <select class="bg-blue-900/30 text-white border border-blue-800 rounded-md px-3 py-1 text-sm">
+                            <option value="all">전체</option>
+                            <option value="easy">쉬움</option>
+                            <option value="medium">보통</option>
+                            <option value="hard">어려움</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-sm text-blue-300 mr-2">상태:</span>
+                        <select class="bg-blue-900/30 text-white border border-blue-800 rounded-md px-3 py-1 text-sm">
+                            <option value="all">전체</option>
+                            <option value="waiting">대기중</option>
+                            <option value="progress">진행중</option>
+                        </select>
+                    </div>
+                    <div class="ml-auto">
+                        <div class="relative">
+                            <input type="text" placeholder="방 검색..." class="bg-blue-900/30 text-white border border-blue-800 rounded-md pl-9 pr-3 py-1 text-sm w-64">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-300 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 방 목록 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 방 1 -->
+                <div class="room-card glass-effect rounded-xl overflow-hidden">
+                    <div class="gradient-bg px-4 py-3 flex justify-between items-center">
+                        <h3 class="font-bold text-white">알고리즘 배틀 #129</h3>
+                        <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">대기중</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between mb-3">
+                            <span class="text-sm text-blue-300">문제 유형: <span class="text-white">알고리즘</span></span>
+                            <span class="text-sm text-blue-300">난이도: <span class="text-yellow-400">보통</span></span>
+                        </div>
+                        <div class="flex justify-between mb-4">
+                            <span class="text-sm text-blue-300">참가자: <span class="text-white">3/8</span></span>
+                            <span class="text-sm text-blue-300">시작: <span class="text-white">2분 후</span></span>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <span class="text-xs text-white-500">방장 : </span>
+                            <div class="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center text-xs font-medium ml-1">KM</div>
+                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition enterBtn">
+                            입장하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 방 2 -->
+                <div class="room-card glass-effect rounded-xl overflow-hidden">
+                    <div class="gradient-bg px-4 py-3 flex justify-between items-center">
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <h3 class="font-bold text-white">자료구조 마스터 #46</h3>
+                        </div>
+                        <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">진행중</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between mb-3">
+                            <span class="text-sm text-blue-300">문제 유형: <span class="text-white">자료구조</span></span>
+                            <span class="text-sm text-blue-300">난이도: <span class="text-red-400">어려움</span></span>
+                        </div>
+                        <div class="flex justify-between mb-4">
+                            <span class="text-sm text-blue-300">참가자: <span class="text-white">5/8</span></span>
+                            <span class="text-sm text-blue-300">남은 시간: <span class="text-white">12:45</span></span>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <span class="text-xs text-white-500">방장 : </span>
+                            <div class="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-xs font-medium ml-1">JW</div>
+                        </div>
+                        <button class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg transition enterBtn">
+                            입장하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 방 3 -->
+                <div class="room-card glass-effect rounded-xl overflow-hidden">
+                    <div class="gradient-bg px-4 py-3 flex justify-between items-center">
+                        <h3 class="font-bold text-white">SQL 챌린지 #13</h3>
+                        <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">대기중</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between mb-3">
+                            <span class="text-sm text-blue-300">문제 유형: <span class="text-white">SQL</span></span>
+                            <span class="text-sm text-blue-300">난이도: <span class="text-green-400">쉬움</span></span>
+                        </div>
+                        <div class="flex justify-between mb-4">
+                            <span class="text-sm text-blue-300">참가자: <span class="text-white">2/6</span></span>
+                            <span class="text-sm text-blue-300">시작: <span class="text-white">5분 후</span></span>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <span class="text-xs text-white-500">방장 : </span>
+                            <div class="w-8 h-8 rounded-full bg-purple-700 flex items-center justify-center text-xs font-medium ml-1">SH</div>
+                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition enterBtn">
+                            입장하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 방 4 -->
+                <div class="room-card glass-effect rounded-xl overflow-hidden">
+                    <div class="gradient-bg px-4 py-3 flex justify-between items-center">
+                        <h3 class="font-bold text-white">프론트엔드 배틀 #52</h3>
+                        <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">대기중</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between mb-3">
+                            <span class="text-sm text-blue-300">문제 유형: <span class="text-white">프론트엔드</span></span>
+                            <span class="text-sm text-blue-300">난이도: <span class="text-yellow-400">보통</span></span>
+                        </div>
+                        <div class="flex justify-between mb-4">
+                            <span class="text-sm text-blue-300">참가자: <span class="text-white">1/4</span></span>
+                            <span class="text-sm text-blue-300">시작: <span class="text-white">10분 후</span></span>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <span class="text-xs text-white-500">방장 : </span>
+                            <div class="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-xs font-medium ml-1">MJ</div>
+                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition enterBtn">
+                            입장하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 방 5 -->
+                <div class="room-card glass-effect rounded-xl overflow-hidden">
+                    <div class="gradient-bg px-4 py-3 flex justify-between items-center">
+                        <h3 class="font-bold text-white">동적계획법 챌린지 #28</h3>
+                        <span class="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full">진행중</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between mb-3">
+                            <span class="text-sm text-blue-300">문제 유형: <span class="text-white">동적계획법</span></span>
+                            <span class="text-sm text-blue-300">난이도: <span class="text-red-400">어려움</span></span>
+                        </div>
+                        <div class="flex justify-between mb-4">
+                            <span class="text-sm text-blue-300">참가자: <span class="text-white">6/6</span></span>
+                            <span class="text-sm text-blue-300">남은 시간: <span class="text-white">23:12</span></span>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <span class="text-xs text-white-500">방장 : </span>
+                            <div class="w-8 h-8 rounded-full bg-yellow-700 flex items-center justify-center text-xs font-medium ml-1">JH</div>
+                        </div>
+                        <button class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 rounded-lg transition enterBtn">
+                            입장하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 방 6 -->
+                <div class="room-card glass-effect rounded-xl overflow-hidden">
+                    <div class="gradient-bg px-4 py-3 flex justify-between items-center">
+                        <h3 class="font-bold text-white">알고리즘 배틀 #130</h3>
+                        <span class="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">대기중</span>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between mb-3">
+                            <span class="text-sm text-blue-300">문제 유형: <span class="text-white">알고리즘</span></span>
+                            <span class="text-sm text-blue-300">난이도: <span class="text-green-400">쉬움</span></span>
+                        </div>
+                        <div class="flex justify-between mb-4">
+                            <span class="text-sm text-blue-300">참가자: <span class="text-white">1/8</span></span>
+                            <span class="text-sm text-blue-300">시작: <span class="text-white">15분 후</span></span>
+                        </div>
+                        <div class="flex items-center mb-4">
+                            <span class="text-xs text-white-500">방장 : </span>
+                            <div class="w-8 h-8 rounded-full bg-red-700 flex items-center justify-center text-xs font-medium ml-1">GM</div>
+                        </div>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition enterBtn">
+                            입장하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="mt-6 text-center">
+                <button class="text-blue-400 hover:text-blue-300 flex items-center mx-auto transition">
+                    더 보기
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div> -->
+
+            <div class="mt-6 flex justify-center">
+                <nav class="inline-flex rounded-md shadow-sm">
+                    <a href="#" class="px-3 py-2 rounded-l-md border border-gray-300 bg-blue-900/50 hover:bg-blue-800 text-sm font-medium text-gray-500">이전</a>
+                    <a href="#" class="px-3 py-2 border-t border-b border-gray-300 bg-blue-600 hover:bg-blue-700 text-sm font-medium text-white-600">1</a>
+                    <a href="#" class="px-3 py-2 border-t border-b border-gray-300 bg-blue-900/50 hover:bg-blue-800 text-sm font-medium text-gray-500">2</a>
+                    <a href="#" class="px-3 py-2 border-t border-b border-gray-300 bg-blue-900/50 hover:bg-blue-800 text-sm font-medium text-gray-500">3</a>
+                    <a href="#" class="px-3 py-2 rounded-r-md border border-gray-300 bg-blue-900/50 hover:bg-blue-800 text-sm font-medium text-gray-500">다음</a>
+                </nav>
+            </div>
+
+        </section>
+
+        <!-- 랭킹 및 공지사항 섹션 -->
+        <section>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- 실시간 랭킹 -->
+                <div class="glass-effect rounded-xl p-6">
+
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-white flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            실시간 랭킹
+                        </h2>
+                        <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">모든 랭킹 보기</a>
+                    </div>
+                    
+
+                    <div class="space-y-4 custom-scrollbar overflow-y-auto max-h-96">
+                        <!-- 1위 -->
+                        <div class="glass-effect rounded-lg p-3 flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold mr-3">1</div>
+                            <div class="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                                <span class="text-xs font-bold text-blue-200">마스터</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-white">코딩의신</h3>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-blue-300">승률: 92%</span>
+                                    <span class="mx-2 text-blue-700">•</span>
+                                    <span class="text-xs text-blue-300">총 점수: 9,842</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-white">9,842</span>
+                                <p class="text-xs text-green-400">+128 ↑</p>
+                            </div>
+                        </div>
+
+                        <!-- 2위 -->
+                        <div class="glass-effect rounded-lg p-3 flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white font-bold mr-3">2</div>
+                            <div class="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                                <span class="text-xs font-bold text-blue-200">마스터</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-white">알고리즘킹</h3>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-blue-300">승률: 89%</span>
+                                    <span class="mx-2 text-blue-700">•</span>
+                                    <span class="text-xs text-blue-300">총 점수: 9,512</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-white">9,512</span>
+                                <p class="text-xs text-red-400">-42 ↓</p>
+                            </div>
+                        </div>
+
+                        <!-- 3위 -->
+                        <div class="glass-effect rounded-lg p-3 flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold mr-3">3</div>
+                            <div class="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                                <span class="text-xs font-bold text-blue-200">마스터</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-white">코드워리어</h3>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-blue-300">승률: 85%</span>
+                                    <span class="mx-2 text-blue-700">•</span>
+                                    <span class="text-xs text-blue-300">총 점수: 8,976</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-white">8,976</span>
+                                <p class="text-xs text-green-400">+86 ↑</p>
+                            </div>
+                        </div>
+
+                        <!-- 4위 -->
+                        <div class="glass-effect rounded-lg p-3 flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-white font-bold mr-3">4</div>
+                            <div class="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                                <span class="text-xs font-bold text-blue-200">다이아</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-white">프로그래머J</h3>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-blue-300">승률: 82%</span>
+                                    <span class="mx-2 text-blue-700">•</span>
+                                    <span class="text-xs text-blue-300">총 점수: 8,245</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-white">8,245</span>
+                                <p class="text-xs text-green-400">+52 ↑</p>
+                            </div>
+                        </div>
+
+                        <!-- 5위 -->
+                        <div class="glass-effect rounded-lg p-3 flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-white font-bold mr-3">5</div>
+                            <div class="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                                <span class="text-xs font-bold text-blue-200">다이아</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-white">코드닌자</h3>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-blue-300">승률: 80%</span>
+                                    <span class="mx-2 text-blue-700">•</span>
+                                    <span class="text-xs text-blue-300">총 점수: 7,921</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-white">7,921</span>
+                                <p class="text-xs text-red-400">-18 ↓</p>
+                            </div>
+                        </div>
+
+                        <!-- 내 랭킹 -->
+                        <div class="glass-effect rounded-lg p-3 flex items-center border border-blue-500">
+                            <div class="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-white font-bold mr-3">12</div>
+                            <div class="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                                <span class="text-xs font-bold text-blue-200">다이아</span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-medium text-white">코드마스터</h3>
+                                <div class="flex items-center">
+                                    <span class="text-xs text-blue-300">승률: 78%</span>
+                                    <span class="mx-2 text-blue-700">•</span>
+                                    <span class="text-xs text-blue-300">총 점수: 3,842</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-lg font-bold text-white">3,842</span>
+                                <p class="text-xs text-green-400">+64 ↑</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 공지사항 -->
+                <div class="glass-effect rounded-xl p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 3a1 1 0 00-1.447-.894L8.763 6H5a3 3 0 000 6h.28l1.771 5.316A1 1 0 008 18h1a1 1 0 001-1v-4.382l6.553 3.276A1 1 0 0018 15V3z" clip-rule="evenodd" />
+                        </svg>
+                        공지사항
+                    </h2>
+                        <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">모든 공지사항 보기</a>
+                    </div>
+                
+                    <div class="space-y-4 custom-scrollbar overflow-y-auto max-h-96">
+                        <!-- 공지 1 -->
+                        <div class="glass-effect rounded-lg p-4 border-l-4 border-blue-500">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-semibold text-white">시스템 업데이트 안내</h3>
+                                <span class="text-xs text-blue-300">2023.05.15</span>
+                            </div>
+                            <p class="text-sm text-blue-100 mb-2">코드 배틀 플랫폼이 새롭게 업데이트되었습니다. 주요 변경사항은 다음과 같습니다.</p>
+                            <ul class="text-xs text-blue-300 list-disc list-inside space-y-1">
+                                <li>실시간 대결 시스템 개선</li>
+                                <li>새로운 문제 유형 추가 (프론트엔드)</li>
+                                <li>티어 시스템 리밸런싱</li>
+                            </ul>
+                            <button class="text-blue-400 hover:text-blue-300 text-xs mt-2 transition">자세히 보기</button>
+                        </div>
+
+                        <!-- 공지 2 -->
+                        <div class="glass-effect rounded-lg p-4 border-l-4 border-yellow-500">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-semibold text-white">월간 코딩 챌린지 안내</h3>
+                                <span class="text-xs text-blue-300">2023.05.10</span>
+                            </div>
+                            <p class="text-sm text-blue-100 mb-2">5월 월간 코딩 챌린지가 시작됩니다. 이번 달 주제는 '효율적인 알고리즘'입니다.</p>
+                            <div class="flex justify-between items-center text-xs mt-3">
+                                <span class="text-blue-300">참가 신청: 5월 20일까지</span>
+                                <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded transition">참가 신청</button>
+                            </div>
+                        </div>
+
+                        <!-- 공지 3 -->
+                        <div class="glass-effect rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-semibold text-white">신규 문제 추가</h3>
+                                <span class="text-xs text-blue-300">2023.05.05</span>
+                            </div>
+                            <p class="text-sm text-blue-100 mb-2">새로운 문제가 추가되었습니다. 다양한 난이도의 문제를 풀어보세요.</p>
+                            <div class="grid grid-cols-3 gap-2 mt-3">
+                                <div class="bg-blue-900/30 rounded p-2 text-center">
+                                    <p class="text-xs text-blue-300">알고리즘</p>
+                                    <p class="text-sm font-medium text-white">+12문제</p>
+                                </div>
+                                <div class="bg-blue-900/30 rounded p-2 text-center">
+                                    <p class="text-xs text-blue-300">자료구조</p>
+                                    <p class="text-sm font-medium text-white">+8문제</p>
+                                </div>
+                                <div class="bg-blue-900/30 rounded p-2 text-center">
+                                    <p class="text-xs text-blue-300">SQL</p>
+                                    <p class="text-sm font-medium text-white">+5문제</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 공지 4 -->
+                        <div class="glass-effect rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="font-semibold text-white">코딩 대회 결과 발표</h3>
+                                <span class="text-xs text-blue-300">2023.04.28</span>
+                            </div>
+                            <p class="text-sm text-blue-100 mb-3">4월 코딩 대회 결과가 발표되었습니다. 수상자 명단은 다음과 같습니다.</p>
+                            <div class="space-y-2">
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold mr-2 text-xs">1</div>
+                                    <span class="text-sm text-white">코딩의신</span>
+                                    <span class="ml-auto text-xs text-blue-300">9,842점</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 rounded-full bg-gray-400 flex items-center justify-center text-white font-bold mr-2 text-xs">2</div>
+                                    <span class="text-sm text-white">알고리즘킹</span>
+                                    <span class="ml-auto text-xs text-blue-300">9,512점</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold mr-2 text-xs">3</div>
+                                    <span class="text-sm text-white">코드워리어</span>
+                                    <span class="ml-auto text-xs text-blue-300">8,976점</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 방 만들기 모달 -->
+    <div id="createRoomModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="glass-effect rounded-xl w-full max-w-md p-6 animate-fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-white">새 방 만들기</h2>
+                <button id="closeCreateModal" class="text-blue-300 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-blue-300 mb-1">방 제목</label>
+                    <input type="text" class="w-full bg-blue-900/30 border border-blue-800 rounded-md px-3 py-2 text-white" placeholder="방 제목을 입력하세요">
+                </div>
+                <div>
+                    <label class="block text-sm text-blue-300 mb-1">문제 유형</label>
+                    <select class="w-full bg-blue-900/30 border border-blue-800 rounded-md px-3 py-2 text-white">
+                        <option value="algorithm">알고리즘</option>
+                        <option value="datastructure">자료구조</option>
+                        <option value="dp">동적계획법</option>
+                        <option value="sql">SQL</option>
+                        <option value="frontend">프론트엔드</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-blue-300 mb-1">난이도</label>
+                    <select class="w-full bg-blue-900/30 border border-blue-800 rounded-md px-3 py-2 text-white">
+                        <option value="easy">쉬움</option>
+                        <option value="medium">보통</option>
+                        <option value="hard">어려움</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-blue-300 mb-1">최대 참가자 수</label>
+                    <select class="w-full bg-blue-900/30 border border-blue-800 rounded-md px-3 py-2 text-white">
+                        <option value="2">2명</option>
+                        <option value="4">4명</option>
+                        <option value="6">6명</option>
+                        <option value="8" selected>8명</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm text-blue-300 mb-1">제한 시간</label>
+                    <select class="w-full bg-blue-900/30 border border-blue-800 rounded-md px-3 py-2 text-white">
+                        <option value="15">15분</option>
+                        <option value="30" selected>30분</option>
+                        <option value="45">45분</option>
+                        <option value="60">60분</option>
+                    </select>
+                </div>
+                <div class="flex items-center">
+                    <input type="checkbox" id="privateRoom" class="mr-2">
+                    <label for="privateRoom" class="text-sm text-blue-300">비공개 방 (입장 코드로만 입장 가능)</label>
+                </div>
+                <button id="confirmCreateRoom" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition mt-2">
+                    방 만들기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 방 입장 코드 모달 -->
+    <div id="joinRoomModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="glass-effect rounded-xl w-full max-w-md p-6 animate-fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-white">입장 코드로 참가</h2>
+                <button id="closeJoinModal" class="text-blue-300 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-blue-300 mb-1">입장 코드</label>
+                    <input type="text" class="w-full bg-blue-900/30 border border-blue-800 rounded-md px-3 py-2 text-white" placeholder="입장 코드를 입력하세요">
+                </div>
+                <button id="confirmJoinRoom" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition mt-2">
+                    참가하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 방 생성 완료 모달 -->
+    <div id="roomCreatedModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+        <div class="glass-effect rounded-xl w-full max-w-md p-6 animate-fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-white">방 생성 완료</h2>
+                <button id="closeCreatedModal" class="text-blue-300 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="text-center mb-4">
+                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-white mb-2">방이 성공적으로 생성되었습니다!</h3>
+                <p class="text-blue-300 mb-4">아래 입장 코드를 친구들에게 공유하세요.</p>
+                <div class="glass-effect rounded-lg p-3 flex items-center mb-4">
+                    <input type="text" value="BATTLE-58392" readonly class="bg-transparent border-none outline-none flex-1 text-white text-center font-bold text-xl" />
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm transition">복사</button>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <button id="shareRoom" class="flex-1 bg-blue-900/50 hover:bg-blue-800 text-white py-2 rounded-lg transition flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+                    </svg>
+                    공유하기
+                </button>
+                <button id="enterCreatedRoom" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition enterBtn">
+                    입장하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 모달 제어
+        document.getElementById('createRoomBtn').addEventListener('click', function() {
+            document.getElementById('createRoomModal').classList.remove('hidden');
+        });
+        
+        document.getElementById('closeCreateModal').addEventListener('click', function() {
+            document.getElementById('createRoomModal').classList.add('hidden');
+        });
+        
+        document.getElementById('joinRoomBtn').addEventListener('click', function() {
+            // 여기에 방 입장 로직 추가
+            alert('랜덤한 방에 입장합니다!');
+        });
+        
+
+        document.getElementById('confirmCreateRoom').addEventListener('click', function() {
+            document.getElementById('createRoomModal').classList.add('hidden');
+            document.getElementById('roomCreatedModal').classList.remove('hidden');
+        });
+        
+        document.getElementById('closeCreatedModal').addEventListener('click', function() {
+            document.getElementById('roomCreatedModal').classList.add('hidden');
+        });
+        
+        document.getElementById('enterCreatedRoom').addEventListener('click', function() {
+            document.getElementById('roomCreatedModal').classList.add('hidden');
+            // 여기에 방 입장 로직 추가
+            alert('방에 입장합니다!');
+        });
+
+        
+        // 입장 버튼 클릭 이벤트
+        document.querySelectorAll('.enterBtn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                window.location.href='4-ready.html'
+                // alert("이동")
+            });
+        });
+
+
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'94117135558cd1cf',t:'MTc0NzQ2NzM3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
