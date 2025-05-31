@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
-import NicknamePopup from "../NickName/NicknamePopup";
 const Login = () => {
   const [typingComplete, setTypingComplete] = useState(false);
   const [backgroundLines, setBackgroundLines] = useState([]);
@@ -26,7 +24,6 @@ const Login = () => {
     "export default function App() { return <div>Hello</div>; }",
     "<div className='container'>{children}</div>",
     "const [count, setCount] = useState(0);",
-    "useEffect(() => { document.title = `Count: ${count}`; });",
     "map(item => <li key={item.id}>{item.name}</li>)",
     "@media (max-width: 768px) { .container { padding: 1rem; } }",
     "python -m venv env && source env/bin/activate"
