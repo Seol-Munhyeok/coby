@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
-
+import NicknamePopup from "../NickName/NicknamePopup";
 const Login = () => {
   const [typingComplete, setTypingComplete] = useState(false);
   const [backgroundLines, setBackgroundLines] = useState([]);
-
+  const navigate = useNavigate();
   // 배경 코드 생성
   useEffect(() => {
     const codeSnippets = [
@@ -95,16 +97,19 @@ const Login = () => {
   const handleGoogleLogin = () => {
     // Google 로그인 로직
     console.log('Google 로그인');
+    navigate('/nickname');
   };
 
   const handleKakaoLogin = () => {
     // 카카오 로그인 로직
     console.log('카카오 로그인');
+    navigate('/nickname');
   };
 
   const handleGithubLogin = () => {
     // GitHub 로그인 로직
     console.log('GitHub 로그인');
+    navigate('/nickname');
   };
 
   // const handleNicknameRedirect = () => {
