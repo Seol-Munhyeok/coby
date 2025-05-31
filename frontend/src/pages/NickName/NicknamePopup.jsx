@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import './NicknamePopup.css';
+import { useNavigate } from 'react-router-dom';
+
 
 const usedNicknames = ['admin', 'test', '게임마스터'];
+
 
 const NicknamePopup = () => {
   const [nickname, setNickname] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
-
+  const navigate = useNavigate();
   const checkDuplicate = () => {
     if (nickname.length < 2 || nickname.length > 12) {
       setMessage({ text: '닉네임은 2~12자 이내로 입력해주세요.', type: 'error' });
@@ -24,14 +27,9 @@ const NicknamePopup = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (message.type !== 'success') {
-      setMessage({ text: '닉네임 중복 확인을 먼저 해주세요.', type: 'error' });
-      return;
-    }
+  const handleSubmit = () => {
     alert(`환영합니다, ${nickname}님! 닉네임이 성공적으로 설정되었습니다.`);
-    window.location.href = '3-main.html';
+    navigate('/main'); 
   };
 
   return (
