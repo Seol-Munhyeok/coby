@@ -29,7 +29,7 @@ const NicknamePopup = () => {
 
   const handleSubmit = () => {
     alert(`환영합니다, ${nickname}님! 닉네임이 성공적으로 설정되었습니다.`);
-    navigate('/main'); 
+    navigate('/mainpage'); 
   };
 
   return (
