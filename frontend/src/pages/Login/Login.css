@@ -48,6 +48,10 @@
   padding: 1rem;
   z-index: 10;
   position: relative;
+  display: flex;
+  justify-content: center; /*가로 중앙*/
+  align-items: center;  
+  flex-direction: column;  
 }
 
 /* 타이핑 텍스트 */
@@ -89,6 +93,7 @@
   transform: translateY(20px);
   transition: opacity 0.5s ease, transform 0.5s ease;
   visibility: hidden;
+  display: inline-block;  
 }
 
 .login-container.visible {
