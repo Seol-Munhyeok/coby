@@ -59,7 +59,7 @@ function MainPage() {
     return (
     <div className='MainPage'>
         <div className='min-h-screen'>
-            <nav className="glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-blue-900/30">
+            <nav className="main-glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-blue-900/30">
                 <button className="flex items-center space-x-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -72,7 +72,7 @@ function MainPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                 </button>
-                <div className="relative pulse">
+                <div className="relative main-pulse">
                     <button className="text-blue-300 hover:text-blue-100 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -80,7 +80,7 @@ function MainPage() {
                     </button>
                 </div>
                 <button className="flex items-center space-x-3" onClick={enterMypageBtn}>
-                    <div className="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center">
+                    <div className="main-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center">
                     <span className="text-sm font-bold text-blue-200">다이아</span>
                     </div>
                     <span className="font-medium">코드마스터</span>
@@ -92,9 +92,9 @@ function MainPage() {
                 <section className="mb-8">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* 프로필 카드 */}
-                    <div className="glass-effect rounded-xl p-6 animate-fade-in">
+                    <div className="main-glass-effect rounded-xl p-6 main-animate-fade-in">
                     <div className="flex items-center space-x-4">
-                        <div className="tier-badge w-16 h-16 rounded-full bg-blue-900 flex items-center justify-center">
+                        <div className="main-tier-badge w-16 h-16 rounded-full bg-blue-900 flex items-center justify-center">
                         <span className="text-lg font-bold text-blue-200">다이아</span>
                         </div>
                         <div>
@@ -103,44 +103,44 @@ function MainPage() {
                         </div>
                     </div>
                     <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                        <div className="glass-effect rounded-lg p-2">
+                        <div className="main-glass-effect rounded-lg p-2">
                         <p className="text-xs text-blue-300">순위</p>
                         <p className="text-xl font-bold text-white">12위</p>
                         </div>
-                        <div className="glass-effect rounded-lg p-2">
+                        <div className="main-glass-effect rounded-lg p-2">
                         <p className="text-xs text-blue-300">포인트</p>
                         <p className="text-xl font-bold text-white">3,842</p>
                         </div>
-                        <div className="glass-effect rounded-lg p-2">
+                        <div className="main-glass-effect rounded-lg p-2">
                         <p className="text-xs text-blue-300">참여</p>
                         <p className="text-xl font-bold text-white">58회</p>
                         </div>
                     </div>
                     </div>
                     {/* 최근 기록 */}
-                    <div className="glass-effect rounded-xl p-6 animate-fade-in" style={{animationDelay: '0.1s'}}>
+                    <div className="main-glass-effect rounded-xl p-6 main-animate-fade-in" style={{animationDelay: '0.1s'}}>
                     <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                         </svg>
                         최근 기록
                     </h3>
-                    <div className="space-y-3 custom-scrollbar overflow-y-auto max-h-40">
-                        <div className="flex justify-between items-center glass-effect rounded-lg p-2 border-l-4 border-green-500">
+                    <div className="space-y-3 main-custom-scrollbar overflow-y-auto max-h-40">
+                        <div className="flex justify-between items-center main-glass-effect rounded-lg p-2 border-l-4 border-green-500">
                         <div>
                             <p className="font-medium text-white">알고리즘 배틀 #128</p>
                             <p className="text-xs text-blue-300">2시간 전</p>
                         </div>
                         <span className="text-green-400 font-medium">승리</span>
                         </div>
-                        <div className="flex justify-between items-center glass-effect rounded-lg p-2 border-l-4 border-green-500">
+                        <div className="flex justify-between items-center main-glass-effect rounded-lg p-2 border-l-4 border-green-500">
                         <div>
                             <p className="font-medium text-white">자료구조 마스터 #45</p>
                             <p className="text-xs text-blue-300">어제</p>
                         </div>
                         <span className="text-green-400 font-medium">승리</span>
                         </div>
-                        <div className="flex justify-between items-center glass-effect rounded-lg p-2 border-l-4 border-red-500">
+                        <div className="flex justify-between items-center main-glass-effect rounded-lg p-2 border-l-4 border-red-500">
                         <div>
                             <p className="font-medium text-white">SQL 챌린지 #12</p>
                             <p className="text-xs text-blue-300">2일 전</p>
@@ -168,7 +168,7 @@ function MainPage() {
                     </div>
                 </div>
                 {/* 필터 옵션 */}
-                <div className="glass-effect rounded-xl p-4 mb-6">
+                <div className="main-glass-effect rounded-xl p-4 mb-6">
                     <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center">
                         <span className="text-sm text-blue-300 mr-2">문제 유형:</span>
@@ -211,8 +211,8 @@ function MainPage() {
                 {/* 방 목록 */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* 방 1 */}
-                    <div className="room-card glass-effect rounded-xl overflow-hidden">
-                    <div className="gradient-bg px-4 py-3 flex justify-between items-center">
+                    <div className="main-room-card main-glass-effect rounded-xl overflow-hidden">
+                    <div className="main-gradient-bg px-4 py-3 flex justify-between items-center">
                         <h3 className="font-bold text-white">알고리즘 배틀 #129</h3>
                         <span className="bg-green-500/20 text-green-400 text-xs px-2 py-1 rounded-full">대기중</span>
                     </div>
@@ -251,7 +251,7 @@ function MainPage() {
                 <section>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* 실시간 랭킹 */}
-                    <div className="glass-effect rounded-xl p-6">
+                    <div className="main-glass-effect rounded-xl p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold text-white flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -261,11 +261,11 @@ function MainPage() {
                         </h2>
                         <a href="#" className="text-blue-600 hover:text-blue-800 text-sm font-medium">모든 랭킹 보기</a>
                     </div>
-                    <div className="space-y-4 custom-scrollbar overflow-y-auto max-h-96">
+                    <div className="space-y-4 main-custom-scrollbar overflow-y-auto max-h-96">
                         {/* 1위 */}
-                        <div className="glass-effect rounded-lg p-3 flex items-center">
+                        <div className="main-glass-effect rounded-lg p-3 flex items-center">
                         <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center text-white font-bold mr-3">1</div>
-                        <div className="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                        <div className="main-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
                             <span className="text-xs font-bold text-blue-200">1</span>
                         </div>
                         <div className="flex-1">
@@ -282,9 +282,9 @@ function MainPage() {
                         </div>
                         </div>
                         {/* 2위 */}
-                        <div className="glass-effect rounded-lg p-3 flex items-center">
+                        <div className="main-glass-effect rounded-lg p-3 flex items-center">
                         <div className="w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white font-bold mr-3">2</div>
-                        <div className="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                        <div className="main-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
                             <span className="text-xs font-bold text-blue-200">2</span>
                         </div>
                         <div className="flex-1">
@@ -301,9 +301,9 @@ function MainPage() {
                         </div>
                         </div>
                         {/* 3위 */}
-                        <div className="glass-effect rounded-lg p-3 flex items-center">
+                        <div className="main-glass-effect rounded-lg p-3 flex items-center">
                         <div className="w-8 h-8 rounded-full bg-amber-700 flex items-center justify-center text-white font-bold mr-3">3</div>
-                        <div className="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                        <div className="main-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
                             <span className="text-xs font-bold text-blue-200">3</span>
                         </div>
                         <div className="flex-1">
@@ -320,9 +320,9 @@ function MainPage() {
                         </div>
                         </div>
                         {/* 4위 */}
-                        <div className="glass-effect rounded-lg p-3 flex items-center">
+                        <div className="main-glass-effect rounded-lg p-3 flex items-center">
                         <div className="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-white font-bold mr-3">4</div>
-                        <div className="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                        <div className="main-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
                             <span className="text-xs font-bold text-blue-200">4</span>
                         </div>
                         <div className="flex-1">
@@ -339,9 +339,9 @@ function MainPage() {
                         </div>
                         </div>
                         {/* 5위 */}
-                        <div className="glass-effect rounded-lg p-3 flex items-center">
+                        <div className="main-glass-effect rounded-lg p-3 flex items-center">
                         <div className="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-white font-bold mr-3">5</div>
-                        <div className="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                        <div className="main-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
                             <span className="text-xs font-bold text-blue-200">5</span>
                         </div>
                         <div className="flex-1">
@@ -358,9 +358,9 @@ function MainPage() {
                         </div>
                         </div>
                         {/* 6위 */}
-                        <div className="glass-effect rounded-lg p-3 flex items-center border border-blue-500">
+                        <div className="main-glass-effect rounded-lg p-3 flex items-center border border-blue-500">
                         <div className="w-8 h-8 rounded-full bg-blue-900/50 flex items-center justify-center text-white font-bold mr-3">12</div>
-                        <div className="tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
+                        <div className="main-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center mr-3">
                             <span className="text-xs font-bold text-blue-200">랭6</span>
                         </div>
                         <div className="flex-1">
@@ -380,7 +380,7 @@ function MainPage() {
                     </div>
 
                     {/* 공지사항 */}
-                    <div className="glass-effect rounded-xl p-6">
+                    <div className="main-glass-effect rounded-xl p-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-xl font-bold text-white flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
@@ -390,9 +390,9 @@ function MainPage() {
                         </h2>
                         <a href="#" className="text-blue-600 hover:text-blue-800 text-sm font-medium">모든 공지사항 보기</a>
                     </div>
-                    <div className="space-y-4 custom-scrollbar overflow-y-auto max-h-96">
+                    <div className="space-y-4 main-custom-scrollbar overflow-y-auto max-h-96">
                         {/* 공지 1 */}
-                        <div className="glass-effect rounded-lg p-4 border-l-4 border-blue-500">
+                        <div className="main-glass-effect rounded-lg p-4 border-l-4 border-blue-500">
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="font-semibold text-white">공지1 입니다.</h3>
                             <span className="text-xs text-blue-300">2025.06.01</span>
@@ -406,7 +406,7 @@ function MainPage() {
                         <button className="text-blue-400 hover:text-blue-300 text-xs mt-2 transition">자세히 보기</button>
                         </div>
                         {/* 공지 2 */}
-                        <div className="glass-effect rounded-lg p-4 border-l-4 border-yellow-500">
+                        <div className="main-glass-effect rounded-lg p-4 border-l-4 border-yellow-500">
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="font-semibold text-white">공지2 입니다.</h3>
                             <span className="text-xs text-blue-300">2025.06.01</span>
@@ -414,7 +414,7 @@ function MainPage() {
                         <p className="text-sm text-blue-100 mb-2">내용</p>
                         </div>
                         {/* 공지 3 */}
-                        <div className="glass-effect rounded-lg p-4">
+                        <div className="main-glass-effect rounded-lg p-4">
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="font-semibold text-white">공지3 입니다.</h3>
                             <span className="text-xs text-blue-300">2025.06.01</span>
@@ -436,7 +436,7 @@ function MainPage() {
                         </div>
                         </div>
                         {/* 공지 4 */}
-                        <div className="glass-effect rounded-lg p-4">
+                        <div className="main-glass-effect rounded-lg p-4">
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="font-semibold text-white">공지4 입니다.</h3>
                             <span className="text-xs text-blue-300">2025.06.01</span>
@@ -470,7 +470,7 @@ function MainPage() {
             {/* 방 만들기 모달 */}
             {isCreateModalOpen && (
             <div id="createRoomModal" className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-                <div className="glass-effect rounded-xl w-full max-w-md p-6 animate-fade-in">
+                <div className="main-glass-effect rounded-xl w-full max-w-md p-6 main-animate-fade-in">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-white">새 방 만들기</h2>
                     <button id="closeCreateModal" className="text-blue-300 hover:text-white transition">
@@ -534,7 +534,7 @@ function MainPage() {
 
             {/* 방 입장 코드 모달 */}
             <div id="joinRoomModal" className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-                <div className="glass-effect rounded-xl w-full max-w-md p-6 animate-fade-in">
+                <div className="main-glass-effect rounded-xl w-full max-w-md p-6 main-animate-fade-in">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-white">입장 코드로 참가</h2>
                     <button id="closeJoinModal" className="text-blue-300 hover:text-white transition">
@@ -558,7 +558,7 @@ function MainPage() {
             {/* 방 생성 완료 모달 */}
             { isRoomCreatedModalOpen && (
             <div id="roomCreatedModal" className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-                <div className="glass-effect rounded-xl w-full max-w-md p-6 animate-fade-in">
+                <div className="main-glass-effect rounded-xl w-full max-w-md p-6 main-animate-fade-in">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-bold text-white">방 생성 완료</h2>
                     <button id="closeCreatedModal" className="text-blue-300 hover:text-white transition">
@@ -575,7 +575,7 @@ function MainPage() {
                     </div>
                     <h3 className="text-lg font-semibold text-white mb-2">방이 성공적으로 생성되었습니다!</h3>
                     <p className="text-blue-300 mb-4">아래 입장 코드를 친구들에게 공유하세요.</p>
-                    <div className="glass-effect rounded-lg p-3 flex items-center mb-4">
+                    <div className="main-glass-effect rounded-lg p-3 flex items-center mb-4">
                     <input type="text" defaultValue="BATTLE-58392" readOnly className="bg-transparent border-none outline-none flex-1 text-white text-center font-bold text-xl" />
                     <button className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm transition">복사</button>
                     </div>
