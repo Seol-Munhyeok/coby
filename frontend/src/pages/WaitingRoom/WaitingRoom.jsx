@@ -1,6 +1,18 @@
 import React from 'react';
 import './WaitingRoom.css';
+import { useNavigate } from 'react-router-dom';
+
 function WaitingRoom() {
+  const navigate = useNavigate();
+
+  const enterRoomBtn1 = () => {
+    alert('방에 입장합니다!');
+    navigate('/gamepage');
+  };
+  const quickbtn = () => {
+    alert('방에서 나갑니다');
+    navigate('/nickname');
+  };
   return (
     <div className="WaitingRoom">
       <meta charSet="UTF-8" />
@@ -21,7 +33,7 @@ function WaitingRoom() {
             </div>
             <span className="font-medium">코드마스터</span>
           </div>
-          <button id="leaveRoomBtn" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition">
+          <button id="leaveRoomBtn" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition" onClick={quickbtn}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414a1 1 0 00-.293-.707L11.414 2.414A1 1 0 0010.707 2H4a1 1 0 00-1 1zm9 4a1 1 0 00-1-1H8a1 1 0 00-1 1v8a1 1 0 001 1h3a1 1 0 001-1V7z" clipRule="evenodd" />
               <path d="M3 7.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 4a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5z" />
@@ -47,7 +59,7 @@ function WaitingRoom() {
                   </button>
                 </div>
               </div>
-              <button id="startGameBtn" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition">
+              <button id="startGameBtn" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition" onClick={enterRoomBtn1}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                 </svg>
