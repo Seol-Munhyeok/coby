@@ -65,7 +65,7 @@ const NicknamePopup = () => {
                     setMessage({ text: '', type: '' });
                   }}
                 />
-                <button type="button" className="btn btn-secondary ml-2" onClick={checkDuplicate}>
+                <button type="button" className="btn ml-2 white-button" onClick={checkDuplicate}>
                   중복확인
                 </button>
               </div>
