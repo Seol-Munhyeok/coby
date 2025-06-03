@@ -1,11 +1,16 @@
 from fastapi import FastAPI, UploadFile, Form, HTTPException, File
+from fastapi.responses import JSONResponse
 from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
+import json
 import os
 import shutil
 import uuid
 import subprocess
 import logging
 import traceback
+
+
 
 app = FastAPI()
 
@@ -16,7 +21,7 @@ logger = logging.getLogger(__name__)
 LANGUAGE_TO_IMAGE = {
     "java": "code-runner-java",
     "cpp": "code-runner-cpp",
-    "python": "code-runner-python"
+    "py": "code-runner-python"
 }
 
 LANGUAGE_TO_EXTENSIONS = {
@@ -25,28 +30,31 @@ LANGUAGE_TO_EXTENSIONS = {
     "python": "py"
 }
 
-@app.post("/compile")
+class FileInfo(BaseModel):
+    user_filename: str
+    filename: str
+    file_id: str
+
+# language: str = Form(...) 
+
+@app.post("/compile",response_model=FileInfo)
 async def compile_code(code: UploadFile = File(...), 
                        testcase: UploadFile = File(...), 
-                       result : UploadFile = File(...),
-                       language: str = Form(...) ):
-    logger.info(f"Received compilation request for language: {language}")
+                       result : UploadFile = File(...)) -> FileInfo:
+    code_extension = os.path.splitext(code.filename)[1]
+    logger.info(f"Received compilation request for language: {code_extension}")
     
-    if language not in LANGUAGE_TO_IMAGE:
-        return PlainTextResponse(f"Unsupported language: {language}", status_code=400)
+    if code_extension not in LANGUAGE_TO_IMAGE:
+        return PlainTextResponse(f"Unsupported language: {code_extension}", status_code=400)
 
     # 고유한 작업 디렉토리 생성 (절대 경로 사용)
     workdir = os.path.abspath(f"/tmp/{uuid.uuid4().hex}")
     os.makedirs(workdir, exist_ok=True, mode=0o755)  # 권한 설정 추가
     logger.info(f"Created working directory: {workdir}")
 
-    try:
-        # 파일 저장
-        if language not in LANGUAGE_TO_EXTENSIONS:
-            return PlainTextResponse(f"No file extension defined for language: {language}", status_code=400)
-            
-        extension = LANGUAGE_TO_EXTENSIONS[language]
-        filename = f"code.{extension}"
+    try:  
+        # extension = LANGUAGE_TO_EXTENSIONS[language]
+        filename = f"Main.{code_extension}"
         codefilepath = os.path.join(workdir, filename)
 
         # 파일 내용 읽기 및 저장
@@ -97,7 +105,7 @@ async def compile_code(code: UploadFile = File(...),
             result = subprocess.run(
                 docker_cmd,
                 capture_output=True,
-                timeout=10,  # 안전을 위한 제한 시간
+                timeout=60,  # 안전을 위한 제한 시간
                 check=False  # 에러가 발생해도 예외를 발생시키지 않음
             )
             
@@ -108,12 +116,11 @@ async def compile_code(code: UploadFile = File(...),
             logger.info(f"Command completed with return code: {result.returncode}")
             logger.info(f"STDOUT: {stdout[:200]}...")  # 첫 200자만 로깅
             logger.info(f"STDERR: {stderr[:200]}...")  # 첫 200자만 로깅
-            
-            if result.returncode == 0 :
-                return PlainTextResponse(stdout)
-            else:
-                logger.error(f"Error during execution: {stderr}")
-                return PlainTextResponse(f"Error:\n{stderr}", status_code=400)
+
+            if result.returncode == 0:
+            # stdout을 JSON으로 변환
+                result_json = parse_result_to_json(stdout)
+                return JSONResponse(content=result_json)
         
         except subprocess.SubprocessError as e:
             logger.error(f"Subprocess error: {str(e)}")
