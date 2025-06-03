@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Login.css';
-
 const Login = () => {
   const [typingComplete, setTypingComplete] = useState(false);
   const [backgroundLines, setBackgroundLines] = useState([]);
-
+  const navigate = useNavigate();
   // 배경 코드 생성
   useEffect(() => {
     const codeSnippets = [
@@ -24,7 +24,6 @@ const Login = () => {
     "export default function App() { return <div>Hello</div>; }",
     "<div className='container'>{children}</div>",
     "const [count, setCount] = useState(0);",
-    "useEffect(() => { document.title = `Count: ${count}`; });",
     "map(item => <li key={item.id}>{item.name}</li>)",
     "@media (max-width: 768px) { .container { padding: 1rem; } }",
     "python -m venv env && source env/bin/activate"
@@ -95,16 +94,19 @@ const Login = () => {
   const handleGoogleLogin = () => {
     // Google 로그인 로직
     console.log('Google 로그인');
+    navigate('/nickname');
   };
 
   const handleKakaoLogin = () => {
     // 카카오 로그인 로직
     console.log('카카오 로그인');
+    navigate('/nickname');
   };
 
   const handleGithubLogin = () => {
     // GitHub 로그인 로직
     console.log('GitHub 로그인');
+    navigate('/nickname');
   };
 
   // const handleNicknameRedirect = () => {
