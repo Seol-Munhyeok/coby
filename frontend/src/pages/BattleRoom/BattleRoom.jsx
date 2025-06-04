@@ -9,16 +9,22 @@ export default function CodingBattle() {
   const intervalRef = useRef(null);
   const colors = ["bg-red-500", "bg-yellow-500", "bg-purple-500"];
   const navigate = useNavigate();
+  const nicknameRef = useRef(null);
+  const answerRef = useRef(null);
 
-  const defaultCode = `/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-var twoSum = function(nums, target) {
-    // 여기에 코드를 작성하세요
-};`;
 
+  const defaultCode = `n = input()
+lst = []
+
+for i in range(len(n)):
+    lst.append(int(n[i]))
+
+lst.sort(reverse=True)
+for num in range(len(n)):
+    print(lst[num], end='')`;
+
+answerRef.value = defaultCode;
+nicknameRef.value = "python";
   const opponents = [
     `var twoSum = function(nums, target) {
   const map = new Map();
@@ -41,18 +47,19 @@ var twoSum = function(nums, target) {
 };`,
   ];
   const handleSubmit = async () => {
-    /*try {
-      const response = await fetch("http://localhost:8000/submit/", {
+     try {
+      const response = await fetch("http://localhost:8080/api/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          nickname: nicknameRef.current?.value,
-          answer: answerRef.current?.value,
+        body:JSON.stringify({
+          code: answerRef.value,
+          language: nicknameRef.value,
           // 필요한 데이터 추가
         }),
       });
+      console.info(answerRef.value, nicknameRef.value);
 
       if (!response.ok) {
         throw new Error("서버 응답 실패");
@@ -61,7 +68,7 @@ var twoSum = function(nums, target) {
       const result = await response.json();
       console.log("서버 응답:", result);
     } catch (error) {
-      console.error("제출 중 오류:", error);}*/
+      console.error("제출 중 오류:", error);}
     alert('수고하셨습니다!');
     navigate("/resultpage");
 
