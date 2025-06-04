@@ -4,12 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="chore">
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="fix: db세팅">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/backend/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/controller/JudgeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/controller/JudgeController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/service/JudgeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/service/JudgeService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/BattleRoom/BattleRoom.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/BattleRoom/BattleRoom.jsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,6 +79,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Gradle.Build coby.executor": "Run",
     "Gradle.backend 빌드.executor": "Run",
     "RequestMappingsPanelOrder0": "0",
     "RequestMappingsPanelOrder1": "1",
@@ -89,7 +89,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "Spring Boot.CobyApplication.executor": "Run",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "fix/db",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "D:/battle-coding",
     "node.js.detected.package.eslint": "true",
@@ -138,6 +138,15 @@
       <workItem from="1747820495605" duration="651000" />
       <workItem from="1748236093142" duration="9000" />
     </task>
+    <task id="LOCAL-00001" summary="fix: db세팅">
+      <option name="closed" value="true" />
+      <created>1749021951511</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1749021951511</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -145,6 +154,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="chore: gitignore 수정" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: gitignore 수정" />
+    <MESSAGE value="fix: db세팅" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: db세팅" />
   </component>
 </project>
