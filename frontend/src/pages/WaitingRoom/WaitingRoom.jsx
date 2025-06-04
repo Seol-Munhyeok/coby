@@ -11,7 +11,7 @@ function WaitingRoom() {
   };
   const quickbtn = () => {
     alert('방에서 나갑니다');
-    navigate('/nickname');
+    navigate('/mainpage');
   };
   return (
     <div className="WaitingRoom">
