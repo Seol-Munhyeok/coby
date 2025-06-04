@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/coby.iml" filepath="$PROJECT_DIR$/.idea/modules/coby.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/backend/coby.backend.main.iml" filepath="$PROJECT_DIR$/.idea/modules/backend/coby.backend.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.example.coby.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.example.coby.main.iml" />
     </modules>
   </component>
 </project>

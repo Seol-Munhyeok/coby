@@ -171,3 +171,9 @@ async def compile_code(code: UploadFile = File(...),
         if os.path.exists(workdir):
             shutil.rmtree(workdir)
             logger.info(f"Cleaned up working directory: {workdir}")
+
+
+@app.post("/test")
+async def test1(code: UploadFile = File(...), 
+                       language: str = Form(...)):
+    logger.info(f"{code.filename} received")

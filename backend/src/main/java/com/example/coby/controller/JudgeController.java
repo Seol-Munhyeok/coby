@@ -1,14 +1,15 @@
 package com.example.coby.controller;
 
+import ch.qos.logback.classic.Logger;
+import com.example.coby.dto.CodeRequestDto;
 import com.example.coby.dto.JudgeResultDto;
 import com.example.coby.service.JudgeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -18,12 +19,18 @@ public class JudgeController {
 
     @PostMapping("/submit")
     public ResponseEntity<JudgeResultDto> submitCode(
-            @RequestParam String code,
-            @RequestParam String language,
-            @RequestParam String testcase,
-            @RequestParam String result
+            @RequestBody CodeRequestDto request
     ) {
-        JudgeResultDto resultDto = judgeService.judgeCode(code, language, testcase, result);
-        return ResponseEntity.ok(resultDto);
+        try{
+            String code = request.getCode();
+            String language = request.getLanguage();
+
+            JudgeResultDto result = judgeService.judgeCode(code, language);
+            return ResponseEntity.ok(result);
+        } catch(Exception e) {
+            log.info("Wrong params");
+            log.info(e.getMessage());
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
