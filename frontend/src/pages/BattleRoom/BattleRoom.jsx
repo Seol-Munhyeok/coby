@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function CodingBattle() {
   const editorRef = useRef(null);
+  const languageRef = useRef(null);
   const opponentRefs = [useRef(null), useRef(null), useRef(null)];
   const timerRef = useRef(null);
   const intervalRef = useRef(null);
@@ -18,6 +19,9 @@ export default function CodingBattle() {
 var twoSum = function(nums, target) {
     // 여기에 코드를 작성하세요
 };`;
+
+  const sampleTestcase = "1 2\n3 4";
+  const sampleResult = "3\n7";
 
   const opponents = [
     `var twoSum = function(nums, target) {
@@ -41,17 +45,19 @@ var twoSum = function(nums, target) {
 };`,
   ];
   const handleSubmit = async () => {
-    /*try {
-      const response = await fetch("http://localhost:8000/submit/", {
+    const code = editorRef.current ? editorRef.current.getValue() : "";
+    const language = languageRef.current ? languageRef.current.value.toLowerCase() : "python";
+
+    const formData = new FormData();
+    formData.append("code", code);
+    formData.append("language", language);
+    formData.append("testcase", sampleTestcase);
+    formData.append("result", sampleResult);
+
+    try {
+      const response = await fetch("http://localhost:8080/api/submit", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          nickname: nicknameRef.current?.value,
-          answer: answerRef.current?.value,
-          // 필요한 데이터 추가
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -61,9 +67,10 @@ var twoSum = function(nums, target) {
       const result = await response.json();
       console.log("서버 응답:", result);
     } catch (error) {
-      console.error("제출 중 오류:", error);}*/
+      console.error("제출 중 오류:", error);}
     alert('수고하셨습니다!');
     navigate("/resultpage");
+    console.error("제출 중 오류:", error);
 
   };
   useEffect(() => {
@@ -133,11 +140,10 @@ var twoSum = function(nums, target) {
         <section className="w-3/5 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
             <h3 className="text-lg font-medium">코드 작성</h3>
-            <select className="bg-slate-700 text-white px-3 py-1 rounded text-sm">
-              <option>JavaScript</option>
-              <option>Python</option>
-              <option>Java</option>
-              <option>C++</option>
+            <select ref={languageRef} className="bg-slate-700 text-white px-3 py-1 rounded text-sm">
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
             </select>
           </div>
           <div className="flex-1 mb-4 h-[500px] rounded-lg overflow-hidden">

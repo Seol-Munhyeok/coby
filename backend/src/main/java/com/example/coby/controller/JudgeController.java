@@ -19,10 +19,12 @@ public class JudgeController {
     @PostMapping("/submit")
     public ResponseEntity<JudgeResultDto> submitCode(
             @RequestParam String code,
-            @RequestParam String language
+            @RequestParam String language,
+            @RequestParam String testcase,
+            @RequestParam String result
     ) {
-        JudgeResultDto result = judgeService.judgeCode(code, language);
-        return ResponseEntity.ok(result);
+        JudgeResultDto resultDto = judgeService.judgeCode(code, language, testcase, result);
+        return ResponseEntity.ok(resultDto);
     }
 }
 
