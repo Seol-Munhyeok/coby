@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="feat: 전송 시, 테스트 케이스도 같이 채점 서버에 보내도록 수정">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/config/CorsConfig.java" afterDir="false" />
+    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="fix: Cors 설정 추가">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/controller/JudgeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/controller/JudgeController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/pages/BattleRoom/BattleRoom.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/pages/BattleRoom/BattleRoom.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/yarn.lock" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/yarn.lock" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -151,7 +155,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749023701251</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="fix: Cors 설정 추가">
+      <option name="closed" value="true" />
+      <created>1749023983878</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1749023983878</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -161,6 +173,7 @@
     <MESSAGE value="chore: gitignore 수정" />
     <MESSAGE value="fix: db세팅" />
     <MESSAGE value="feat: 전송 시, 테스트 케이스도 같이 채점 서버에 보내도록 수정" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat: 전송 시, 테스트 케이스도 같이 채점 서버에 보내도록 수정" />
+    <MESSAGE value="fix: Cors 설정 추가" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix: Cors 설정 추가" />
   </component>
 </project>

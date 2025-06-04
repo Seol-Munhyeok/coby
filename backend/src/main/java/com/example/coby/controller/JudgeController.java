@@ -27,4 +27,3 @@ public class JudgeController {
         return ResponseEntity.ok(resultDto);
     }
 }
-
