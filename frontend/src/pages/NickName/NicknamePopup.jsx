@@ -9,25 +9,42 @@ const usedNicknames = ['admin', 'test', '게임마스터'];
 const NicknamePopup = () => {
   const [nickname, setNickname] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [isNicknameValid, setIsNicknameValid] = useState(false); // ✅ 중복확인 성공 여부
   const navigate = useNavigate();
+
+  const usedNicknames = ['홍길동', 'test123', '사용자1']; // 예시 데이터
+
   const checkDuplicate = () => {
     if (nickname.length < 2 || nickname.length > 12) {
       setMessage({ text: '닉네임은 2~12자 이내로 입력해주세요.', type: 'error' });
+      setIsNicknameValid(false);
       return;
     }
+
     const regex = /^[가-힣a-zA-Z0-9]+$/;
     if (!regex.test(nickname)) {
       setMessage({ text: '한글, 영문, 숫자만 사용 가능합니다.', type: 'error' });
+      setIsNicknameValid(false);
       return;
     }
+
     if (usedNicknames.includes(nickname)) {
       setMessage({ text: '이미 사용 중인 닉네임입니다.', type: 'error' });
+      setIsNicknameValid(false);
     } else {
       setMessage({ text: '사용 가능한 닉네임입니다!', type: 'success' });
+      setIsNicknameValid(true); // ✅ 중복 확인 성공
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e) => {
+     e.preventDefault(); // ✅ form의 기본 제출 동작 방지
+
+    if (!isNicknameValid) {
+      alert('닉네임 중복 확인을 먼저 해주세요.');
+      return;
+    }
+
     alert(`환영합니다, ${nickname}님! 닉네임이 성공적으로 설정되었습니다.`);
     navigate('/mainpage'); 
   };
