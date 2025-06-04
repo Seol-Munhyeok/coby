@@ -70,7 +70,6 @@ var twoSum = function(nums, target) {
       console.error("제출 중 오류:", error);}
     alert('수고하셨습니다!');
     navigate("/resultpage");
-    console.error("제출 중 오류:", error);
 
   };
   useEffect(() => {
