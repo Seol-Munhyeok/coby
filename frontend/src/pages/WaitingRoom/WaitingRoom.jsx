@@ -88,8 +88,8 @@ function WaitingRoom() {
                     <span className="text-yellow-400 font-medium">보통</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-blue-300">문제 수:</span>
-                    <span className="text-white font-medium">3문제</span>
+                    <span className="text-blue-300">언어</span>
+                    <span className="text-white font-medium">Python</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-blue-300">제한 시간:</span>
@@ -114,10 +114,10 @@ function WaitingRoom() {
                     <p className="text-sm text-white">모든 참가자가 준비 완료 후 방장이 게임을 시작합니다.</p>
                   </div>
                   <div className="waitingRoom-glass-effect rounded-lg p-3 border-l-4 border-yellow-500">
-                    <p className="text-sm text-white">문제는 총 3문제이며, 난이도는 쉬움 1문제, 보통 1문제, 어려움 1문제로 구성됩니다.</p>
+                    <p className="text-sm text-white">문제는 1문제가 제공됩니다.</p>
                   </div>
                   <div className="waitingRoom-glass-effect rounded-lg p-3 border-l-4 border-green-500">
-                    <p className="text-sm text-white">모든 문제를 가장 빨리 해결한 참가자가 승리합니다.</p>
+                    <p className="text-sm text-white">문제를 가장 빨리 해결한 참가자가 승리합니다.</p>
                   </div>
                 </div>
               </div>
@@ -136,53 +136,53 @@ function WaitingRoom() {
                   <div className="flex items-start">
                     <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0">KM</div>
                     <div className="waitingRoom-chat-bubble waitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
-                      <p className="text-xs text-blue-300 mb-1">코딩의신</p>
-                      <p className="text-sm text-white">안녕하세요! 다들 준비 되셨나요?</p>
+                      <p className="text-xs text-blue-300 mb-1">사용자1</p>
+                      <p className="text-sm text-white">안녕하세요</p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <div className="w-8 h-8 rounded-full bg-purple-700 flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0">JH</div>
                     <div className="waitingRoom-chat-bubble waitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
-                      <p className="text-xs text-blue-300 mb-1">알고리즘킹</p>
-                      <p className="text-sm text-white">네! 준비 완료했습니다.</p>
+                      <p className="text-xs text-blue-300 mb-1">사용자2</p>
+                      <p className="text-sm text-white">반갑습니다.</p>
                     </div>
                   </div>
                   <div className="flex items-start justify-end">
                     <div className="waitingRoom-chat-bubble waitingRoom-chat-bubble-right bg-blue-600/50 rounded-lg p-2 max-w-[80%]">
                       <p className="text-xs text-blue-300 mb-1">코드마스터 (나)</p>
-                      <p className="text-sm text-white">저도 준비됐어요! 그래프 알고리즘 좋아합니다.</p>
+                      <p className="text-sm text-white">준비완료했습니다.</p>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center text-xs font-medium ml-2 flex-shrink-0">CM</div>
                   </div>
                   <div className="flex items-start">
                     <div className="w-8 h-8 rounded-full bg-yellow-700 flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0">SJ</div>
                     <div className="waitingRoom-chat-bubble waitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
-                      <p className="text-xs text-blue-300 mb-1">코드닌자</p>
-                      <p className="text-sm text-white">다익스트라 알고리즘 나오면 좋겠네요!</p>
+                      <p className="text-xs text-blue-300 mb-1">사용자4</p>
+                      <p className="text-sm text-white">저도 준비완료했습니다.</p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0">KM</div>
                     <div className="waitingRoom-chat-bubble waitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
-                      <p className="text-xs text-blue-300 mb-1">코딩의신</p>
+                      <p className="text-xs text-blue-300 mb-1">사용자1</p>
                       <p className="text-sm text-white">모두 준비되면 시작하겠습니다. 아직 준비 안 된 분들은 준비 버튼 눌러주세요!</p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <div className="w-8 h-8 rounded-full bg-red-700 flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0">PK</div>
                     <div className="waitingRoom-chat-bubble waitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
-                      <p className="text-xs text-blue-300 mb-1">프로그래머K</p>
+                      <p className="text-xs text-blue-300 mb-1">사용자5</p>
                       <p className="text-sm text-white">잠시만요! 준비 중입니다.</p>
                     </div>
                   </div>
-                  <div className="flex items-start">
+                  {/* <div className="flex items-start">
                     <div className="w-8 h-8 rounded-full bg-red-700 flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0">PK</div>
                     <div className="waitingRoom-typing-indicator p-2">
                       <span />
                       <span />
                       <span />
                     </div>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="flex items-center">
                   <input type="text" id="chatInput" placeholder="메시지 입력..." className="bg-blue-900/30 text-white border border-blue-800 rounded-l-md px-3 py-2 text-sm flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500" />
@@ -211,7 +211,7 @@ function WaitingRoom() {
                 <div className="waitingRoom-character-emote">🏆</div>
                 <div className="w-16 h-16 rounded-full bg-blue-700 flex items-center justify-center text-xl font-medium">KM</div>
               </div>
-              <h3 className="font-medium text-white text-center">코딩의신</h3>
+              <h3 className="font-medium text-white text-center">사용자1</h3>
               <div className="flex items-center mt-1">
                 <div className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-1">
                   <span className="text-[0.6rem] font-bold text-blue-200">마스터</span>
@@ -226,7 +226,7 @@ function WaitingRoom() {
                 <div className="waitingRoom-character-emote">👍</div>
                 <div className="w-16 h-16 rounded-full bg-purple-700 flex items-center justify-center text-xl font-medium">JH</div>
               </div>
-              <h3 className="font-medium text-white text-center">알고리즘킹</h3>
+              <h3 className="font-medium text-white text-center">사용자5</h3>
               <div className="flex items-center mt-1">
                 <div className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-1">
                   <span className="text-[0.6rem] font-bold text-blue-200">마스터</span>
@@ -241,7 +241,7 @@ function WaitingRoom() {
                 <div className="waitingRoom-character-emote">😎</div>
                 <div className="w-16 h-16 rounded-full bg-green-700 flex items-center justify-center text-xl font-medium">CM</div>
               </div>
-              <h3 className="font-medium text-white text-center">코드마스터</h3>
+              <h3 className="font-medium text-white text-center">사용자2</h3>
               <div className="flex items-center mt-1">
                 <div className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-1">
                   <span className="text-[0.6rem] font-bold text-blue-200">다이아</span>
@@ -256,7 +256,7 @@ function WaitingRoom() {
                 <div className="waitingRoom-character-emote">🥷</div>
                 <div className="w-16 h-16 rounded-full bg-yellow-700 flex items-center justify-center text-xl font-medium">SJ</div>
               </div>
-              <h3 className="font-medium text-white text-center">코드닌자</h3>
+              <h3 className="font-medium text-white text-center">사용자3</h3>
               <div className="flex items-center mt-1">
                 <div className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-1">
                   <span className="text-[0.6rem] font-bold text-blue-200">다이아</span>
@@ -270,7 +270,7 @@ function WaitingRoom() {
               <div className="waitingRoom-character mb-2">
                 <div className="w-16 h-16 rounded-full bg-red-700 flex items-center justify-center text-xl font-medium">PK</div>
               </div>
-              <h3 className="font-medium text-white text-center">프로그래머K</h3>
+              <h3 className="font-medium text-white text-center">사용자4</h3>
               <div className="flex items-center mt-1">
                 <div className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-1">
                   <span className="text-[0.6rem] font-bold text-blue-200">플래티넘</span>
@@ -339,7 +339,7 @@ function WaitingRoom() {
               <div id="playerAvatar" className="w-16 h-16 rounded-full bg-blue-700 flex items-center justify-center text-xl font-medium">KM</div>
             </div>
             <div>
-              <h3 id="playerName" className="text-lg font-bold text-white">코딩의신</h3>
+              <h3 id="playerName" className="text-lg font-bold text-white">사용자1</h3>
               <div className="flex items-center">
                 <div id="playerTier" className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-2">
                   <span className="text-[0.6rem] font-bold text-blue-200">마스터</span>
