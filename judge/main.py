@@ -1,7 +1,6 @@
 from fastapi import FastAPI, UploadFile, Form, HTTPException, File
 from fastapi.responses import JSONResponse
 from fastapi.responses import PlainTextResponse
-from pydantic import BaseModel
 import json
 import os
 import shutil
@@ -10,7 +9,50 @@ import subprocess
 import logging
 import traceback
 
-
+def parse_result_to_json(stdout_text):
+    """
+    run.sh의 출력 결과를 JSON으로 변환
+    입력 형태: "Pass|1.234|5678" 또는 "Fail|0|0" 또는 "TimeOut|0|0"
+    출력 형태: {"result": "Pass", "avg_time": "1.234", "avg_memory": "5678"}
+    """
+    try:
+        # 공백 제거 및 파싱
+        output = stdout_text.strip()
+        
+        if not output:
+            return {
+                "result": "Fail",
+                "avg_time": "0",
+                "avg_memory": "0"
+            }
+        
+        # "|"로 분리
+        parts = output.split('|')
+        
+        if len(parts) == 3:
+            result_status = parts[0].strip()  # Pass, Fail, TimeOut
+            avg_time = parts[1].strip()
+            avg_memory = parts[2].strip()
+        else:
+            # 파싱 실패시 기본값
+            result_status = "Fail"
+            avg_time = "0"
+            avg_memory = "0"
+        
+        return {
+            "result": result_status,
+            "avg_time": avg_time,
+            "avg_memory": avg_memory
+        }
+        
+    except Exception as e:
+        # 파싱 중 오류 발생시 기본값 반환
+        logger.error(f"Error parsing result: {e}")
+        return {
+            "result": "Fail",
+            "avg_time": "0",
+            "avg_memory": "0"
+        }
 
 app = FastAPI()
 
@@ -19,28 +61,18 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 LANGUAGE_TO_IMAGE = {
-    "java": "code-runner-java",
-    "cpp": "code-runner-cpp",
-    "py": "code-runner-python"
+    ".java": "code-runner-java",
+    ".cpp": "code-runner-cpp",
+    ".py": "code-runner-python"
 }
-
-LANGUAGE_TO_EXTENSIONS = {
-    "java": "java",
-    "cpp": "cpp",
-    "python": "py"
-}
-
-class FileInfo(BaseModel):
-    user_filename: str
-    filename: str
-    file_id: str
 
 # language: str = Form(...) 
 
-@app.post("/compile",response_model=FileInfo)
+@app.post("/compile")
 async def compile_code(code: UploadFile = File(...), 
                        testcase: UploadFile = File(...), 
-                       result : UploadFile = File(...)) -> FileInfo:
+                       result : UploadFile = File(...),
+                       language: str = Form(...)):
     code_extension = os.path.splitext(code.filename)[1]
     logger.info(f"Received compilation request for language: {code_extension}")
     
@@ -53,8 +85,7 @@ async def compile_code(code: UploadFile = File(...),
     logger.info(f"Created working directory: {workdir}")
 
     try:  
-        # extension = LANGUAGE_TO_EXTENSIONS[language]
-        filename = f"Main.{code_extension}"
+        filename = f"Main{code_extension}"
         codefilepath = os.path.join(workdir, filename)
 
         # 파일 내용 읽기 및 저장
@@ -81,6 +112,8 @@ async def compile_code(code: UploadFile = File(...),
         with open(tcfilepath, "wb") as f:
             f.write(content)
 
+        logger.info(f"Saved testcase to {tcfilepath}")
+
         extension = "txt"
         filename = f"result.{extension}"
         resultfilepath = os.path.join(workdir, filename)
@@ -92,12 +125,12 @@ async def compile_code(code: UploadFile = File(...),
         with open(resultfilepath, "wb") as f:
             f.write(content)
         
-
+        logger.info(f"Saved resultfile to {resultfilepath}")
         # 도커 명령 실행
         docker_cmd = [
             "docker", "run", "--rm",
             "-v", f"{workdir}:/app/code",  # 전체 디렉토리 마운트
-            LANGUAGE_TO_IMAGE[language]
+            LANGUAGE_TO_IMAGE[code_extension]
         ]
         logger.info(f"Executing docker command: {' '.join(docker_cmd)}")
         
@@ -114,7 +147,7 @@ async def compile_code(code: UploadFile = File(...),
             stderr = result.stderr.decode('utf-8', errors='replace') if result.stderr else ""
             
             logger.info(f"Command completed with return code: {result.returncode}")
-            logger.info(f"STDOUT: {stdout[:200]}...")  # 첫 200자만 로깅
+            logger.info(f"STDOUT: {stdout[:600]}...")  # 첫 200자만 로깅
             logger.info(f"STDERR: {stderr[:200]}...")  # 첫 200자만 로깅
 
             if result.returncode == 0:
