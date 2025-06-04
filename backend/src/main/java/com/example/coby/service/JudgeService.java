@@ -2,6 +2,7 @@ package com.example.coby.service;
 
 import com.example.coby.dto.JudgeResultDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -18,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JudgeService {
@@ -45,6 +48,8 @@ public class JudgeService {
             // 2. 채점 서버에 전송
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("code", new FileSystemResource(filePath));
+            body.add("testcase", new FileSystemResource("backend/src/main/java/com/example/coby/service/testcase.txt"));
+            body.add("result", new FileSystemResource("backend/src/main/java/com/example/coby/service/result.txt"));
             body.add("language", language);
 
             HttpHeaders headers = new HttpHeaders();
@@ -57,7 +62,7 @@ public class JudgeService {
                     requestEntity,
                     JudgeResultDto.class
             );
-
+            log.info("response: " + response.getBody());
             return response.getBody();
 
         } catch (IOException e) {
