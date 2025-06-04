@@ -10,19 +10,22 @@ export default function CodingBattle() {
   const intervalRef = useRef(null);
   const colors = ["bg-red-500", "bg-yellow-500", "bg-purple-500"];
   const navigate = useNavigate();
+  const nicknameRef = useRef(null);
+  const answerRef = useRef(null);
 
-  const defaultCode = `/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-var twoSum = function(nums, target) {
-    // 여기에 코드를 작성하세요
-};`;
 
-  const sampleTestcase = "1 2\n3 4";
-  const sampleResult = "3\n7";
+  const defaultCode = `n = input()
+lst = []
 
+for i in range(len(n)):
+    lst.append(int(n[i]))
+
+lst.sort(reverse=True)
+for num in range(len(n)):
+    print(lst[num], end='')`;
+
+answerRef.value = defaultCode;
+nicknameRef.value = "python";
   const opponents = [
     `var twoSum = function(nums, target) {
   const map = new Map();
@@ -45,20 +48,19 @@ var twoSum = function(nums, target) {
 };`,
   ];
   const handleSubmit = async () => {
-    const code = editorRef.current ? editorRef.current.getValue() : "";
-    const language = languageRef.current ? languageRef.current.value.toLowerCase() : "python";
-
-    const formData = new FormData();
-    formData.append("code", code);
-    formData.append("language", language);
-    formData.append("testcase", sampleTestcase);
-    formData.append("result", sampleResult);
-
-    try {
+     try {
       const response = await fetch("http://localhost:8080/api/submit", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body:JSON.stringify({
+          code: answerRef.value,
+          language: nicknameRef.value,
+          // 필요한 데이터 추가
+        }),
       });
+      console.info(answerRef.value, nicknameRef.value);
 
       if (!response.ok) {
         throw new Error("서버 응답 실패");
