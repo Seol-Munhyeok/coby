@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { useNavigate } from 'react-router-dom';
+import * as monaco from "monaco-editor";
+
 
 export default function CodingBattle() {
   const editorRef = useRef(null);
@@ -11,6 +13,7 @@ export default function CodingBattle() {
   const navigate = useNavigate();
   const nicknameRef = useRef(null);
   const answerRef = useRef(null);
+  const languageRef = useRef(null)
 
 
   const defaultCode = `n = input()
@@ -23,8 +26,8 @@ lst.sort(reverse=True)
 for num in range(len(n)):
     print(lst[num], end='')`;
 
-answerRef.value = defaultCode;
-nicknameRef.value = "python";
+  answerRef.value = defaultCode;
+  nicknameRef.value = "python";
   const opponents = [
     `var twoSum = function(nums, target) {
   const map = new Map();
@@ -93,6 +96,21 @@ nicknameRef.value = "python";
     };
   }, []);
 
+  // 언어 변경 핸들러
+  const handleLanguageChange = () => {
+    const lang = languageRef.current?.value;
+    const editor = editorRef.current;
+
+    if (editor && lang) {
+      const model = editor.getModel();
+      if (model) {
+        // 언어를 변경합니다
+        monaco.editor.setModelLanguage(model, lang === 'cpp' ? 'cpp' : lang);
+      }
+    }
+  };
+
+
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans">
@@ -140,17 +158,16 @@ nicknameRef.value = "python";
         <section className="w-3/5 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
             <h3 className="text-lg font-medium">코드 작성</h3>
-            <select className="bg-slate-700 text-white px-3 py-1 rounded text-sm">
-              <option>JavaScript</option>
-              <option>Python</option>
-              <option>Java</option>
-              <option>C++</option>
+            <select ref={languageRef} onChange={handleLanguageChange} className="bg-slate-700 text-white px-3 py-1 rounded text-sm">
+              <option value="python">Python</option>
+              <option value="java">Java</option>
+              <option value="cpp">C++</option>
             </select>
           </div>
           <div className="flex-1 mb-4 h-[500px] rounded-lg overflow-hidden">
             <Editor
               height="100%"
-              defaultLanguage="javascript"
+              defaultLanguage="python"
               defaultValue={defaultCode}
               theme="vs-dark"
               onMount={(editor) => {
@@ -185,7 +202,7 @@ nicknameRef.value = "python";
                   >
                     {["상", "김", "박"][i]}
                   </div>
-                  <div className="ml-2 text-sm font-medium">{["알고리즘왕", "코드닌자", "자바스크립트고수"][i]}</div>
+                  <div className="ml-2 text-sm font-medium">{["사용자1", "사용자2", "사용자3"][i]}</div>
                 </div>
                 <div className="text-xs text-gray-400">진행률: {i === 0 ? "45%" : i === 1 ? "60%" : "30%"}</div>
               </div>
