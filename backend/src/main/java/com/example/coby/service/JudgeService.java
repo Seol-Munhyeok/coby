@@ -33,7 +33,7 @@ public class JudgeService {
 
     private final RestTemplate restTemplate;
 
-    public JudgeResultDto judgeCode(String code, String language, String testcase, String result) {
+    public JudgeResultDto judgeCode(String code, String language) {
         String ext = EXTENSIONS.get(language);
         if (ext == null) throw new IllegalArgumentException("지원하지 않는 언어입니다.");
 
@@ -45,20 +45,12 @@ public class JudgeService {
             Path filePath = tempDir.resolve(filename);
             Files.writeString(filePath, code, StandardCharsets.UTF_8);
 
-            Path tcPath = tempDir.resolve("testcase.txt");
-            Files.writeString(tcPath, testcase, StandardCharsets.UTF_8);
-
-            Path resultPath = tempDir.resolve("result.txt");
-            Files.writeString(resultPath, result, StandardCharsets.UTF_8);
-
             // 2. 채점 서버에 전송
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("code", new FileSystemResource(filePath));
             body.add("testcase", new FileSystemResource("backend/src/main/java/com/example/coby/service/testcase.txt"));
             body.add("result", new FileSystemResource("backend/src/main/java/com/example/coby/service/result.txt"));
             body.add("language", language);
-            body.add("testcase", new FileSystemResource(tcPath));
-            body.add("result", new FileSystemResource(resultPath));
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);

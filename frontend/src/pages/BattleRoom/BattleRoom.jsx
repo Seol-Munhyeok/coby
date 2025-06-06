@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 
 export default function CodingBattle() {
   const editorRef = useRef(null);
-  const languageRef = useRef(null);
   const opponentRefs = [useRef(null), useRef(null), useRef(null)];
   const timerRef = useRef(null);
   const intervalRef = useRef(null);
@@ -141,10 +140,11 @@ nicknameRef.value = "python";
         <section className="w-3/5 flex flex-col">
           <div className="mb-2 flex justify-between items-center">
             <h3 className="text-lg font-medium">코드 작성</h3>
-            <select ref={languageRef} className="bg-slate-700 text-white px-3 py-1 rounded text-sm">
-              <option value="python">Python</option>
-              <option value="java">Java</option>
-              <option value="cpp">C++</option>
+            <select className="bg-slate-700 text-white px-3 py-1 rounded text-sm">
+              <option>JavaScript</option>
+              <option>Python</option>
+              <option>Java</option>
+              <option>C++</option>
             </select>
           </div>
           <div className="flex-1 mb-4 h-[500px] rounded-lg overflow-hidden">

@@ -159,7 +159,7 @@ function ResultRoom() {
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="player-avatar bg-red-500 text-white">상</div>
-                            <div className="ml-2">사용자1</div>
+                            <div className="ml-2">알고리즘왕</div>
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">11:45</td>
@@ -195,7 +195,7 @@ function ResultRoom() {
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="player-avatar bg-yellow-500 text-white">김</div>
-                            <div className="ml-2">사용자2</div>
+                            <div className="ml-2">코드닌자</div>
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">13:10</td>
@@ -213,7 +213,7 @@ function ResultRoom() {
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="player-avatar bg-purple-500 text-white">박</div>
-                            <div className="ml-2">사용자3</div>
+                            <div className="ml-2">자바스크립트고수</div>
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">14:30</td>
@@ -235,42 +235,42 @@ function ResultRoom() {
                   <div className="chat-message others p-3 mb-3">
                     <div className="flex items-center mb-1">
                       <div className="player-avatar bg-red-500 text-white text-xs">상</div>
-                      <div className="ml-2 text-xs font-medium">사용자1</div>
+                      <div className="ml-2 text-xs font-medium">알고리즘왕</div>
                     </div>
                     <div className="text-sm">
-                      게임이 종료되었습니다
+                      해시맵을 사용하면 O(n) 시간 복잡도로 풀 수 있어요. 배열을 한 번만 순회하면 됩니다.
                     </div>
                   </div>
                   <div className="chat-message mine p-3 mb-3">
                     <div className="text-sm">
-                      채팅 테스트
+                      저도 해시맵으로 풀었어요! 처음에는 이중 반복문으로 생각했는데 시간 복잡도가 O(n²)이라 비효율적이더라고요.
                     </div>
                   </div>
                   <div className="chat-message others p-3 mb-3">
                     <div className="flex items-center mb-1">
                       <div className="player-avatar bg-yellow-500 text-white text-xs">김</div>
-                      <div className="ml-2 text-xs font-medium">사용자2</div>
+                      <div className="ml-2 text-xs font-medium">코드닌자</div>
                     </div>
                     <div className="text-sm">
-                      채팅1
+                      저는 처음에 이중 반복문으로 풀었다가 시간 초과가 나서 해시맵으로 다시 풀었어요 ㅠㅠ
                     </div>
                   </div>
                   <div className="chat-message others p-3 mb-3">
                     <div className="flex items-center mb-1">
                       <div className="player-avatar bg-purple-500 text-white text-xs">박</div>
-                      <div className="ml-2 text-xs font-medium">사용자3</div>
+                      <div className="ml-2 text-xs font-medium">자바스크립트고수</div>
                     </div>
                     <div className="text-sm">
-                      채팅2
+                      저는 엣지 케이스를 놓쳐서 부분 정답이 나왔네요. 다음에는 더 꼼꼼하게 풀어야겠어요.
                     </div>
                   </div>
                   <div className="chat-message others p-3 mb-3">
                     <div className="flex items-center mb-1">
                       <div className="player-avatar bg-red-500 text-white text-xs">상</div>
-                      <div className="ml-2 text-xs font-medium">사용자1</div>
+                      <div className="ml-2 text-xs font-medium">알고리즘왕</div>
                     </div>
                     <div className="text-sm">
-                      수고하셨습니다
+                      다들 수고하셨어요! 다음 문제도 같이 풀어볼까요?
                     </div>
                   </div>
                 </div>
