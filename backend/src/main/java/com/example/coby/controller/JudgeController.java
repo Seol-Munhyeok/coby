@@ -32,5 +32,7 @@ public class JudgeController {
             log.info(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
+
     }
 }
+
