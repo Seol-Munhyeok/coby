@@ -72,12 +72,12 @@ for num in range(len(n)):
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          code: answerRef.current?.value,
-          language: nicknameRef.current?.value,
+          code: answerRef.value,
+          language: nicknameRef.value,
         }),
       });
 
-      console.info(answerRef.current?.value, nicknameRef.current?.value);
+      console.info(answerRef.value, nicknameRef.value);
 
       if (!response.ok) {
         throw new Error("서버 응답 실패");
