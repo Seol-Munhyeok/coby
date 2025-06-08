@@ -48,8 +48,8 @@ public class JudgeService {
             // 2. 채점 서버에 전송
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("code", new FileSystemResource(filePath));
-            body.add("testcase", new FileSystemResource("backend/src/main/java/com/example/coby/service/testcase.txt"));
-            body.add("result", new FileSystemResource("backend/src/main/java/com/example/coby/service/result.txt"));
+            body.add("testcase", new FileSystemResource("src/main/java/com/example/coby/service/testcase.txt"));
+            body.add("result", new FileSystemResource("src/main/java/com/example/coby/service/result.txt"));
             body.add("language", language);
 
             HttpHeaders headers = new HttpHeaders();
