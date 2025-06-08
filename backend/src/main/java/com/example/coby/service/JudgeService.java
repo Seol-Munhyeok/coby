@@ -3,6 +3,7 @@ package com.example.coby.service;
 import com.example.coby.dto.JudgeResultDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -14,6 +15,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -47,9 +49,14 @@ public class JudgeService {
 
             // 2. 채점 서버에 전송
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            ClassPathResource testcase_ClassPath = new ClassPathResource("testcase.txt");
+            File testcase = testcase_ClassPath.getFile();
+            ClassPathResource result_ClassPath = new ClassPathResource("result.txt");
+            File result = result_ClassPath.getFile();
+            log.info(testcase.getAbsolutePath() + "\n" + result.getAbsolutePath());
             body.add("code", new FileSystemResource(filePath));
-            body.add("testcase", new FileSystemResource("src/main/java/com/example/coby/service/testcase.txt"));
-            body.add("result", new FileSystemResource("src/main/java/com/example/coby/service/result.txt"));
+            body.add("testcase", new FileSystemResource(testcase.getAbsolutePath()));
+            body.add("result", new FileSystemResource(result.getAbsolutePath()));
             body.add("language", language);
 
             HttpHeaders headers = new HttpHeaders();
