@@ -5,7 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="chore">
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/result.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/resources/testcase.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/service/JudgeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/service/JudgeService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,9 +88,9 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "Spring Boot.CobyApplication.executor": "Run",
-    "git-widget-placeholder": "compile",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/battle-coding",
+    "last_opened_file_path": "C:/Users/ASUS/projects/Capstone/coby/backend/src/main/resources",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -100,6 +103,9 @@
   }
 }]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\ASUS\projects\Capstone\coby\backend\src\main\resources" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\ASUS\projects\Capstone\coby\backend\src\main\java\com\example\coby\dto" />
     </key>
@@ -143,6 +149,7 @@
       <workItem from="1749036360606" duration="11000" />
       <workItem from="1749115645744" duration="1343000" />
       <workItem from="1749193388197" duration="2837000" />
+      <workItem from="1749370991370" duration="1984000" />
     </task>
     <task id="LOCAL-00001" summary="fix: db세팅">
       <option name="closed" value="true" />
