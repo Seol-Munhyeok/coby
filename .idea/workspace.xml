@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="fix: 수정">
+    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="chore">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -88,13 +88,13 @@
     "Spring Boot.CobyApplication.executor": "Run",
     "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/battle-coding",
+    "last_opened_file_path": "D:/GSprojectVue",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "프로젝트",
+    "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.2",
     "vue.rearranger.settings.migration": "true"
@@ -107,7 +107,7 @@
   </component>
   <component name="RunManager">
     <configuration name="CobyApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
-      <module name="com.example.coby.main" />
+      <module name="coby.backend.main" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.example.coby.CobyApplication" />
       <method v="2">
         <option name="Make" enabled="true" />
@@ -141,6 +141,9 @@
       <workItem from="1748236093142" duration="9000" />
       <workItem from="1749022322666" duration="7182000" />
       <workItem from="1749035011295" duration="147000" />
+      <workItem from="1749215137322" duration="551000" />
+      <workItem from="1749215707551" duration="391000" />
+      <workItem from="1749445512808" duration="30000" />
     </task>
     <task id="LOCAL-00001" summary="fix: db세팅">
       <option name="closed" value="true" />
@@ -166,7 +169,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749023983878</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="chore">
+      <option name="closed" value="true" />
+      <created>1749215175895</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1749215175895</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -177,6 +188,7 @@
     <MESSAGE value="fix: db세팅" />
     <MESSAGE value="feat: 전송 시, 테스트 케이스도 같이 채점 서버에 보내도록 수정" />
     <MESSAGE value="fix: Cors 설정 추가" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: Cors 설정 추가" />
+    <MESSAGE value="chore" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore" />
   </component>
 </project>
