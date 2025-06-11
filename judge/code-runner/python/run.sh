@@ -6,6 +6,8 @@ total_real_time=0
 total_memory=0
 RUN_CMD="python3 Main.py"
 
+dos2unix /app/code/*.txt > /dev/null 2>&1
+
 # 두 파일을 병렬로 한 줄씩 읽음
 while IFS=$'\t' read -r testcase expected; do
     test_count=$((test_count + 1))
@@ -20,7 +22,7 @@ while IFS=$'\t' read -r testcase expected; do
     # 실행 실패 체크
     if [ $exit_code -ne 0 ]; then
         rm -f "$TIME_OUTPUT"
-        echo "[DEBUG] Runtime error"
+        echo "[DEBUG] Runtime error ["$testcase"|"$exit_code"|"$output"]"
         echo "Fail"
         exit 0
     fi
