@@ -4,7 +4,13 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+# Python 가상환경
+venv/
+judge/venv/
 
+# Python bytecode
+__pycache__/
+*.pyc
 ### STS ###
 .apt_generated
 .classpath

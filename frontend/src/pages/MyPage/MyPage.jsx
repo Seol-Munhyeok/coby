@@ -200,7 +200,7 @@ function MyPage() {
                         </div>
                         <div>
                           <span className="text-gray-400">언어:</span>
-                          <span>JavaScript</span>
+                          <span>Python</span>
                         </div>
                       </div>
                     </div>
@@ -230,7 +230,7 @@ function MyPage() {
                         </div>
                         <div>
                           <span className="text-gray-400">언어:</span>
-                          <span>JavaScript</span>
+                          <span>Python</span>
                         </div>
                       </div>
                     </div>
@@ -260,7 +260,7 @@ function MyPage() {
                         </div>
                         <div>
                           <span className="text-gray-400">언어:</span>
-                          <span>JavaScript</span>
+                          <span>Python</span>
                         </div>
                       </div>
                     </div>
@@ -290,7 +290,7 @@ function MyPage() {
                         </div>
                         <div>
                           <span className="text-gray-400">언어:</span>
-                          <span>JavaScript</span>
+                          <span>Python</span>
                         </div>
                       </div>
                     </div>
@@ -320,7 +320,7 @@ function MyPage() {
                         </div>
                         <div>
                           <span className="text-gray-400">언어:</span>
-                          <span>JavaScript</span>
+                          <span>Python</span>
                         </div>
                       </div>
                     </div>
