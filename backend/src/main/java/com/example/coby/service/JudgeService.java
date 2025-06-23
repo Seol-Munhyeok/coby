@@ -5,17 +5,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -33,7 +28,7 @@ public class JudgeService {
             "python", "py"
     );
 
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
     public JudgeResultDto judgeCode(String code, String language) {
         String ext = EXTENSIONS.get(language);
@@ -41,36 +36,34 @@ public class JudgeService {
 
         // 1. 임시 파일 생성
         String filename = "Main." + ext;
-        Path tempDir;
+
         try {
-            tempDir = Files.createTempDirectory("submission_");
+            Path tempDir = Files.createTempDirectory("submission_");
             Path filePath = tempDir.resolve(filename);
             Files.writeString(filePath, code, StandardCharsets.UTF_8);
 
-            // 2. 채점 서버에 전송
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            ClassPathResource testcase_ClassPath = new ClassPathResource("testcase.txt");
-            File testcase = testcase_ClassPath.getFile();
-            ClassPathResource result_ClassPath = new ClassPathResource("result.txt");
-            File result = result_ClassPath.getFile();
-            log.info(testcase.getAbsolutePath() + "\n" + result.getAbsolutePath());
-            body.add("code", new FileSystemResource(filePath));
-            body.add("testcase", new FileSystemResource(testcase.getAbsolutePath()));
-            body.add("result", new FileSystemResource(result.getAbsolutePath()));
-            body.add("language", language);
+            // 2. 리소스 파일 불러오기
+            ClassPathResource testcase = new ClassPathResource("testcase.txt");
+            ClassPathResource result = new ClassPathResource("result.txt");
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            // 3. Multipart 전송 데이터 구성
+            MultipartBodyBuilder builder = new MultipartBodyBuilder();
+            builder.part("code", new FileSystemResource(filePath));
+            builder.part("testcase", testcase);
+            builder.part("result", result);
+            builder.part("language", language);
 
-            HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+            // 4. WebClient 요청 (동기적 처리)
+            JudgeResultDto response = webClient.post()
+                    .uri("http://localhost:8000/compile")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .retrieve()
+                    .bodyToMono(JudgeResultDto.class)
+                    .block();  // 동기 처리
 
-            ResponseEntity<JudgeResultDto> response = restTemplate.postForEntity(
-                    "http://localhost:8000/compile", // 채점 서버 주소
-                    requestEntity,
-                    JudgeResultDto.class
-            );
-            log.info("response: " + response.getBody());
-            return response.getBody();
+            log.info("Judge server response: {}", response);
+            return response;
 
         } catch (IOException e) {
             throw new RuntimeException("파일 생성 오류", e);
