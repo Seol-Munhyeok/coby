@@ -9,12 +9,12 @@ function WaitingRoom() {
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [selectedPlayer, setSelectedPlayer] = useState(null); // Stores data of the clicked player
-  
+
   // Assume '코드마스터' is the current user's name
   const currentUser = "코드마스터";
-  // For demonstration, let's assume '사용자1' is the host.
+  // For demonstration, let's assume '사용자1' is the initial host.
   // In a real app, this would come from props or a global state.
-  const roomHost = "사용자1"; 
+  const [roomHost, setRoomHost] = useState("사용자1"); // roomHost 상태를 추가
   const isCurrentUserHost = currentUser === roomHost;
 
   const contextMenuRef = useRef(null);
@@ -35,8 +35,8 @@ function WaitingRoom() {
 
   const handlePlayerCardClick = (event, player) => {
     // Prevent default right-click menu for onContextMenu
-    event.preventDefault(); 
-    
+    event.preventDefault();
+
     setSelectedPlayer(player);
     setContextMenuPos({ x: event.clientX, y: event.clientY });
     setShowContextMenu(true);
@@ -46,23 +46,23 @@ function WaitingRoom() {
     // Here you would typically open the player info modal and populate it
     const playerInfoModal = document.getElementById('playerInfoModal');
     if (playerInfoModal) {
-        playerInfoModal.classList.remove('hidden');
-        // Populate modal with selectedPlayer data (e.g., playerInfoModal.querySelector('#playerName').innerText = selectedPlayer.name;)
-        document.getElementById('playerAvatar').innerText = selectedPlayer.avatarInitials;
-        document.getElementById('playerName').innerText = selectedPlayer.name;
-        document.getElementById('playerTier').querySelector('span').innerText = selectedPlayer.tier;
-        document.getElementById('playerLevel').innerText = selectedPlayer.level;
-        // You'd also update win rate, wins, losses, etc. from selectedPlayer data
+      playerInfoModal.classList.remove('hidden');
+      // Populate modal with selectedPlayer data (e.g., playerInfoModal.querySelector('#playerName').innerText = selectedPlayer.name;)
+      document.getElementById('playerAvatar').innerText = selectedPlayer.avatarInitials;
+      document.getElementById('playerName').innerText = selectedPlayer.name;
+      document.getElementById('playerTier').querySelector('span').innerText = selectedPlayer.tier;
+      document.getElementById('playerLevel').innerText = selectedPlayer.level;
+      // You'd also update win rate, wins, losses, etc. from selectedPlayer data
     }
     setShowContextMenu(false);
   };
 
   const handleDelegateHost = () => {
     if (selectedPlayer) {
-      alert(`방장 위임: ${selectedPlayer.name}`);
-      // Implement host delegation logic here
+      // alert(`방장 위임: ${selectedPlayer.name}`);
+      setRoomHost(selectedPlayer.name); // 선택된 플레이어를 새로운 호스트로 설정
+      setShowContextMenu(false);
     }
-    setShowContextMenu(false);
   };
 
   const handleKickPlayer = () => {
@@ -88,13 +88,30 @@ function WaitingRoom() {
     };
   }, []);
 
+  // 콘솔에서 getHost() 입력 시 "코드마스터"가 호스트가 되도록 하는 기능
+  useEffect(() => {
+    window.getHost = () => {
+      setRoomHost("코드마스터");
+      console.log("코드마스터가 호스트가 되었습니다.");
+    };
+
+    return () => {
+      delete window.getHost; // 컴포넌트 언마운트 시 전역 함수 정리
+    };
+  }, []);
+
+
   // Player data for rendering cards
   const players = [
-    { name: "사용자1", avatarInitials: "KM", tier: "마스터", level: "Lv.42", isHost: true, isReady: true },
-    { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isReady: true },
-    { name: "코드마스터", avatarInitials: "CM", tier: "다이아", level: "Lv.28", isReady: isReady }, // Current user
-    { name: "사용자4", avatarInitials: "SJ", tier: "다이아", level: "Lv.31", isReady: true },
-  ];
+    { name: "사용자1", avatarInitials: "KM", tier: "마스터", level: "Lv.42", isHost: false, isReady: true },
+    { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isHost: false, isReady: true },
+    { name: "코드마스터", avatarInitials: "CM", tier: "다이아", level: "Lv.28", isHost: false, isReady: isReady }, // Current user
+    { name: "사용자4", avatarInitials: "SJ", tier: "다이아", level: "Lv.31", isHost: false, isReady: true },
+  ].map(player => ({
+    ...player,
+    isHost: player.name === roomHost // roomHost 상태에 따라 isHost 동적으로 설정
+  }));
+
 
   return (
     <div className="WaitingRoom" onContextMenu={(e) => e.preventDefault()}> {/* Prevent default right-click on the whole page */}
@@ -161,7 +178,7 @@ function WaitingRoom() {
                 </svg>
                 게임 시작
               </button>
-              
+
             </div>
           </div>
           {/* Main content grid */}
@@ -260,8 +277,7 @@ function WaitingRoom() {
                   {players.map((player) => (
                     <div
                       key={player.name}
-                      className={`waitingRoom-player-card waitingRoom-glass-effect rounded-xl p-4 flex flex-col items-center relative m-2 
-                                  ${player.name === currentUser ? 'border-2 border-blue-500' : ''}
+                      className={`waitingRoom-player-card waitingRoom-glass-effect rounded-xl p-4 flex flex-col items-center relative m-2
                                   ${player.isHost ? 'host' : ''}
                                   `}
                       data-player={player.name}
