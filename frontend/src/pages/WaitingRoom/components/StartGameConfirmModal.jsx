@@ -2,6 +2,8 @@
  * 게임 시작 확인 모달을 렌더링하는 컴포넌트입니다.
  */
 import React from 'react';
+import '../WaitingRoom.css';
+
 
 function StartGameConfirmModal() {
   return (

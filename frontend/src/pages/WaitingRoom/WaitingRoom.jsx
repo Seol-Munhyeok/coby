@@ -60,7 +60,7 @@ function WaitingRoom() {
 
   const players = [
     { name: "사용자1", avatarInitials: "KM", tier: "마스터", level: "Lv.42", isHost: false, isReady: true },
-    { name: "사용자2", avatarInitals: "JH", tier: "마스터", level: "Lv.39", isHost: false, isReady: true },
+    { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isHost: false, isReady: true }, // 'avatarInitals' -> 'avatarInitials' (오타 수정)
     { name: "코드마스터", avatarInitials: "CM", tier: "다이아", level: "Lv.28", isHost: false, isReady: isReady },
     { name: "사용자4", avatarInitials: "SJ", tier: "다이아", level: "Lv.31", isHost: false, isReady: true },
   ].map(player => ({

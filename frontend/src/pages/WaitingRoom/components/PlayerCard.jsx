@@ -2,6 +2,7 @@
  * 개별 플레이어 카드를 렌더링하는 컴포넌트입니다. host 클래스가 동적으로 적용됩니다.
  */
 import React from 'react';
+import '../WaitingRoom.css';
 
 function PlayerCard({ player, handlePlayerCardClick }) {
   return (
