@@ -1,23 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './WaitingRoom.css';
+/**
+ * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
+ */
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './WaitingRoom.css';
+import useContextMenu from './hooks/useContextMenu';
+import useConsoleHostCommand from './hooks/useConsoleHostCommand';
+import PlayerCard from './components/PlayerCard';
+import PlayerInfoModal from './components/PlayerInfoModal';
+import StartGameConfirmModal from './components/StartGameConfirmModal';
 
 function WaitingRoom() {
   const navigate = useNavigate();
 
   const [isReady, setIsReady] = useState(false);
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
-  const [selectedPlayer, setSelectedPlayer] = useState(null); // Stores data of the clicked player
-
-  // Assume '코드마스터' is the current user's name
+  const [roomHost, setRoomHost] = useState("사용자1");
   const currentUser = "코드마스터";
-  // For demonstration, let's assume '사용자1' is the initial host.
-  // In a real app, this would come from props or a global state.
-  const [roomHost, setRoomHost] = useState("사용자1"); // roomHost 상태를 추가
   const isCurrentUserHost = currentUser === roomHost;
 
-  const contextMenuRef = useRef(null);
+  const {
+    showContextMenu,
+    contextMenuPos,
+    selectedPlayer,
+    contextMenuRef,
+    handlePlayerCardClick,
+    setShowContextMenu,
+    setSelectedPlayer,
+  } = useContextMenu();
+
+  useConsoleHostCommand(setRoomHost);
 
   const enterRoomBtn1 = () => {
     alert('방에 입장합니다!');
@@ -33,34 +44,9 @@ function WaitingRoom() {
     setIsReady(prevIsReady => !prevIsReady);
   };
 
-  const handlePlayerCardClick = (event, player) => {
-    // Prevent default right-click menu for onContextMenu
-    event.preventDefault();
-
-    setSelectedPlayer(player);
-    setContextMenuPos({ x: event.clientX, y: event.clientY });
-    setShowContextMenu(true);
-  };
-
-  const handleViewInfo = () => {
-    // Here you would typically open the player info modal and populate it
-    const playerInfoModal = document.getElementById('playerInfoModal');
-    if (playerInfoModal) {
-      playerInfoModal.classList.remove('hidden');
-      // Populate modal with selectedPlayer data (e.g., playerInfoModal.querySelector('#playerName').innerText = selectedPlayer.name;)
-      document.getElementById('playerAvatar').innerText = selectedPlayer.avatarInitials;
-      document.getElementById('playerName').innerText = selectedPlayer.name;
-      document.getElementById('playerTier').querySelector('span').innerText = selectedPlayer.tier;
-      document.getElementById('playerLevel').innerText = selectedPlayer.level;
-      // You'd also update win rate, wins, losses, etc. from selectedPlayer data
-    }
-    setShowContextMenu(false);
-  };
-
   const handleDelegateHost = () => {
     if (selectedPlayer) {
-      // alert(`방장 위임: ${selectedPlayer.name}`);
-      setRoomHost(selectedPlayer.name); // 선택된 플레이어를 새로운 호스트로 설정
+      setRoomHost(selectedPlayer.name);
       setShowContextMenu(false);
     }
   };
@@ -68,53 +54,22 @@ function WaitingRoom() {
   const handleKickPlayer = () => {
     if (selectedPlayer) {
       alert(`강퇴하기: ${selectedPlayer.name}`);
-      // Implement kick player logic here
-    }
-    setShowContextMenu(false);
-  };
-
-  const handleClickOutside = (event) => {
-    if (contextMenuRef.current && !contextMenuRef.current.contains(event.target)) {
       setShowContextMenu(false);
-      setSelectedPlayer(null);
     }
   };
 
-  // Add event listener for clicks outside the context menu
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  // 콘솔에서 getHost() 입력 시 "코드마스터"가 호스트가 되도록 하는 기능
-  useEffect(() => {
-    window.getHost = () => {
-      setRoomHost("코드마스터");
-      console.log("코드마스터가 호스트가 되었습니다.");
-    };
-
-    return () => {
-      delete window.getHost; // 컴포넌트 언마운트 시 전역 함수 정리
-    };
-  }, []);
-
-
-  // Player data for rendering cards
   const players = [
     { name: "사용자1", avatarInitials: "KM", tier: "마스터", level: "Lv.42", isHost: false, isReady: true },
-    { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isHost: false, isReady: true },
-    { name: "코드마스터", avatarInitials: "CM", tier: "다이아", level: "Lv.28", isHost: false, isReady: isReady }, // Current user
+    { name: "사용자2", avatarInitals: "JH", tier: "마스터", level: "Lv.39", isHost: false, isReady: true },
+    { name: "코드마스터", avatarInitials: "CM", tier: "다이아", level: "Lv.28", isHost: false, isReady: isReady },
     { name: "사용자4", avatarInitials: "SJ", tier: "다이아", level: "Lv.31", isHost: false, isReady: true },
   ].map(player => ({
     ...player,
-    isHost: player.name === roomHost // roomHost 상태에 따라 isHost 동적으로 설정
+    isHost: player.name === roomHost
   }));
 
-
   return (
-    <div className="WaitingRoom" onContextMenu={(e) => e.preventDefault()}> {/* Prevent default right-click on the whole page */}
+    <div className="WaitingRoom" onContextMenu={(e) => e.preventDefault()}>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>COBY - Coding Online Battle with You</title>
@@ -159,7 +114,6 @@ function WaitingRoom() {
                   </button>
                 </div>
               </div>
-              {/* Ready/Unready Button */}
               <button
                 id="readyBtn"
                 className={`px-4 py-2 rounded-lg flex items-center transition ${
@@ -178,14 +132,10 @@ function WaitingRoom() {
                 </svg>
                 게임 시작
               </button>
-
             </div>
           </div>
-          {/* Main content grid */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
-            {/* 문제정보 (상단 가로 정렬) */}
             <div className="lg:col-span-3">
-              {/* 방 상세 정보 */}
               <div className="waitingRoom-glass-effect rounded-lg px-4 py-2">
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
                   <div className="flex items-center">
@@ -207,7 +157,6 @@ function WaitingRoom() {
                 </div>
               </div>
             </div>
-            {/* 채팅 (왼쪽 1/3) */}
             <div className="lg:col-span-1">
               <div className="waitingRoom-glass-effect rounded-lg p-4 flex flex-col h-full">
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center">
@@ -264,7 +213,6 @@ function WaitingRoom() {
                 </div>
               </div>
             </div>
-            {/* 참가자 섹션 (오른쪽 2/3) */}
             <div className="lg:col-span-2">
               <div className="waitingRoom-glass-effect rounded-xl p-4 flex flex-col h-full">
                 <h2 className="text-xl font-bold text-white mb-4 flex items-center">
@@ -275,36 +223,11 @@ function WaitingRoom() {
                 </h2>
                 <div className="grid grid-cols-2 gap-4 flex-1">
                   {players.map((player) => (
-                    <div
+                    <PlayerCard
                       key={player.name}
-                      className={`waitingRoom-player-card waitingRoom-glass-effect rounded-xl p-4 flex flex-col items-center relative m-2
-                                  ${player.isHost ? 'host' : ''}
-                                  `}
-                      data-player={player.name}
-                      onClick={(e) => handlePlayerCardClick(e, player)}
-                      onContextMenu={(e) => handlePlayerCardClick(e, player)}
-                    >
-                      <div className="waitingRoom-character mb-2">
-                        <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-medium
-                                        ${player.name === "사용자1" ? 'bg-blue-700' :
-                                          player.name === "사용자2" ? 'bg-purple-700' :
-                                          player.name === "코드마스터" ? 'bg-green-700' :
-                                          'bg-yellow-700' // Default for 사용자4
-                                        }`}>
-                          {player.avatarInitials}
-                        </div>
-                      </div>
-                      <h3 className="font-medium text-white text-center">{player.name}</h3>
-                      <div className="flex items-center mt-1">
-                        <div className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-1">
-                          <span className="text-[0.6rem] font-bold text-blue-200">{player.tier}</span>
-                        </div>
-                        <span className="text-xs text-blue-300">{player.level}</span>
-                      </div>
-                      <div className={`${player.isReady ? 'waitingRoom-player-ready' : 'waitingRoom-player-not-ready'}`}>
-                          {player.isReady ? '준비 완료' : '대기 중'}
-                      </div>
-                    </div>
+                      player={player}
+                      handlePlayerCardClick={handlePlayerCardClick}
+                    />
                   ))}
                 </div>
               </div>
@@ -313,7 +236,6 @@ function WaitingRoom() {
         </div>
       </main>
 
-      {/* Custom Context Menu */}
       {showContextMenu && selectedPlayer && (
         <div
           ref={contextMenuRef}
@@ -321,10 +243,20 @@ function WaitingRoom() {
           style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
         >
           <ul className="text-white text-sm">
-            <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer" onClick={handleViewInfo}>
+            <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer" onClick={() => {
+                const playerInfoModal = document.getElementById('playerInfoModal');
+                if (playerInfoModal) {
+                  playerInfoModal.classList.remove('hidden');
+                  document.getElementById('playerAvatar').innerText = selectedPlayer.avatarInitials;
+                  document.getElementById('playerName').innerText = selectedPlayer.name;
+                  document.getElementById('playerTier').querySelector('span').innerText = selectedPlayer.tier;
+                  document.getElementById('playerLevel').innerText = selectedPlayer.level;
+                }
+                setShowContextMenu(false);
+            }}>
               정보 보기
             </li>
-            {isCurrentUserHost && selectedPlayer.name !== currentUser && ( // Host can't delegate/kick themselves
+            {isCurrentUserHost && selectedPlayer.name !== currentUser && (
               <>
                 <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer" onClick={handleDelegateHost}>
                   방장 위임
@@ -338,112 +270,8 @@ function WaitingRoom() {
         </div>
       )}
 
-      {/* Player Info Modal (hidden by default) */}
-      <div id="playerInfoModal" className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div className="waitingRoom-glass-effect rounded-xl w-full max-w-md p-6 waitingRoom-animate-fade-in">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-white">플레이어 정보</h2>
-            <button id="closePlayerModal" className="text-blue-300 hover:text-white transition" onClick={() => document.getElementById('playerInfoModal').classList.add('hidden')}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="flex items-center mb-4">
-            <div className="waitingRoom-character mr-4">
-              <div id="playerAvatar" className="w-16 h-16 rounded-full bg-blue-700 flex items-center justify-center text-xl font-medium"></div>
-            </div>
-            <div>
-              <h3 id="playerName" className="text-lg font-bold text-white"></h3>
-              <div className="flex items-center">
-                <div id="playerTier" className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-2">
-                  <span className="text-[0.6rem] font-bold text-blue-200"></span>
-                </div>
-                <span id="playerLevel" className="text-sm text-blue-300"></span>
-              </div>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="waitingRoom-glass-effect rounded-lg p-4">
-              <h4 className="text-sm font-medium text-blue-300 mb-2">전적</h4>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div className="waitingRoom-glass-effect rounded-lg p-2">
-                  <p className="text-xs text-blue-300">승률</p>
-                  <p id="playerWinRate" className="text-xl font-bold text-white">92%</p> {/* Placeholder, populate from selectedPlayer */}
-                </div>
-                <div className="waitingRoom-glass-effect rounded-lg p-2">
-                  <p className="text-xs text-blue-300">승리</p>
-                  <p id="playerWins" className="text-xl font-bold text-green-400">138</p> {/* Placeholder */}
-                </div>
-                <div className="waitingRoom-glass-effect rounded-lg p-2">
-                  <p className="text-xs text-blue-300">패배</p>
-                  <p id="playerLosses" className="text-xl font-bold text-red-400">12</p> {/* Placeholder */}
-                </div>
-              </div>
-            </div>
-            <div className="waitingRoom-glass-effect rounded-lg p-4">
-              <h4 className="text-sm font-medium text-blue-300 mb-2">선호 문제 유형</h4>
-              <div className="waitingRoom-stats-chart-container">
-                <canvas id="preferredTypesChart" />
-              </div>
-            </div>
-            <div className="waitingRoom-glass-effect rounded-lg p-4">
-              <h4 className="text-sm font-medium text-blue-300 mb-2">최근 기록</h4>
-              <div className="space-y-2 waitingRoom-custom-scrollbar overflow-y-auto max-h-32">
-                <div className="flex justify-between items-center waitingRoom-glass-effect rounded-lg p-2 border-l-4 border-green-500">
-                  <div>
-                    <p className="font-medium text-white">알고리즘 배틀 #128</p>
-                    <p className="text-xs text-blue-300">2시간 전</p>
-                  </div>
-                  <span className="text-green-400 font-medium">승리</span>
-                </div>
-                <div className="flex justify-between items-center waitingRoom-glass-effect rounded-lg p-2 border-l-4 border-green-500">
-                  <div>
-                    <p className="font-medium text-white">자료구조 마스터 #45</p>
-                    <p className="text-xs text-blue-300">어제</p>
-                  </div>
-                  <span className="text-green-400 font-medium">승리</span>
-                </div>
-                <div className="flex justify-between items-center waitingRoom-glass-effect rounded-lg p-2 border-l-4 border-green-500">
-                  <div>
-                    <p className="font-medium text-white">SQL 챌린지 #12</p>
-                    <p className="text-xs text-blue-300">2일 전</p>
-                  </div>
-                  <span className="text-green-400 font-medium">승리</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* 게임 시작 확인 모달 */}
-      <div id="startGameConfirmModal" className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
-        <div className="waitingRoom-glass-effect rounded-xl w-full max-w-md p-6 waitingRoom-animate-fade-in">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-white">게임 시작</h2>
-            <button id="closeStartConfirmModal" className="text-blue-300 hover:text-white transition" onClick={() => document.getElementById('startGameConfirmModal').classList.add('hidden')}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="text-center mb-6">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-yellow-500 mx-auto mb-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <h3 className="text-lg font-semibold text-white mb-2">게임을 시작하시겠습니까?</h3>
-            <p className="text-blue-300">아직 준비되지 않은 참가자가 있습니다. 그래도 시작하시겠습니까?</p>
-          </div>
-          <div className="flex space-x-3">
-            <button id="cancelStartGame" className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition">
-              취소
-            </button>
-            <button id="confirmStartGame" className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition">
-              시작하기
-            </button>
-          </div>
-        </div>
-      </div>
+      <PlayerInfoModal />
+      <StartGameConfirmModal />
     </div>
   );
 }
