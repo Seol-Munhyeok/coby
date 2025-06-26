@@ -11,12 +11,100 @@ import PlayerInfoModal from './components/PlayerInfoModal';
 import StartGameConfirmModal from './components/StartGameConfirmModal';
 
 function WaitingRoom() {
+  // 플레이어 정보 데이터
+const playerData = {
+    '사용자1': {
+        avatar: 'KM',
+        avatarColor: 'bg-blue-700',
+        tier: '마스터',
+        level: 42,
+        winRate: '92%',
+        wins: 138,
+        losses: 12,
+        preferredTypes: {
+            '알고리즘': 45,
+            '자료구조': 30,
+            'SQL': 10,
+            '동적계획법': 15
+        },
+        recentGames: [
+            { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
+            { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
+            { name: 'SQL 챌린지 #12', time: '2일 전', result: '승리' }
+        ]
+    },
+    '사용자2': {
+        avatar: 'JH',
+        avatarColor: 'bg-purple-700',
+        tier: '마스터',
+        level: 39,
+        winRate: '89%',
+        wins: 125,
+        losses: 15,
+        preferredTypes: {
+            '알고리즘': 60,
+            '자료구조': 20,
+            'SQL': 5,
+            '동적계획법': 15
+        },
+        recentGames: [
+            { name: '알고리즘 배틀 #128', time: '2시간 전', result: '패배' },
+            { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
+            { name: 'SQL 챌린지 #12', time: '2일 전', result: '승리' }
+        ]
+    },
+    '코드마스터': {
+        avatar: 'CM',
+        avatarColor: 'bg-green-700',
+        tier: '다이아',
+        level: 28,
+        winRate: '78%',
+        wins: 45,
+        losses: 13,
+        preferredTypes: {
+            '알고리즘': 30,
+            '자료구조': 40,
+            'SQL': 20,
+            '동적계획법': 10
+        },
+        recentGames: [
+            { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
+            { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
+            { name: 'SQL 챌린지 #12', time: '2일 전', result: '패배' }
+        ]
+    },
+    '사용자4': {
+        avatar: 'SJ',
+        avatarColor: 'bg-yellow-700',
+        tier: '다이아',
+        level: 31,
+        winRate: '80%',
+        wins: 80,
+        losses: 20,
+        preferredTypes: {
+            '알고리즘': 25,
+            '자료구조': 25,
+            'SQL': 25,
+            '동적계획법': 25
+        },
+        recentGames: [
+            { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
+            { name: '자료구조 마스터 #45', time: '어제', result: '패배' },
+            { name: 'SQL 챌린지 #12', time: '2일 전', result: '승리' }
+        ]
+    }
+};
+
+
   const navigate = useNavigate();
 
   const [isReady, setIsReady] = useState(false);
-  const [roomHost, setRoomHost] = useState("사용자1");
+  const [roomHost, setRoomHost] = useState("코드마스터");
   const currentUser = "코드마스터";
   const isCurrentUserHost = currentUser === roomHost;
+  const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false); // State to control modal visibility
+  const [playerInfoForModal, setPlayerInfoForModal] = useState(null); // State to hold player data for modal
+
 
   const {
     showContextMenu,
@@ -31,8 +119,15 @@ function WaitingRoom() {
   useConsoleHostCommand(setRoomHost);
 
   const enterRoomBtn1 = () => {
-    alert('방에 입장합니다!');
-    navigate('/gamepage');
+    // Only allow game start if current user is host and all players are ready
+    if (isCurrentUserHost && allPlayersReady) {
+      alert('방에 입장합니다!');
+      navigate('/gamepage');
+    } else if (!isCurrentUserHost) {
+      alert('방장만 게임을 시작할 수 있습니다.');
+    } else {
+      alert('모든 플레이어가 준비 완료 상태여야 게임을 시작할 수 있습니다.');
+    }
   };
 
   const quickbtn = () => {
@@ -60,13 +155,16 @@ function WaitingRoom() {
 
   const players = [
     { name: "사용자1", avatarInitials: "KM", tier: "마스터", level: "Lv.42", isHost: false, isReady: true },
-    { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isHost: false, isReady: true }, // 'avatarInitals' -> 'avatarInitials' (오타 수정)
+    { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isHost: false, isReady: true },
     { name: "코드마스터", avatarInitials: "CM", tier: "다이아", level: "Lv.28", isHost: false, isReady: isReady },
     { name: "사용자4", avatarInitials: "SJ", tier: "다이아", level: "Lv.31", isHost: false, isReady: true },
   ].map(player => ({
     ...player,
     isHost: player.name === roomHost
   }));
+
+  // Check if all players are ready
+  const allPlayersReady = players.every(player => player.isReady);
 
   return (
     <div className="WaitingRoom" onContextMenu={(e) => e.preventDefault()}>
@@ -126,7 +224,16 @@ function WaitingRoom() {
                 </svg>
                 {isReady ? '준비 완료' : '준비 하기'}
               </button>
-              <button id="startGameBtn" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition" onClick={enterRoomBtn1}>
+              <button
+                id="startGameBtn"
+                className={`px-4 py-2 rounded-lg flex items-center transition ${
+                  isCurrentUserHost && allPlayersReady
+                    ? 'bg-green-600 hover:bg-green-700'
+                    : 'bg-gray-600 cursor-not-allowed opacity-50' // Disable and dim the button
+                } text-white`}
+                onClick={enterRoomBtn1}
+                disabled={!isCurrentUserHost || !allPlayersReady} // Disable if not host or not all ready
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                 </svg>
@@ -190,14 +297,14 @@ function WaitingRoom() {
                   </div>
                   <div className="flex items-start">
                     <div className="w-8 h-8 rounded-full bg-yellow-700 flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0">SJ</div>
-                    <div className="waitingRoom-chat-bubble waitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
+                    <div className="waitingRoom-chat-bubble WaitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
                       <p className="text-xs text-blue-300 mb-1">사용자4</p>
                       <p className="text-sm text-white">저도 준비완료했습니다.</p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0">KM</div>
-                    <div className="waitingRoom-chat-bubble waitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
+                    <div className="waitingRoom-chat-bubble WaitingRoom-chat-bubble-left bg-blue-900/50 rounded-lg p-2 max-w-[80%]">
                       <p className="text-xs text-blue-300 mb-1">사용자1</p>
                       <p className="text-sm text-white">모두 준비되면 시작하겠습니다. 아직 준비 안 된 분들은 준비 버튼 눌러주세요!</p>
                     </div>
@@ -244,13 +351,11 @@ function WaitingRoom() {
         >
           <ul className="text-white text-sm">
             <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer" onClick={() => {
-                const playerInfoModal = document.getElementById('playerInfoModal');
-                if (playerInfoModal) {
-                  playerInfoModal.classList.remove('hidden');
-                  document.getElementById('playerAvatar').innerText = selectedPlayer.avatarInitials;
-                  document.getElementById('playerName').innerText = selectedPlayer.name;
-                  document.getElementById('playerTier').querySelector('span').innerText = selectedPlayer.tier;
-                  document.getElementById('playerLevel').innerText = selectedPlayer.level;
+                // Find the full player data from playerData based on selectedPlayer.name
+                const fullPlayer = playerData[selectedPlayer.name];
+                if (fullPlayer) {
+                  setPlayerInfoForModal(fullPlayer); // Set the full player data
+                  setShowPlayerInfoModal(true); // Show the modal
                 }
                 setShowContextMenu(false);
             }}>
@@ -270,7 +375,13 @@ function WaitingRoom() {
         </div>
       )}
 
-      <PlayerInfoModal />
+      {/* Pass show/hide state and player info to PlayerInfoModal */}
+      <PlayerInfoModal
+        showModal={showPlayerInfoModal}
+        onClose={() => setShowPlayerInfoModal(false)}
+        playerData={playerInfoForModal}
+        selectedPlayerName={selectedPlayer ? selectedPlayer.name : ''} // Pass selected player name for avatar/name
+      />
       <StartGameConfirmModal />
     </div>
   );
