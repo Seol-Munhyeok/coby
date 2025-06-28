@@ -13,6 +13,7 @@
     background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
 
+
 .waitingRoom-glass-effect {
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(8px);
@@ -259,7 +260,7 @@
 /* WaitingRoom.css additions */
 .custom-context-menu {
   position: fixed; /* Ensures it's positioned relative to the viewport */
-  background-color: rgba(17, 24, 39, 0.9); /* Example: dark blue with transparency */
+  background-color: rgba(17, 24, 39, 1); /* Example: dark blue with transparency */
   border: 1px solid rgba(59, 130, 246, 0.3); /* Blue border with transparency */
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -279,4 +280,303 @@
 
 .custom-context-menu li:hover {
   background-color: rgba(59, 130, 246, 0.2); /* Lighter blue on hover */
+}
+
+
+.watingRoom-text{
+    color: rgb(105, 169, 237)
+}
+
+
+/* 라이트 모드 -----------------------------------------------------------------------------------------------*/
+.WaitingRoom.light-mode {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: rgb(250,250,250);
+    color: #000000;
+    min-height: 100vh;
+}
+
+
+.WaitingRoom.light-mode .waitingRoom-gradient-bg {
+    background: linear-gradient(135deg, #d0eaff 0%, #aed7f2 100%); /* 파스텔 블루 그라디언트 */
+}
+
+
+.WaitingRoom.light-mode .waitingRoom-glass-effect {
+    background: rgba(245, 245, 245, 0.6); /* 부드러운 글래스 효과 */
+    backdrop-filter: blur(8px); /* 약간 더 부드러운 블러 */
+    border: 1px solid rgba(0, 0, 0, 0.151); /* 더 약한 테두리 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); /* 소프트 섀도우 추가 */
+}
+
+.WaitingRoom.light-mode .waitingRoom-tier-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.WaitingRoom.light-mode .waitingRoom-tier-badge::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    padding: 2px;
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+.WaitingRoom.light-mode .waitingRoom-pulse {
+    position: relative;
+}
+
+.WaitingRoom.light-mode .waitingRoom-pulse::before {
+    content: '';
+    position: absolute;
+    border: 4px solid #3b82f6;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    top: -3px;
+    right: -3px;
+    animation: light-mode-waitingRoom-pulse 2s infinite;
+}
+
+@keyframes light-mode-waitingRoom-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
+
+.WaitingRoom.light-mode .waitingRoom-custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.WaitingRoom.light-mode .waitingRoom-custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.WaitingRoom.light-mode .waitingRoom-custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.5);
+    border-radius: 3px;
+}
+
+.WaitingRoom.light-mode .waitingRoom-custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.8);
+}
+
+.WaitingRoom.light-mode .waitingRoom-animate-fade-in {
+    animation: light-mode-waitingRoom-fadeIn 0.5s ease-in-out;
+}
+
+@keyframes light-mode-waitingRoom-fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.WaitingRoom.light-mode .waitingRoom-chat-bubble {
+    position: relative;
+}
+
+.WaitingRoom.light-mode .waitingRoom-chat-bubble::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+.WaitingRoom.light-mode .waitingRoom-chat-bubble-left::after {
+    left: -8px;
+    top: 10px;
+    border-width: 8px 8px 8px 0;
+    border-color: transparent rgba(30, 58, 138, 0.5) transparent transparent;
+}
+
+.WaitingRoom.light-mode .waitingRoom-chat-bubble-right::after {
+    right: -8px;
+    top: 10px;
+    border-width: 8px 0 8px 8px;
+    border-color: transparent transparent transparent rgba(59, 130, 246, 0.5);
+}
+
+.WaitingRoom.light-mode .waitingRoom-player-card {
+    background-color: rgba(250, 250, 250, 1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.WaitingRoom.light-mode .waitingRoom-player-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.3);
+}
+
+.WaitingRoom.light-mode .waitingRoom-player-card.host {
+    border: 2px solid #fbbf24;
+}
+
+.WaitingRoom.light-mode .waitingRoom-player-card.host::after {
+    content: '방장';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background-color: #fbbf24;
+    color: #0f172a;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+.WaitingRoom.light-mode .waitingRoom-player-ready {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #10b981;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.WaitingRoom.light-mode .waitingRoom-player-not-ready {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #6b7280;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.WaitingRoom.light-mode .waitingRoom-typing-indicator {
+    display: inline-flex;
+    align-items: center;
+}
+
+.WaitingRoom.light-mode .waitingRoom-typing-indicator span {
+    height: 8px;
+    width: 8px;
+    margin: 0 1px;
+    background-color: #60a5fa;
+    border-radius: 50%;
+    display: inline-block;
+    animation: light-mode-waitingRoom-typing 1.4s ease-in-out infinite;
+}
+
+.WaitingRoom.light-mode .waitingRoom-typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.WaitingRoom.light-mode .waitingRoom-typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes light-mode-waitingRoom-typing {
+    0% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.WaitingRoom.light-mode .waitingRoom-stats-chart-container {
+    width: 100%;
+    height: 200px;
+}
+
+
+.WaitingRoom.light-mode .waitingRoom-character {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.WaitingRoom.light-mode .waitingRoom-character:hover {
+    transform: scale(1.1);
+}
+
+.WaitingRoom.light-mode .waitingRoom-character-emote {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    animation: light-mode-waitingRoom-bounce 1s ease infinite;
+}
+
+@keyframes light-mode-waitingRoom-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(-50%);
+    }
+
+    50% {
+        transform: translateY(-10px) translateX(-50%);
+    }
+}
+
+/* WaitingRoom.css additions */
+.WaitingRoom.light-mode .custom-context-menu {
+  position: fixed; /* Ensures it's positioned relative to the viewport */
+  background-color: rgba(189, 189, 189, 0.9); /* Example: dark blue with transparency */
+  border: 1px solid rgba(59, 130, 246, 0.3); /* Blue border with transparency */
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+}
+
+.WaitingRoom.light-mode .custom-context-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.WaitingRoom.light-mode .custom-context-menu li {
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.WaitingRoom.light-mode .custom-context-menu li:hover {
+  background-color: rgba(59, 130, 246, 0.2); /* Lighter blue on hover */
+}
+
+.WaitingRoom.light-mode .waitingRoom-text{
+    color: rgb(19, 9, 196)
+}
+
+.WaitingRoom.light-mode .waitingRoom-main-container{
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.229); 
 }

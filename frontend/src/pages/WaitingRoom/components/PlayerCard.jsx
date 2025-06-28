@@ -35,12 +35,12 @@ function PlayerCard({ player, handlePlayerCardClick }) {
           {player.avatarInitials}
         </div>
       </div>
-      <h3 className="font-medium text-white text-center">{player.name}</h3>
+      <h3 className="font-medium  text-center">{player.name}</h3>
       <div className="flex items-center mt-1">
         <div className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-1">
           <span className="text-[0.6rem] font-bold text-blue-200">{player.tier}</span>
         </div>
-        <span className="text-xs text-blue-300">{player.level}</span>
+        <span className="text-xs waitingRoom-text">{player.level}</span>
       </div>
       <div className={`${player.isReady ? 'waitingRoom-player-ready' : 'waitingRoom-player-not-ready'}`}>
           {player.isReady ? '준비 완료' : '대기 중'}

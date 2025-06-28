@@ -58,13 +58,13 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
   // Helper function to render recent games
   const renderRecentGames = (games) => {
     if (!games || games.length === 0) {
-      return <p className="text-blue-300 text-center">최근 기록이 없습니다.</p>;
+      return <p className="waitingRoom-text text-center">최근 기록이 없습니다.</p>;
     }
     return games.map((game, index) => (
       <div key={index} className={`flex justify-between items-center waitingRoom-glass-effect rounded-lg p-2 border-l-4 ${game.result === '승리' ? 'border-green-500' : 'border-red-500'}`}>
         <div>
-          <p className="font-medium text-white">{game.name}</p>
-          <p className="text-xs text-blue-300">{game.time}</p>
+          <p className="font-medium ">{game.name}</p>
+          <p className="text-xs waitingRoom-text">{game.time}</p>
         </div>
         <span className={`font-medium ${game.result === '승리' ? 'text-green-400' : 'text-red-400'}`}>{game.result}</span>
       </div>
@@ -80,8 +80,8 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
       {/* 모달 컨테이너의 너비와 높이를 조정 (가로 600px, 세로 450px) */}
       <div className="waitingRoom-glass-effect rounded-xl w-[750px] h-[550px] p-6 waitingRoom-animate-fade-in flex flex-col">
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h2 className="text-xl font-bold text-white">플레이어 정보</h2>
-          <button id="closePlayerModal" className="text-blue-300 hover:text-white transition" onClick={onClose}> {/* Use onClose prop */}
+          <h2 className="text-xl font-bold ">플레이어 정보</h2>
+          <button id="closePlayerModal" className="waitingRoom-text hover: transition" onClick={onClose}> {/* Use onClose prop */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -99,30 +99,30 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
               </div>
             </div>
             <div>
-              <h3 id="playerName" className="text-lg font-bold text-white">{selectedPlayerName}</h3> {/* Use selectedPlayerName */}
+              <h3 id="playerName" className="text-lg font-bold ">{selectedPlayerName}</h3> {/* Use selectedPlayerName */}
               <div className="flex items-center">
                 <div id="playerTier" className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-2">
                   <span className="text-[0.6rem] font-bold text-blue-200">{playerData.tier}</span> {/* Use playerData.tier */}
                 </div>
-                <span id="playerLevel" className="text-sm text-blue-300">Lv.{playerData.level}</span> {/* Use playerData.level */}
+                <span id="playerLevel" className="text-sm waitingRoom-text">Lv.{playerData.level}</span> {/* Use playerData.level */}
               </div>
             </div>
           </div>
 
           {/* 전적 섹션 */}
           <div className="waitingRoom-glass-effect rounded-lg p-4 flex-1 ml-4">
-            <h4 className="text-sm font-medium text-blue-300 mb-2">전적</h4>
+            <h4 className="text-sm font-medium waitingRoom-text mb-2">전적</h4>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="waitingRoom-glass-effect rounded-lg p-2">
-                <p className="text-xs text-blue-300">승률</p>
-                <p id="playerWinRate" className="text-xl font-bold text-white">{playerData.winRate}</p> {/* Use playerData.winRate */}
+                <p className="text-xs waitingRoom-text">승률</p>
+                <p id="playerWinRate" className="text-xl font-bold ">{playerData.winRate}</p> {/* Use playerData.winRate */}
               </div>
               <div className="waitingRoom-glass-effect rounded-lg p-2">
-                <p className="text-xs text-blue-300">승리</p>
+                <p className="text-xs waitingRoom-text">승리</p>
                 <p id="playerWins" className="text-xl font-bold text-green-400">{playerData.wins}</p> {/* Use playerData.wins */}
               </div>
               <div className="waitingRoom-glass-effect rounded-lg p-2">
-                <p className="text-xs text-blue-300">패배</p>
+                <p className="text-xs waitingRoom-text">패배</p>
                 <p id="playerLosses" className="text-xl font-bold text-red-400">{playerData.losses}</p> {/* Use playerData.losses */}
               </div>
             </div>
@@ -133,7 +133,7 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
         <div className="grid grid-cols-2 gap-4 flex-grow overflow-y-auto waitingRoom-custom-scrollbar">
           {/* 최근 기록 섹션 (왼쪽) */}
           <div className="waitingRoom-glass-effect rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-300 mb-2">최근 기록</h4>
+            <h4 className="text-sm font-medium waitingRoom-text mb-2">최근 기록</h4>
             <div className="space-y-2">
               {renderRecentGames(playerData.recentGames)} {/* Render recent games dynamically */}
             </div>
@@ -141,7 +141,7 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
 
           {/* 선호 문제 유형 섹션 (오른쪽) */}
           <div className="waitingRoom-glass-effect rounded-lg p-4">
-            <h4 className="text-sm font-medium text-blue-300 mb-2">선호 문제 유형</h4>
+            <h4 className="text-sm font-medium waitingRoom-text mb-2">선호 문제 유형</h4>
             <div className="waitingRoom-stats-chart-container">
               <PieChart data={chartData} /> {/* Pass chartData state to PieChart */}
             </div>

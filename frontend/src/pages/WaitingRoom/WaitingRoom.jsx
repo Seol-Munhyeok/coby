@@ -115,6 +115,7 @@ function WaitingRoom() {
   const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
   const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);
   const [notification, setNotification] = useState(null); // 토스트 알림 상태
+  const [entranceCode, setEntranceCode] = useState("BATTLE-58392"); // 입장 코드 상태 추가
 
   // 현재 방에 활성화된 플레이어 이름 목록
   const initialActivePlayerNames = basePlayersData.map(player => player.name);
@@ -229,6 +230,18 @@ function WaitingRoom() {
     setShowRoomSettingsModal(false);
   };
 
+  // 입장 코드 복사 핸들러
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(entranceCode);
+      setNotification({ message: "입장 코드가 복사되었습니다!", type: "success" });
+    } catch (err) {
+      setNotification({ message: "클립보드 복사에 실패했습니다.", type: "error" });
+      console.error('Failed to copy: ', err);
+    }
+    setTimeout(() => setNotification(null), 3000); // 3초 후 알림 닫기
+  };
+
   // 현재 방에 있는 실제 플레이어 목록 (isHost, isReady 상태 동적 반영)
   const currentPlayers = basePlayersData
     .filter(player => activePlayerNames.includes(player.name))
@@ -254,27 +267,45 @@ function WaitingRoom() {
   // 게임 시작 버튼 활성화 조건
   const canStartGame = isCurrentUserHost && allPlayersReady && (currentPlayers.length === maxParticipants);
 
+  const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode state
+  // Dark mode toggle function
+  const toggleDarkMode = () => {
+      setIsDarkMode(prevMode => !prevMode);
+  };
+
   return (
-    <div className="WaitingRoom" onContextMenu={(e) => e.preventDefault()}>
+    <div className={`WaitingRoom ${isDarkMode ? '' : 'light-mode'}`} onContextMenu={(e) => e.preventDefault()}>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>COBY - Coding Online Battle with You</title>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
-      <nav className="waitingRoom-glass-effect sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-blue-900/30">
+      <nav className="waitingRoom-glass-effect waitingRoom-main-container sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-blue-900/30">
         <div className="flex items-center space-x-2">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
-          <h1 className="text-2xl font-bold text-white">COBY</h1>
+          <h1 className="text-2xl font-bold ">COBY</h1>
         </div>
         <div className="flex items-center space-x-6">
+          <button onClick={toggleDarkMode} className="waitingRoom-text hover:text-blue-100 transition">
+              {isDarkMode ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                  </svg>
+                  
+              ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h1M3 12h1m15.325-4.707l-.707-.707M6.707 6.707l-.707-.707m1.414 14.14L4.929 19.071m14.14-1.414l-.707-.707M12 18a6 6 0 110-12 6 6 0 010 12z" />
+                  </svg>
+              )}
+          </button>
           <div className="flex items-center space-x-3">
             <div className="waitingRoom-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center">
               <span className="text-sm font-bold text-blue-200">다이아</span>
             </div>
             <span className="font-medium">코드마스터</span>
           </div>
-          <button id="leaveRoomBtn" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center transition" onClick={quickbtn}>
+          <button id="leaveRoomBtn" className="bg-red-600 hover:bg-red-700  px-4 py-2 rounded-lg flex items-center transition" onClick={quickbtn}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414a1 1 0 00-.293-.707L11.414 2.414A1 1 0 0010.707 2H4a1 1 0 00-1 1zm9 4a1 1 0 00-1-1H8a1 1 0 00-1 1v8a1 1 0 001 1h3a1 1 0 001-1V7z" clipRule="evenodd" />
               <path d="M3 7.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 4a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5z" />
@@ -284,13 +315,13 @@ function WaitingRoom() {
         </div>
       </nav>
       <main className="container mx-auto px-4 pt-4 transform scale-95 origin-top">
-        <div className="waitingRoom-glass-effect rounded-xl p-4">
+        <div className="waitingRoom-glass-effect waitingRoom-main-container rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-white">{roomName}</h2>
+            <h2 className="text-2xl font-bold ">{roomName}</h2>
             <div className="flex items-center space-x-3">
               {isCurrentUserHost && (
                 <button
-                  className="px-4 py-2 rounded-lg flex items-center transition bg-blue-600 hover:bg-blue-700 text-white"
+                  className="px-4 py-2 rounded-lg flex items-center transition bg-blue-600 hover:bg-blue-700 "
                   onClick={() => setShowRoomSettingsModal(true)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -301,10 +332,10 @@ function WaitingRoom() {
                 </button>
               )}
               <div className="flex items-center">
-                <span className="text-sm text-blue-300 mr-2">입장 코드:</span>
+                <span className="text-sm waitingRoom-text mr-2">입장 코드:</span>
                 <div className="waitingRoom-glass-effect rounded-lg px-3 py-1 flex items-center">
-                  <span className="text-white font-medium mr-2">BATTLE-58392</span>
-                  <button className="text-blue-400 hover:text-blue-300 transition">
+                  <span className=" font-medium mr-2">{entranceCode}</span> {/* entranceCode 상태 사용 */}
+                  <button className="waitingRoom-text hover:waitingRoom-text transition" onClick={handleCopyCode}> {/* onClick 핸들러 추가 */}
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
                       <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
@@ -316,7 +347,7 @@ function WaitingRoom() {
                 id="readyBtn"
                 className={`px-4 py-2 rounded-lg flex items-center transition ${
                   isReady ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'
-                } text-white`}
+                } `}
                 onClick={toggleReady}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -330,7 +361,7 @@ function WaitingRoom() {
                   canStartGame
                     ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-gray-600 cursor-not-allowed opacity-50'
-                } text-white`}
+                } `}
                 onClick={enterRoomBtn1}
                 disabled={!canStartGame}
               >
@@ -346,25 +377,25 @@ function WaitingRoom() {
               <div className="waitingRoom-glass-effect rounded-lg px-4 py-2">
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
                   <div className="flex items-center">
-                    <span className="text-blue-300">문제 유형:</span>
-                    <span className="text-white font-medium ml-1">{problemType}</span>
+                    <span className="waitingRoom-text">문제 유형:</span>
+                    <span className=" font-medium ml-1">{problemType}</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-blue-300">난이도:</span>
+                    <span className="waitingRoom-text">난이도:</span>
                     <span className="text-yellow-400 font-medium ml-1">{difficulty}</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-blue-300">제한 시간:</span>
-                    <span className="text-white font-medium ml-1">{timeLimit}</span>
+                    <span className="waitingRoom-text">제한 시간:</span>
+                    <span className=" font-medium ml-1">{timeLimit}</span>
                   </div>
                   <div className="flex items-center">
-                    <span className="text-blue-300">최대 참가자:</span>
-                    <span className="text-white font-medium ml-1">{maxParticipants}명</span>
+                    <span className="waitingRoom-text">최대 참가자:</span>
+                    <span className=" font-medium ml-1">{maxParticipants}명</span>
                   </div>
                   {isPrivate && (
                     <div className="flex items-center">
-                      <span className="text-blue-300">비밀방:</span>
-                      <span className="text-white font-medium ml-1">설정됨</span>
+                      <span className="waitingRoom-text">비밀방:</span>
+                      <span className=" font-medium ml-1">설정됨</span>
                     </div>
                   )}
                 </div>
@@ -375,9 +406,9 @@ function WaitingRoom() {
             </div>
             <div className="lg:col-span-2">
               <div className="waitingRoom-glass-effect rounded-xl p-4 flex flex-col h-full">
-                <h2 className="text-xl font-bold text-white mb-4 flex items-center">
+                <h2 className="text-xl font-bold  mb-4 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3 0 0119 15v3h-3zM4.75 12.094A5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
                   </svg>
                   참가자 ({currentPlayers.length}/{totalSlots})
                 </h2>
@@ -402,7 +433,7 @@ function WaitingRoom() {
           className="waitingRoom-glass-effect custom-context-menu absolute rounded-lg shadow-lg py-2 z-50"
           style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
         >
-          <ul className="text-white text-sm">
+          <ul className=" text-sm">
             <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer" onClick={() => {
                 const fullPlayer = playerData[selectedPlayer.name];
                 if (fullPlayer) {
