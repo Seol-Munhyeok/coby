@@ -5,6 +5,22 @@ import React from 'react';
 import '../WaitingRoom.css';
 
 function PlayerCard({ player, handlePlayerCardClick }) {
+  if (player.isEmpty) {
+    return (
+      <div className="waitingRoom-glass-effect rounded-xl p-4 flex flex-col items-center opacity-50 m-2">
+        <div className="mb-2">
+          <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
+        <h3 className="font-medium text-gray-400 text-center">빈 자리</h3>
+      </div>
+    );
+  }
+
+  // Existing PlayerCard rendering logic for active players
   return (
     <div
       className={`waitingRoom-player-card waitingRoom-glass-effect rounded-xl p-4 flex flex-col items-center relative m-2
@@ -15,12 +31,7 @@ function PlayerCard({ player, handlePlayerCardClick }) {
       onContextMenu={(e) => handlePlayerCardClick(e, player)}
     >
       <div className="waitingRoom-character mb-2">
-        <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-medium
-                        ${player.name === "사용자1" ? 'bg-blue-700' :
-                          player.name === "사용자2" ? 'bg-purple-700' :
-                          player.name === "코드마스터" ? 'bg-green-700' :
-                          'bg-yellow-700'
-                        }`}>
+        <div className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-medium ${player.avatarColor}`}>
           {player.avatarInitials}
         </div>
       </div>
