@@ -4,16 +4,16 @@
 import { useEffect } from 'react';
 
 function useConsoleHostCommand(setRoomHost) {
-  useEffect(() => {
-    window.getHost = () => {
-      setRoomHost("코드마스터");
-      console.log("코드마스터가 호스트가 되었습니다.");
-    };
+  // useEffect(() => {
+  //   window.getHost = () => {
+  //     setRoomHost("코드마스터");
+  //     console.log("코드마스터가 호스트가 되었습니다.");
+  //   };
 
-    return () => {
-      delete window.getHost;
-    };
-  }, [setRoomHost]);
+  //   return () => {
+  //     delete window.getHost;
+  //   };
+  // }, [setRoomHost]);
 }
 
 export default useConsoleHostCommand;
