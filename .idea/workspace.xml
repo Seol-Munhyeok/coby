@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="chore" />
+    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="chore">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -146,6 +148,10 @@
       <workItem from="1749193388197" duration="2837000" />
       <workItem from="1749370991370" duration="1984000" />
       <workItem from="1749456001497" duration="32000" />
+      <workItem from="1750056123578" duration="14000" />
+      <workItem from="1750670791059" duration="1190000" />
+      <workItem from="1750918362265" duration="597000" />
+      <workItem from="1751377309896" duration="747000" />
     </task>
     <task id="LOCAL-00001" summary="fix: db세팅">
       <option name="closed" value="true" />
