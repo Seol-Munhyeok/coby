@@ -1,17 +1,169 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './ResultRoom.css';
 import { useNavigate } from 'react-router-dom';
+import ChatWindow from './components/ChatWindow'; // ChatWindow 컴포넌트 임포트
+import useContextMenu from './hooks/useContextMenu'; // useContextMenu 훅 임포트
+import PlayerInfoModal from './components/PlayerInfoModal'; // PlayerInfoModal 컴포넌트 임포트
 
 function ResultRoom() {
   const navigate = useNavigate();
+
+  // 현재 사용자 정보
+  const currentUser = "코딩마스터";
+
+  // 플레이어 정보 데이터 (대기방과 동일)
+  const playerData = {
+    '사용자1': {
+      avatar: 'KM',
+      avatarColor: 'bg-red-500',
+      tier: '마스터',
+      level: 42,
+      winRate: '92%',
+      wins: 138,
+      losses: 12,
+      preferredTypes: {
+        '알고리즘': 45,
+        '자료구조': 30,
+        'SQL': 10,
+        '동적계획법': 15
+      },
+      recentGames: [
+        { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
+        { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
+        { name: 'SQL 챌린지 #12', time: '2일 전', result: '승리' }
+      ]
+    },
+    '사용자2': {
+      avatar: 'JH',
+      avatarColor: 'bg-yellow-500',
+      tier: '마스터',
+      level: 39,
+      winRate: '89%',
+      wins: 125,
+      losses: 15,
+      preferredTypes: {
+        '알고리즘': 60,
+        '자료구조': 20,
+        'SQL': 5,
+        '동적계획법': 15
+      },
+      recentGames: [
+        { name: '알고리즘 배틀 #128', time: '2시간 전', result: '패배' },
+        { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
+        { name: 'SQL 챌린지 #12', time: '2일 전', result: '승리' }
+      ]
+    },
+    '코딩마스터': {
+      avatar: 'CM',
+      avatarColor: 'bg-green-500',
+      tier: '다이아',
+      level: 28,
+      winRate: '78%',
+      wins: 45,
+      losses: 13,
+      preferredTypes: {
+        '알고리즘': 30,
+        '자료구조': 40,
+        'SQL': 20,
+        '동적계획법': 10
+      },
+      recentGames: [
+        { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
+        { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
+        { name: 'SQL 챌린지 #12', time: '2일 전', result: '패배' }
+      ]
+    },
+    '사용자3': {
+      avatar: 'PK',
+      avatarColor: 'bg-purple-500',
+      tier: '다이아',
+      level: 31,
+      winRate: '80%',
+      wins: 80,
+      losses: 20,
+      preferredTypes: {
+        '알고리즘': 25,
+        '자료구조': 25,
+        'SQL': 25,
+        '동적계획법': 25
+      },
+      recentGames: [
+        { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
+        { name: '자료구조 마스터 #45', time: '어제', result: '패배' },
+        { name: 'SQL 챌린지 #12', time: '2일 전', result: '승리' }
+      ]
+    }
+  };
+
+  // 플레이어 정보 모달 관련 상태
+  const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
+  const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
+  const [activeTab, setActiveTab] =useState('myCode');
+  // useContextMenu 훅 사용
+  const {
+    showContextMenu,
+    contextMenuPos,
+    selectedPlayer, // 컨텍스트 메뉴가 열린 플레이어 정보
+    contextMenuRef,
+    handlePlayerCardClick, // 플레이어 카드 클릭 핸들러 (여기서는 테이블 행에 적용)
+    setShowContextMenu,
+  } = useContextMenu();
+
+  // 채팅 메시지 상태 (초기 게임 종료 메시지들 포함)
+  const [messages, setMessages] = useState([
+    {
+      sender: "사용자1",
+      avatarInitials: playerData["사용자1"].avatar,
+      avatarColor: playerData["사용자1"].avatarColor,
+      text: "게임이 종료되었습니다",
+      isSelf: false,
+    },
+    {
+      sender: "사용자2",
+      avatarInitials: playerData["사용자2"].avatar,
+      avatarColor: playerData["사용자2"].avatarColor,
+      text: "좋은 게임이었습니다!",
+      isSelf: false,
+    },
+    {
+      sender: "사용자3",
+      avatarInitials: playerData["사용자3"].avatar,
+      avatarColor: playerData["사용자3"].avatarColor,
+      text: "다음에 또 해요~",
+      isSelf: false,
+    },
+    {
+      sender: "사용자1",
+      avatarInitials: playerData["사용자1"].avatar,
+      avatarColor: playerData["사용자1"].avatarColor,
+      text: "수고하셨습니다",
+      isSelf: false,
+    }
+  ]);
+
   const quickRoomBtn = () => {
     alert('방에서 나갑니다!');
     navigate('/mainpage');
   };
+
   const regameBtn = () => {
     alert('재대결을 준비하세요');
     navigate('/waitingRoom');
   };
+
+  // 메시지 전송 핸들러
+  const handleSendMessage = (newMessage) => {
+    console.log("Sending message:", newMessage);
+    const newMsg = {
+      sender: currentUser,
+      avatarInitials: playerData[currentUser].avatar,
+      avatarColor: playerData[currentUser].avatarColor,
+      text: newMessage,
+      isSelf: true,
+    };
+    setMessages((prevMessages) => [...prevMessages, newMsg]);
+  };
+
   return (
     <div className='resultroom'>
       <meta charSet="UTF-8" />
@@ -30,7 +182,7 @@ function ResultRoom() {
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-400">방 ID: ABCD1234</span>
             <div className="flex items-center ml-4">
-              <div className="player-avatar bg-green-500 text-white">나</div>
+              <div className="player-avatar bg-green-500 text-white">CM</div>
               <div className="ml-2">
                 <div className="text-sm font-medium">코딩마스터</div>
               </div>
@@ -77,36 +229,94 @@ function ResultRoom() {
                 </div>
                 <div className="mb-6">
                   <div className="flex space-x-4 border-b border-slate-700">
-                    <button className="py-2 px-4 tab-active">내 코드</button>
-                    <button className="py-2 px-4 text-gray-400">모범 답안</button>
-                    <button className="py-2 px-4 text-gray-400">문제 해설</button>
+                  <button
+                      className={`py-2 px-4 ${activeTab === 'myCode' ? 'tab-active' : 'text-gray-400'}`}
+                      onClick={() => setActiveTab('myCode')}
+                    >
+                      내 코드
+                    </button>
+                    <button
+                      className={`py-2 px-4 ${activeTab === 'solution' ? 'tab-active' : 'text-gray-400'}`}
+                      onClick={() => setActiveTab('solution')}
+                    >
+                      모범 답안
+                    </button>
+                    <button
+                      className={`py-2 px-4 ${activeTab === 'explanation' ? 'tab-active' : 'text-gray-400'}`}
+                      onClick={() => setActiveTab('explanation')}
+                    >
+                      문제 해설
+                    </button>
                   </div>
                   <div className="mt-4">
-                    <div className="code-block p-4 text-sm">
-                      <pre>
-                        <code>
-                          {`
-                        /**
-                         * @param {number[]} nums
-                         * @param {number} target
-                         * @return {number[]}
-                         */
-                        var twoSum = function(nums, target) {
-                            const map = new Map();
-                            
-                            for (let i = 0; i < nums.length; i++) {
-                                const complement = target - nums[i];
-                                if (map.has(complement)) {
-                                    return [map.get(complement), i];
-                                }
-                                map.set(nums[i], i);
-                            }
-                        };
-    `}
-                        </code>
-                      </pre>
-                    </div>
+                    {activeTab === 'myCode' && (
+                      <div className="code-block p-4 text-sm">
+                        <pre>
+                          <code>
+                            {`
+                          /**
+                           * @param {number[]} nums
+                           * @param {number} target
+                           * @return {number[]}
+                           */
+                          var twoSum = function(nums, target) {
+                              const map = new Map();
+
+                              for (let i = 0; i < nums.length; i++) {
+                                  const complement = target - nums[i];
+                                  if (map.has(complement)) {
+                                      return [map.get(complement), i];
+                                  }
+                                  map.set(nums[i], i);
+                              }
+                          };
+                          `}
+                          </code>
+                        </pre>
+                      </div>
+                    )}
+                    {activeTab === 'solution' && (
+                      <div className="code-block p-4 text-sm bg-blue-900 bg-opacity-30"> {/* 모범 답안 스타일 예시 */}
+                        <pre>
+                          <code>
+                            {`
+                          // 모범 답안 내용 (예시)
+                          // 더 효율적이거나 다른 방식의 풀이
+                          function optimizedTwoSum(nums, target) {
+                              const seen = new Map();
+                              for (let i = 0; i < nums.length; i++) {
+                                  const complement = target - nums[i];
+                                  if (seen.has(complement)) {
+                                      return [seen.get(complement), i];
+                                  }
+                                  seen.set(nums[i], i);
+                              }
+                              return []; // 예외 처리
+                          }
+                          `}
+                          </code>
+                        </pre>
+                      </div>
+                    )}
+                    {activeTab === 'explanation' && (
+                      <div className="explanation-block p-4 text-sm bg-gray-700 text-gray-200"> {/* 문제 해설 스타일 예시 */}
+                        <p className="mb-2">
+                          이 문제는 배열에서 두 숫자의 합이 특정 대상 값과 일치하는 인덱스를 찾는 것입니다.
+                          가장 효율적인 방법은 **해시 맵(Map 또는 Dictionary)**을 사용하는 것입니다.
+                        </p>
+                        <p className="mb-2">
+                          배열을 한 번 순회하면서 각 숫자에 대해 `target - 현재숫자`를 계산합니다.
+                          이 `complement` 값이 이미 해시 맵에 있는지 확인하고, 있다면 두 숫자를 찾은 것이므로 해당 인덱스를 반환합니다.
+                          만약 없다면 현재 숫자를 해시 맵에 저장합니다.
+                        </p>
+                        <p>
+                          시간 복잡도는 O(n)이며, 공간 복잡도는 O(n)입니다.
+                        </p>
+                      </div>
+                    )}
                   </div>
+                
+                
                 </div>
                 <div>
                   <h4 className="font-medium mb-2">성능 분석</h4>
@@ -150,7 +360,9 @@ function ResultRoom() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700">
-                      <tr className="bg-slate-700 bg-opacity-30">
+                      <tr className="bg-slate-700 bg-opacity-30 cursor-pointer hover:bg-slate-600"
+                          onClick={(e) => handlePlayerCardClick(e, { name: '사용자1' })}
+                          onContextMenu={(e) => handlePlayerCardClick(e, { name: '사용자1' })}>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <span className="text-yellow-500">1</span>
@@ -158,7 +370,7 @@ function ResultRoom() {
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="player-avatar bg-red-500 text-white">상</div>
+                            <div className="player-avatar bg-red-500 text-white">KM</div>
                             <div className="ml-2">사용자1</div>
                           </div>
                         </td>
@@ -168,7 +380,9 @@ function ResultRoom() {
                           <span className="result-badge success">정답</span>
                         </td>
                       </tr>
-                      <tr className="bg-blue-900 bg-opacity-20">
+                      <tr className="bg-blue-900 bg-opacity-20 cursor-pointer hover:bg-blue-800"
+                          onClick={(e) => handlePlayerCardClick(e, { name: '코딩마스터' })}
+                          onContextMenu={(e) => handlePlayerCardClick(e, { name: '코딩마스터' })}>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <span className="text-gray-300">2</span>
@@ -176,7 +390,7 @@ function ResultRoom() {
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="player-avatar bg-green-500 text-white">나</div>
+                            <div className="player-avatar bg-green-500 text-white">CM</div>
                             <div className="ml-2">코딩마스터</div>
                           </div>
                         </td>
@@ -186,7 +400,9 @@ function ResultRoom() {
                           <span className="result-badge success">정답</span>
                         </td>
                       </tr>
-                      <tr>
+                      <tr className="cursor-pointer hover:bg-slate-700"
+                          onClick={(e) => handlePlayerCardClick(e, { name: '사용자2' })}
+                          onContextMenu={(e) => handlePlayerCardClick(e, { name: '사용자2' })}>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <span className="text-gray-400">3</span>
@@ -194,7 +410,7 @@ function ResultRoom() {
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="player-avatar bg-yellow-500 text-white">김</div>
+                            <div className="player-avatar bg-yellow-500 text-white">JH</div>
                             <div className="ml-2">사용자2</div>
                           </div>
                         </td>
@@ -204,7 +420,9 @@ function ResultRoom() {
                           <span className="result-badge success">정답</span>
                         </td>
                       </tr>
-                      <tr>
+                      <tr className="cursor-pointer hover:bg-slate-700"
+                          onClick={(e) => handlePlayerCardClick(e, { name: '사용자3' })}
+                          onContextMenu={(e) => handlePlayerCardClick(e, { name: '사용자3' })}>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <span className="text-gray-400">4</span>
@@ -212,7 +430,7 @@ function ResultRoom() {
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="player-avatar bg-purple-500 text-white">박</div>
+                            <div className="player-avatar bg-purple-500 text-white">PK</div>
                             <div className="ml-2">사용자3</div>
                           </div>
                         </td>
@@ -229,60 +447,17 @@ function ResultRoom() {
             </div>
             {/* 오른쪽: 채팅 및 경험치 */}
             <div className="w-2/5 flex flex-col">
-              <div className="card p-4 flex-1 mb-6">
-                <h3 className="text-lg font-bold mb-3">풀이 전략 공유</h3>
-                <div className="chat-container mb-4 p-2">
-                  <div className="chat-message others p-3 mb-3">
-                    <div className="flex items-center mb-1">
-                      <div className="player-avatar bg-red-500 text-white text-xs">상</div>
-                      <div className="ml-2 text-xs font-medium">사용자1</div>
-                    </div>
-                    <div className="text-sm">
-                      게임이 종료되었습니다
-                    </div>
-                  </div>
-                  <div className="chat-message mine p-3 mb-3">
-                    <div className="text-sm">
-                      채팅 테스트
-                    </div>
-                  </div>
-                  <div className="chat-message others p-3 mb-3">
-                    <div className="flex items-center mb-1">
-                      <div className="player-avatar bg-yellow-500 text-white text-xs">김</div>
-                      <div className="ml-2 text-xs font-medium">사용자2</div>
-                    </div>
-                    <div className="text-sm">
-                      채팅1
-                    </div>
-                  </div>
-                  <div className="chat-message others p-3 mb-3">
-                    <div className="flex items-center mb-1">
-                      <div className="player-avatar bg-purple-500 text-white text-xs">박</div>
-                      <div className="ml-2 text-xs font-medium">사용자3</div>
-                    </div>
-                    <div className="text-sm">
-                      채팅2
-                    </div>
-                  </div>
-                  <div className="chat-message others p-3 mb-3">
-                    <div className="flex items-center mb-1">
-                      <div className="player-avatar bg-red-500 text-white text-xs">상</div>
-                      <div className="ml-2 text-xs font-medium">사용자1</div>
-                    </div>
-                    <div className="text-sm">
-                      수고하셨습니다
-                    </div>
-                  </div>
-                </div>
-                <div className="flex">
-                  <input type="text" placeholder="메시지를 입력하세요..." className="flex-1 bg-slate-700 border-none rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
+              {/* ChatWindow 컴포넌트 사용 */}
+              <div className="mb-6">
+                <ChatWindow
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  currentUser={currentUser}
+                  playerData={playerData}
+                  title="게임 후 채팅" // 제목을 게임 후 채팅으로 변경
+                />
               </div>
+
               <div className="card p-6 relative overflow-hidden">
                 <div className="mb-6">
                   <h3 className="text-xl font-bold mb-4">획득한 보상</h3>
@@ -343,9 +518,48 @@ function ResultRoom() {
             </div>
           </div>
         </main>
+
+        {/* PlayerInfoModal 추가 */}
+        <PlayerInfoModal
+          showModal={showPlayerInfoModal}
+          onClose={() => setShowPlayerInfoModal(false)}
+          playerData={playerInfoForModal}
+          selectedPlayerName={selectedPlayer ? selectedPlayer.name : ''}
+        />
+
+        {/* Context Menu 추가 */}
+        {showContextMenu && selectedPlayer && (
+          <div
+            ref={contextMenuRef}
+            className="waitingRoom-glass-effect custom-context-menu absolute rounded-lg shadow-lg py-2 z-50 bg-slate-700 text-white"
+            style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
+          >
+            <ul className="text-sm">
+              <li
+                className="px-4 py-2 hover:bg-blue-700 cursor-pointer"
+                onClick={() => {
+                  const fullPlayer = playerData[selectedPlayer.name];
+                  if (fullPlayer) {
+                    setPlayerInfoForModal(fullPlayer);
+                    setShowPlayerInfoModal(true);
+                  }
+                  setShowContextMenu(false);
+                }}
+              >
+                정보 보기
+              </li>
+              {/* ResultRoom에서는 방장 위임, 강퇴하기 기능이 일반적으로 필요 없으므로 주석 처리하거나 제거했습니다. */}
+              {/* <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer" onClick={handleDelegateHost}>
+                방장 위임
+              </li>
+              <li className="px-4 py-2 hover:bg-red-700 cursor-pointer" onClick={handleKickPlayer}>
+                강퇴하기
+              </li> */}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
-
   );
 }
 
