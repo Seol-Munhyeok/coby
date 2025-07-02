@@ -49,7 +49,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
                         return userRepository.save(
                                 User.builder()
                                         .email(email)
-                                        .provider(provider)
+                                        .ssoProvider(provider)
                                         .providerId(providerId)
                                         .nickname(nickname)
                                         .build()
