@@ -1,7 +1,7 @@
 /**
  * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // useEffect, useRef 추가
 import { useNavigate } from 'react-router-dom';
 import './WaitingRoom.css';
 import useContextMenu from './hooks/useContextMenu';
@@ -10,10 +10,9 @@ import PlayerCard from './components/PlayerCard';
 import PlayerInfoModal from './components/PlayerInfoModal';
 import ChatWindow from './components/ChatWindow';
 import RoomSettingsModal from './components/RoomSettingsModal';
-import ToastNotification from './components/ToastNotification'; // ToastNotification 임포트
+import ToastNotification from './components/ToastNotification';
 
 function WaitingRoom() {
-  // 플레이어 정보 데이터 (정적인 기본 데이터)
   const playerData = {
     '사용자1': {
         avatar: 'KM',
@@ -97,7 +96,6 @@ function WaitingRoom() {
     }
   };
 
-  // 모든 플레이어의 기본 데이터 (isReady는 여기서 기본값을 가짐)
   const basePlayersData = [
     { name: "사용자1", avatarInitials: "KM", tier: "마스터", level: "Lv.42", isReady: true, avatarColor: 'bg-blue-700' },
     { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isReady: true, avatarColor: 'bg-purple-700' },
@@ -107,21 +105,19 @@ function WaitingRoom() {
 
   const navigate = useNavigate();
 
-  const [isReady, setIsReady] = useState(false); // 현재 사용자의 준비 상태
+  const [isReady, setIsReady] = useState(false);
   const [roomHost, setRoomHost] = useState("코드마스터");
   const currentUser = "코드마스터";
   const isCurrentUserHost = currentUser === roomHost;
   const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
   const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
   const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);
-  const [notification, setNotification] = useState(null); // 토스트 알림 상태
-  const [entranceCode, setEntranceCode] = useState("BATTLE-58392"); // 입장 코드 상태 추가
+  const [notification, setNotification] = useState(null);
+  const [entranceCode, setEntranceCode] = useState("BATTLE-58392");
 
-  // 현재 방에 활성화된 플레이어 이름 목록
   const initialActivePlayerNames = basePlayersData.map(player => player.name);
   const [activePlayerNames, setActivePlayerNames] = useState(initialActivePlayerNames);
 
-  // 방 설정 관련 상태
   const [roomName, setRoomName] = useState("알고리즘 배틀 #129");
   const [problemType, setProblemType] = useState("알고리즘");
   const [difficulty, setDifficulty] = useState("보통");
@@ -130,8 +126,46 @@ function WaitingRoom() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [password, setPassword] = useState("");
 
-  // 채팅 메시지 상태 (나중에 웹소켓으로 받아올 메시지로 대체)
   const [messages, setMessages] = useState([]);
+  const ws = useRef(null); // WebSocket 객체를 저장할 ref
+
+  // WebSocket 연결 및 메시지 수신 로직
+  useEffect(() => {
+    // WebSocket 서버 URL (Spring Boot 애플리케이션의 WebSocketConfig에 설정된 경로와 포트를 확인)
+    // 개발 환경에서는 일반적으로 localhost:8080을 사용합니다.
+    ws.current = new WebSocket('ws://localhost:8080/ws/chat'); //
+
+    ws.current.onopen = () => { //
+      console.log('WebSocket 연결됨'); //
+      setNotification({ message: "채팅 서버에 연결되었습니다.", type: "success" }); //
+      setTimeout(() => setNotification(null), 3000); //
+    };
+
+    ws.current.onmessage = (event) => { //
+      console.log('메시지 수신:', event.data); //
+      const receivedMessage = JSON.parse(event.data); //
+      setMessages((prevMessages) => [...prevMessages, receivedMessage]); //
+    };
+
+    ws.current.onclose = () => { //
+      console.log('WebSocket 연결 해제됨'); //
+      setNotification({ message: "채팅 서버와 연결이 끊어졌습니다.", type: "error" }); //
+      setTimeout(() => setNotification(null), 3000); //
+    };
+
+    ws.current.onerror = (error) => { //
+      console.error('WebSocket 오류:', error); //
+      setNotification({ message: "채팅 서버 연결 중 오류가 발생했습니다.", type: "error" }); //
+      setTimeout(() => setNotification(null), 3000); //
+    };
+
+    // 컴포넌트 언마운트 시 WebSocket 연결 해제
+    return () => { //
+      if (ws.current) { //
+        ws.current.close(); //
+      }
+    };
+  }, []); // 빈 배열은 컴포넌트가 처음 마운트될 때 한 번만 실행되도록 함
 
   const {
     showContextMenu,
@@ -164,8 +198,7 @@ function WaitingRoom() {
       return;
     }
 
-    // 모든 조건 충족 시 게임 시작
-    alert('방에 입장합니다!'); // 이 부분은 alert 유지
+    alert('방에 입장합니다!');
     navigate('/gamepage');
   };
 
@@ -203,20 +236,22 @@ function WaitingRoom() {
     }
   };
 
-  // 메시지 전송 핸들러 (나중에 웹소켓으로 메시지를 보내는 로직으로 대체)
+  // 메시지 전송 핸들러 (웹소켓으로 메시지를 보내는 로직)
   const handleSendMessage = (newMessage) => {
-    console.log("Sending message:", newMessage);
-    const newMsg = {
-      sender: currentUser,
-      avatarInitials: playerData[currentUser].avatar,
-      avatarColor: playerData[currentUser].avatarColor,
-      text: newMessage,
-      isSelf: true,
-    };
-    setMessages((prevMessages) => [...prevMessages, newMsg]);
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) { //
+      const messageData = { //
+        sender: currentUser, //
+        avatarInitials: playerData[currentUser]?.avatar, //
+        avatarColor: playerData[currentUser]?.avatarColor, //
+        text: newMessage, //
+      };
+      ws.current.send(JSON.stringify(messageData)); //
+    } else { //
+      setNotification({ message: "채팅 서버에 연결되어 있지 않습니다.", type: "error" }); //
+      setTimeout(() => setNotification(null), 3000); //
+    }
   };
 
-  // 방 설정 변경 핸들러
   const handleSaveRoomSettings = (settings) => {
     setRoomName(settings.roomName);
     setProblemType(settings.problemType);
@@ -230,7 +265,6 @@ function WaitingRoom() {
     setShowRoomSettingsModal(false);
   };
 
-  // 입장 코드 복사 핸들러
   const handleCopyCode = async () => {
     try {
       await navigator.clipboard.writeText(entranceCode);
@@ -239,19 +273,17 @@ function WaitingRoom() {
       setNotification({ message: "클립보드 복사에 실패했습니다.", type: "error" });
       console.error('Failed to copy: ', err);
     }
-    setTimeout(() => setNotification(null), 3000); // 3초 후 알림 닫기
+    setTimeout(() => setNotification(null), 3000);
   };
 
-  // 현재 방에 있는 실제 플레이어 목록 (isHost, isReady 상태 동적 반영)
   const currentPlayers = basePlayersData
     .filter(player => activePlayerNames.includes(player.name))
     .map(player => ({
       ...player,
       isHost: player.name === roomHost,
-      isReady: player.name === currentUser ? isReady : player.isReady // 현재 사용자의 준비 상태 반영
+      isReady: player.name === currentUser ? isReady : player.isReady
     }));
 
-  // 전체 슬롯 배열 (빈 자리 포함)
   const totalSlots = maxParticipants;
   const players = Array.from({ length: totalSlots }, (_, index) => {
     if (currentPlayers[index]) {
@@ -261,14 +293,11 @@ function WaitingRoom() {
     }
   });
 
-  // 모든 플레이어가 준비 완료 상태인지 확인 (현재 방에 있는 플레이어들만 대상)
   const allPlayersReady = currentPlayers.every(player => player.isReady);
 
-  // 게임 시작 버튼 활성화 조건
   const canStartGame = isCurrentUserHost && allPlayersReady && (currentPlayers.length === maxParticipants);
 
-  const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode state
-  // Dark mode toggle function
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const toggleDarkMode = () => {
       setIsDarkMode(prevMode => !prevMode);
   };
@@ -292,7 +321,7 @@ function WaitingRoom() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
-                  
+
               ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h1M3 12h1m15.325-4.707l-.707-.707M6.707 6.707l-.707-.707m1.414 14.14L4.929 19.071m14.14-1.414l-.707-.707M12 18a6 6 0 110-12 6 6 0 010 12z" />
@@ -334,8 +363,8 @@ function WaitingRoom() {
               <div className="flex items-center">
                 <span className="text-sm waitingRoom-text mr-2">입장 코드:</span>
                 <div className="waitingRoom-glass-effect rounded-lg px-3 py-1 flex items-center">
-                  <span className=" font-medium mr-2">{entranceCode}</span> {/* entranceCode 상태 사용 */}
-                  <button className="waitingRoom-text hover:waitingRoom-text transition" onClick={handleCopyCode}> {/* onClick 핸들러 추가 */}
+                  <span className=" font-medium mr-2">{entranceCode}</span>
+                  <button className="waitingRoom-text hover:waitingRoom-text transition" onClick={handleCopyCode}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
                       <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
@@ -481,7 +510,6 @@ function WaitingRoom() {
         currentParticipantsCount={currentPlayers.length}
       />
 
-      {/* 토스트 알림 표시 */}
       {notification && (
         <ToastNotification
             message={notification.message}
