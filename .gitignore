@@ -44,3 +44,6 @@ out/
 
 # IntelliJ config
 *.xml
+
+**/.env.idea/
+backend/.env

@@ -1,0 +1,2 @@
+rootProject.name = 'coby'
+include 'backend', 'frontend', 'judge'
