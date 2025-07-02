@@ -1,11 +1,41 @@
-.BR-timer {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #f97316;
+/* BattleRoom.css */
+
+/* Timer Styles */
+.BR-timer-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 300px;
 }
 
+.BR-progress-bar-wrapper {
+    width: 100%;
+    background-color: #4A5568;
+    border-radius: 9999px;
+    height: 8px;
+    overflow: hidden;
+}
 
+.BR-progress-bar {
+    background-color: #10B981;
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 1s linear;
+}
 
+.BR-countdown-time {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #F97316;
+}
+
+.BR-total-time {
+    font-size: 0.875rem;
+    color: #CBD5E0;
+}
+
+/* Player Card Styles (if not fully handled by Tailwind) */
 .BR-player-card {
     background-color: #1e293b;
     border-radius: 0.5rem;
@@ -26,7 +56,7 @@
     font-weight: bold;
 }
 
-
+/* Loading Modal & Spinner Animations */
 @keyframes BR-spin {
     to { transform: rotate(360deg); }
 }
@@ -46,4 +76,74 @@
 
 .BR-modal-backdrop {
     backdrop-filter: blur(4px);
+}
+
+/* Styles for react-resizable-panels handle (Problem/Editor split - Vertical handle) */
+.resize-handle { /* This will now explicitly be for vertical handles */
+  width: 2px; /* 얇은 수직 핸들 */
+  background-color: transparent;
+  border-left: 1px solid #64748b; /* slate-500 정도의 색상으로 얇은 경계선 (더 잘 보이게) */
+  border-right: 1px solid #64748b;
+  opacity: 0.7;
+  cursor: col-resize; /* 좌우 리사이즈 */
+  transition: all 0.2s ease-in-out;
+  flex-shrink: 0;
+  margin: 0 4px; /* 좌우 마진 */
+  position: relative;
+}
+
+.resize-handle:hover {
+  width: 4px;
+  background-color: #3b82f6;
+  opacity: 1;
+  border-color: transparent;
+}
+
+/* New Styles for Horizontal Resize Handle (Editor/Result split - Horizontal handle) */
+.horizontal-resize-handle {
+  height: 2px; /* 얇은 수평 핸들 */
+  background-color: transparent;
+  border-top: 1px solid #64748b; /* 상하 경계선 (더 잘 보이게) */
+  border-bottom: 1px solid #64748b;
+  opacity: 0.7;
+  cursor: row-resize; /* 상하 리사이즈 */
+  transition: all 0.2s ease-in-out;
+  flex-shrink: 0;
+  margin: 4px 0; /* 상하 마진 */
+  position: relative;
+}
+
+.horizontal-resize-handle:hover {
+  height: 4px;
+  background-color: #3b82f6;
+  opacity: 1;
+  border-color: transparent;
+}
+
+/* CSS Variables for drawer widths */
+:root {
+  --drawer-fully-closed-width: 50px; /* 드로어 완전 닫힘 너비 (버튼만 보임) */
+  --drawer-partially-open-width: 150px; /* 드로어 일부 열림 너비 (기존 닫힘, 프로필/이름/줄 수) */
+  --drawer-fully-open-width: 300px; /* 드로어 완전 열림 너비 (기존 열림) */
+}
+
+/* Drawer Styles */
+.drawer {
+  width: var(--drawer-fully-closed-width); /* 기본은 완전 닫힘 */
+  transition: width 0.3s ease-in-out; /* 너비 변경 애니메이션 */
+  flex-shrink: 0; /* 내용이 줄어들지 않도록 함 */
+  height: 100%; /* 부모의 전체 높이 */
+  overflow-x: hidden; /* Prevent horizontal scrollbar during transition */
+}
+
+.drawer-fully-closed {
+  width: var(--drawer-fully-closed-width);
+}
+
+.drawer-partially-open {
+  width: var(--drawer-partially-open-width);
+}
+
+.drawer-fully-open {
+  width: var(--drawer-fully-open-width);
 }
