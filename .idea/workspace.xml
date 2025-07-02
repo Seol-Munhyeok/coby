@@ -4,13 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="chore">
-      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/config/WebClientConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="9fd9badf-aafc-498b-99b2-3bae7a708e74" name="Changes" comment="feat: OAuth 관련 로직 추가">
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/config/SecurityConfig.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/controller/LoginController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/repository/UserRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/service/CustomOAuth2UserService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/backend/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/config/WebConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/config/WebConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/service/JudgeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/service/JudgeService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/entity/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/example/coby/entity/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/resources/application.yml" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/resources/application.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,6 +83,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Gradle.Build coby.executor": "Run",
     "Gradle.backend 빌드.executor": "Run",
     "RequestMappingsPanelOrder0": "0",
     "RequestMappingsPanelOrder1": "1",
@@ -90,7 +93,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "Spring Boot.CobyApplication.executor": "Run",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "#43 on feat/oauth",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "D:/coby",
     "node.js.detected.package.eslint": "true",
@@ -151,15 +154,57 @@
       <workItem from="1749642027703" duration="217000" />
       <workItem from="1749651139426" duration="14000" />
       <workItem from="1750649272672" duration="3829000" />
-      <workItem from="1750658776640" duration="718000" />
+      <workItem from="1750658776640" duration="4017000" />
+      <workItem from="1750748632392" duration="2975000" />
+      <workItem from="1750902685562" duration="428000" />
+      <workItem from="1751195251473" duration="247000" />
+      <workItem from="1751370635489" duration="759000" />
+      <workItem from="1751433142470" duration="2344000" />
+      <workItem from="1751440487276" duration="28000" />
     </task>
+    <task id="LOCAL-00001" summary="refactor: RestTemplate 대신 WebClient 방식으로 변경">
+      <option name="closed" value="true" />
+      <created>1750661773232</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1750661773232</updated>
+    </task>
+    <task id="LOCAL-00002" summary="feat: OAuth 관련 로직 추가">
+      <option name="closed" value="true" />
+      <created>1751434582800</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1751434582800</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="CUSTOM_BOOLEAN_PROPERTIES">
+                <map>
+                  <entry key="Show.Git.Branches" value="true" />
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="chore: gitignore 수정" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: gitignore 수정" />
+    <MESSAGE value="refactor: RestTemplate 대신 WebClient 방식으로 변경" />
+    <MESSAGE value="feat: OAuth 관련 로직 추가" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: OAuth 관련 로직 추가" />
   </component>
 </project>
