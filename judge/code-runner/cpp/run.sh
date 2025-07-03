@@ -1,14 +1,14 @@
 #!/bin/bash
-cd /app/code
+cd /app/code_root/$TARGET_UUID
 
-g++ /app/code/Main.cpp -o /app/code/Main.out
+g++ /app/code_root/$TARGET_UUID/Main.cpp -o /app/code_root/$TARGET_UUID/Main.out
 # 두 파일을 병렬로 한 줄씩 읽음
 test_count=0
 total_real_time=0
 total_memory=0
-RUN_CMD="/app/code/Main.out"
+RUN_CMD="/app/code_root/$TARGET_UUID/Main.out"
 
-dos2unix /app/code/*.txt > /dev/null 2>&1
+dos2unix *.txt > /dev/null 2>&1
 
 # 두 파일을 병렬로 한 줄씩 읽음
 while IFS=$'\t' read -r testcase expected; do

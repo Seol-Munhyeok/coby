@@ -61,9 +61,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 LANGUAGE_TO_IMAGE = {
-    ".java": "code-runner-java",
-    ".cpp": "code-runner-cpp",
-    ".py": "code-runner-python"
+    ".java": "custiya/code-runner-java",
+    ".cpp": "custiya/code-runner-cpp",
+    ".py": "custiya/code-runner-python"
 }
 
 # language: str = Form(...) 
@@ -80,7 +80,8 @@ async def compile_code(code: UploadFile = File(...),
         return PlainTextResponse(f"Unsupported language: {code_extension}", status_code=400)
 
     # 고유한 작업 디렉토리 생성 (절대 경로 사용)
-    workdir = os.path.abspath(f"/tmp/{uuid.uuid4().hex}")
+    shared_volume_base = "/app/shared_volume"
+    workdir = os.path.join(shared_volume_base, uuid.uuid4().hex)
     os.makedirs(workdir, exist_ok=True, mode=0o755)  # 권한 설정 추가
     logger.info(f"Created working directory: {workdir}")
 
@@ -124,16 +125,34 @@ async def compile_code(code: UploadFile = File(...),
             
         with open(resultfilepath, "wb") as f:
             f.write(content)
-        
-        logger.info(f"Saved resultfile to {resultfilepath}")
+
+        workdir_uuid_name = os.path.basename(workdir)
+        logger.info(f"Saved resultfile to {workdir_uuid_name}")
         # 도커 명령 실행
         docker_cmd = [
             "docker", "run", "--rm",
-            "-v", f"{workdir}:/app/code",  # 전체 디렉토리 마운트
+            "-v", "compiler_data:/app/code_root",  # 전체 디렉토리 마운트
+            "-e", f"TARGET_UUID={workdir_uuid_name}",
             LANGUAGE_TO_IMAGE[code_extension]
         ]
+
         logger.info(f"Executing docker command: {' '.join(docker_cmd)}")
-        
+        logger.info(f"Checking workdir contents on host before docker run: {workdir}")
+        # 호스트 파일 시스템의 workdir 내용을 확인 (컨테이너 내부에서 실행)
+        # 이 명령의 출력은 main.py 컨테이너의 STDOUT에 나타남
+        # check=True로 설정하여 ls 명령어 실패시 예외 발생
+        try:
+            ls_output = subprocess.run(
+                ["ls", "-la", workdir],
+                capture_output=True,
+                check=True,
+                text=True # 텍스트 모드로 stdout/stderr 디코딩
+            )
+            logger.info(f"Host workdir contents (before docker run):\n{ls_output.stdout.strip()}")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to list host workdir: {workdir}. Error: {e.stderr.strip()}")
+
+
         try:
             result = subprocess.run(
                 docker_cmd,
