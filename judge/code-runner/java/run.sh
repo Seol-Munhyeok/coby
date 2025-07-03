@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /app/code
+cd /app/code_root/$TARGET_UUID
 javac Main.java
 # 두 파일을 병렬로 한 줄씩 읽음
 test_count=0
@@ -7,7 +7,7 @@ total_real_time=0
 total_memory=0
 RUN_CMD="java Main"
 
-dos2unix /app/code/*.txt > /dev/null 2>&1
+dos2unix *.txt > /dev/null 2>&1
 
 # 두 파일을 병렬로 한 줄씩 읽음
 while IFS=$'\t' read -r testcase expected; do

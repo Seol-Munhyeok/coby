@@ -1,5 +1,12 @@
-## Compile Server 설정하는 법
-
+# Compile Server 설정하는 법
+---
+## aws
+* ec2접속해서 아래 명령어만 입력
+```
+docker restart code-compiler-api
+```
+## 로컬에서
+---
 ### 환경 설정
 * 경로 설정 : COBY\judge
 * 환경 설정 : 명령어 입력
