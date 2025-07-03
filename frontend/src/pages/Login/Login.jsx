@@ -190,34 +190,6 @@ const CobyLoginPage = () => {
     }, 500);
   };
 
-  // 소셜 로그인 버튼 클릭 처리
-  const handleSocialLogin = (provider) => {
-    const buttons = document.querySelectorAll('.social-btn');
-    buttons.forEach(btn => {
-      btn.classList.add('opacity-50');
-      btn.disabled = true;
-    });
-
-    // 로봇 애니메이션
-    animateRobot();
-
-    // 별 뿌리기 효과
-    const robotHead = document.querySelector('.robot-head');
-    if (robotHead) {
-      const rect = robotHead.getBoundingClientRect();
-      createStarBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
-    }
-
-    // NOTE: 여기서는 실제 로그인 로직이 아닌 애니메이션만 처리
-    // 실제 OAuth 리디렉션은 각 버튼의 onClick 함수에서 처리합니다.
-    setTimeout(() => {
-      alert(`${provider} 로그인 시도 중...`);
-      buttons.forEach(btn => {
-        btn.classList.remove('opacity-50');
-        btn.disabled = false;
-      });
-    }, 800);
-  };
 
 
   // 로봇 클릭 처리
@@ -240,45 +212,42 @@ const CobyLoginPage = () => {
 
   // 카카오 및 깃허브는 기존 handleSocialLogin 애니메이션만 호출
   const handleKakaoLogin = () => {
-    handleSocialLogin('Kakao');
-    // 여기에 실제 카카오 OAuth 리디렉션 로직 추가 (필요시)
-    // 예: window.location.href = 'YOUR_KAKAO_AUTH_URL';
-    navigate('/nickname');
+    window.location.href = 'http://localhost:8080/oauth2/authorization/kakao'
   };
 
-  const handleGitHubLogin = () => {
-    handleSocialLogin('GitHub');
-    // 여기에 실제 깃허브 OAuth 리디렉션 로직 추가 (필요시)
-    // 예: window.location.href = 'YOUR_GITHUB_AUTH_URL';
-    navigate('/nickname');
-  };
+  // const handleGitHubLogin = () => {
+  //   handleSocialLogin('GitHub');
+  //   // 여기에 실제 깃허브 OAuth 리디렉션 로직 추가 (필요시)
+  //   // 예: window.location.href = 'YOUR_GITHUB_AUTH_URL';
+  //   navigate('/nickname');
+  // };
 
   useEffect(() => {
     createStars();
     createBubbles();
 
-    // 2. 로그인 완료 후 이동할 프론트 URL 처리
-    // 현재 URL이 /oauth/success 인지 확인
-    const checkLoginSuccess = async () => {
-      if (window.location.pathname === '/oauth/success') {
-        try {
-          // 3. 로그인 성공 후 사용자 정보 요청 URL
-          const response = await axios.get('http://localhost:8080/login/success', {
-            withCredentials: true // 세션 쿠키 등을 주고받기 위해 필요
-          });
-          console.log('User Info:', response.data);
-          alert('Google 로그인 성공! COBY 코딩 대결에 오신 것을 환영합니다!');
-          // 사용자 정보를 받았다면 닉네임 입력 페이지로 이동
-          navigate('/nickname');
-        } catch (error) {
-          console.error('Failed to fetch user info after Google login:', error);
-          alert('로그인 처리 중 오류가 발생했습니다.');
-          navigate('/login'); // 로그인 실패 시 다시 로그인 페이지로
-        }
-      }
-    };
+    // // 2. 로그인 완료 후 이동할 프론트 URL 처리
+    // // 현재 URL이 /oauth/success 인지 확인
+    // const checkLoginSuccess = async () => {
+    //   if (window.location.pathname === '/oauth/success') {
+    //     try {
+    //       // 3. 로그인 성공 후 사용자 정보 요청 URL
+    //       const response = await axios.get('http://localhost:8080/login/success', {
+    //         withCredentials: true // 세션 쿠키 등을 주고받기 위해 필요
+    //       });
+    //       console.log('User Info:', response.data);
+    //       alert('로그인 성공! COBY 코딩 대결에 오신 것을 환영합니다!');
+    //       // 사용자 정보를 받았다면 닉네임 입력 페이지로 이동
+    //       navigate('/nickname');
+    //     } catch (error) {
+    //       console.error('Failed to fetch user info after Google login:', error);
+    //       alert('로그인 처리 중 오류가 발생했습니다.');
+    //       navigate('/login'); // 로그인 실패 시 다시 로그인 페이지로
+    //     }
+    //   }
+    // };
 
-    checkLoginSuccess();
+    // checkLoginSuccess();
   }, [navigate]); // navigate가 변경될 때마다 useEffect 재실행 방지
 
   return (
@@ -385,7 +354,7 @@ const CobyLoginPage = () => {
                 <span>카카오로 로그인</span>
               </button>
 
-              <button
+              {/* <button
                 onClick={handleGitHubLogin} // 깃허브 로그인 버튼 클릭 시 handleGitHubLogin 호출
                 className="social-btn btn-click-effect w-full bg-gray-800 text-white"
               >
@@ -393,7 +362,7 @@ const CobyLoginPage = () => {
                   <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
                 </svg>
                 <span>GitHub로 로그인</span>
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
