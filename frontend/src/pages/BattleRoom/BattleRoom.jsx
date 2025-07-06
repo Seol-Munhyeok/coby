@@ -308,21 +308,6 @@ for num in range(len(n)):
 
   // 부정행위 감지를 위한 useEffect
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // 페이지가 숨겨졌을 때 (다른 탭, 다른 브라우저, 최소화 등)
-        setWarningCount(prevCount => {
-          const newCount = prevCount + 1;
-          if (newCount >= MAX_WARNINGS) {
-            setCheatingDetected(true);
-            showModal("부정행위 감지", "부정행위가 3회 이상 감지되어 더 이상 코드를 제출할 수 없습니다.", "error");
-          } else {
-            showModal("경고!", `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
-          }
-          return newCount;
-        });
-      }
-    };
 
     const handleBlur = () => {
       // 현재 창에서 포커스가 없어졌을 때
@@ -342,33 +327,14 @@ for num in range(len(n)):
       }
     };
 
-    const handleKeyDown = (event) => {
-        if (event.altKey && event.key === 'Tab') {
-            event.preventDefault(); // 기본 Alt+Tab 동작 방지 (선택 사항)
-            setWarningCount(prevCount => {
-                const newCount = prevCount + 1;
-                if (newCount >= MAX_WARNINGS) {
-                    setCheatingDetected(true);
-                    showModal("부정행위 감지", "부정행위가 3회 이상 감지되어 더 이상 코드를 제출할 수 없습니다.", "error");
-                } else {
-                    showModal("경고!", `화면 이탈(Alt+Tab)이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
-                }
-                return newCount;
-            });
-        }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleBlur);
-    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [warningCount, cheatingDetected]); // warningCount와 cheatingDetected를 의존성 배열에 추가
 
+  
 // 클립보드 초기화 (페이지 로드 시 1회만 실행)
   useEffect(() => {
     async function clearClipboardOnLoad() {
@@ -426,17 +392,7 @@ for num in range(len(n)):
                   </svg>
               )}
           </button>
-          {/* 전체 화면 버튼 제거 (Modal이 대신 역할을 함) */}
-          {/* <button
-            onClick={requestFullScreen}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm flex items-center"
-            title="전체 화면으로 보기"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m0 0l-5 5M4 16v4m0 0h4m0 0l5-5m11 1v4m0 0h-4m0 0l-5-5" />
-            </svg>
-            전체 화면
-          </button> */}
+          
           <div className="flex items-center">
             <div className="BR-player-avatar bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">나</div>
             <div className="ml-2 text-sm font-medium">코딩마스터</div>
@@ -590,7 +546,8 @@ for num in range(len(n)):
                   <Panel defaultSize={30} minSize={10} className="bg-slate-800 rounded-xl p-4 flex flex-col"> {/* Added flex flex-col */}
                     <div className="flex items-center justify-between mb-2"> {/* New flex container for title and button */}
                       <h3 className="text-xl font-bold">실행 결과</h3> {/* Removed mb-2 here, moved to parent div */}
-                      <button
+                      <div className="flex">
+                        <button
                         onClick={handleSubmit}
                         className="bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg font-bold text-white flex items-center gap-2 text-base"
                         disabled={cheatingDetected} // 부정행위 감지 시 버튼 비활성화
@@ -600,6 +557,20 @@ for num in range(len(n)):
                         </svg>
                         실행
                       </button>
+
+                      <button
+                        onClick={handleGiveUp}
+                        className="bg-grey-600 hover:bg-grey-700 py-2 px-4 rounded-lg font-bold text-white flex items-center gap-2 text-base"
+                        disabled={cheatingDetected} // 부정행위 감지 시 버튼 비활성화
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.027A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                        </svg>
+                        포기
+                      </button>
+
+                      </div>
+                      
                     </div>
                     <pre className="bg-slate-700 p-3 rounded text-sm text-slate-200 whitespace-pre-wrap flex-1 overflow-y-auto">
                       {executionResult}

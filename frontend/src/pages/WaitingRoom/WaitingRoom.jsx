@@ -1,7 +1,7 @@
 /**
  * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
  */
-import React, { useState, useEffect, useRef } from 'react'; // useEffect, useRef 추가
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './WaitingRoom.css';
 import useContextMenu from './hooks/useContextMenu';
@@ -11,6 +11,7 @@ import PlayerInfoModal from './components/PlayerInfoModal';
 import ChatWindow from './components/ChatWindow';
 import RoomSettingsModal from './components/RoomSettingsModal';
 import ToastNotification from './components/ToastNotification';
+import { useWebSocket } from '../WebSocket/WebSocketContext';
 
 function WaitingRoom() {
   const playerData = {
@@ -126,47 +127,6 @@ function WaitingRoom() {
   const [isPrivate, setIsPrivate] = useState(false);
   const [password, setPassword] = useState("");
 
-  const [messages, setMessages] = useState([]);
-  const ws = useRef(null); // WebSocket 객체를 저장할 ref
-
-  // WebSocket 연결 및 메시지 수신 로직
-  useEffect(() => {
-    // WebSocket 서버 URL (Spring Boot 애플리케이션의 WebSocketConfig에 설정된 경로와 포트를 확인)
-    // 개발 환경에서는 일반적으로 localhost:8080을 사용합니다.
-    ws.current = new WebSocket('ws://localhost:8080/ws/chat'); //
-
-    ws.current.onopen = () => { //
-      console.log('WebSocket 연결됨'); //
-      setNotification({ message: "채팅 서버에 연결되었습니다.", type: "success" }); //
-      setTimeout(() => setNotification(null), 3000); //
-    };
-
-    ws.current.onmessage = (event) => { //
-      console.log('메시지 수신:', event.data); //
-      const receivedMessage = JSON.parse(event.data); //
-      setMessages((prevMessages) => [...prevMessages, receivedMessage]); //
-    };
-
-    ws.current.onclose = () => { //
-      console.log('WebSocket 연결 해제됨'); //
-      setNotification({ message: "채팅 서버와 연결이 끊어졌습니다.", type: "error" }); //
-      setTimeout(() => setNotification(null), 3000); //
-    };
-
-    ws.current.onerror = (error) => { //
-      console.error('WebSocket 오류:', error); //
-      setNotification({ message: "채팅 서버 연결 중 오류가 발생했습니다.", type: "error" }); //
-      setTimeout(() => setNotification(null), 3000); //
-    };
-
-    // 컴포넌트 언마운트 시 WebSocket 연결 해제
-    return () => { //
-      if (ws.current) { //
-        ws.current.close(); //
-      }
-    };
-  }, []); // 빈 배열은 컴포넌트가 처음 마운트될 때 한 번만 실행되도록 함
-
   const {
     showContextMenu,
     contextMenuPos,
@@ -177,7 +137,7 @@ function WaitingRoom() {
     setSelectedPlayer,
   } = useContextMenu();
 
-  useConsoleHostCommand(setRoomHost);
+  // useConsoleHostCommand(setRoomHost);
 
   const enterRoomBtn1 = () => {
     if (!isCurrentUserHost) {
@@ -236,20 +196,32 @@ function WaitingRoom() {
     }
   };
 
-  // 메시지 전송 핸들러 (웹소켓으로 메시지를 보내는 로직)
-  const handleSendMessage = (newMessage) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) { //
-      const messageData = { //
-        sender: currentUser, //
-        avatarInitials: playerData[currentUser]?.avatar, //
-        avatarColor: playerData[currentUser]?.avatarColor, //
-        text: newMessage, //
-      };
-      ws.current.send(JSON.stringify(messageData)); //
-    } else { //
-      setNotification({ message: "채팅 서버에 연결되어 있지 않습니다.", type: "error" }); //
-      setTimeout(() => setNotification(null), 3000); //
+  
+  const { messages, sendMessage, isConnected, error } = useWebSocket();
+  // Use useEffect to show notifications based on WebSocket connection status
+  useEffect(() => {
+    if (isConnected) {
+      setNotification({ message: "채팅 서버에 연결되었습니다.", type: "success" });
+    } else if (error) {
+      setNotification({ message: error, type: "error" });
+    } else {
+      setNotification({ message: "채팅 서버와 연결이 끊어졌습니다.", type: "error" });
     }
+    const timer = setTimeout(() => setNotification(null), 3000);
+    return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
+  }, [isConnected, error]);
+  
+  // Use the sendMessage function from the context
+  const handleSendMessage = (newMessage) => {
+    const messageData = {
+      // UID : 1,
+      sender: currentUser,
+      // avatarInitials: playerData[currentUser]?.avatar,
+      // avatarColor: playerData[currentUser]?.avatarColor,
+      profileUrl: 'https://example.com/avatars/user1.jpg',
+      text: newMessage,
+    };
+    sendMessage(messageData); // Call the context's sendMessage
   };
 
   const handleSaveRoomSettings = (settings) => {

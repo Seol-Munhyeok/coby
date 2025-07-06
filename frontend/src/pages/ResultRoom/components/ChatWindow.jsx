@@ -3,13 +3,12 @@
  * 웹소켓 연동을 고려하여 메시지 목록과 전송 기능을 분리합니다.
  */
 import React, { useState, useRef, useEffect } from 'react';
-import '../ResultRoom'; // WaitingRoom.css에 있는 스타일을 사용하기 위해 import
+import '../ResultRoom.css';
 
 function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
   const [inputMessage, setInputMessage] = useState('');
   const chatMessagesRef = useRef(null);
 
-  // 메시지가 추가될 때마다 스크롤을 맨 아래로 이동
   useEffect(() => {
     if (chatMessagesRef.current) {
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
@@ -45,17 +44,30 @@ function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
       <div id="chatMessages" className="overflow-y-auto waitingRoom-custom-scrollbar space-y-3 mb-3 h-[300px]" ref={chatMessagesRef}>
         {messages.map((msg, index) => (
           <div key={index} className={`flex items-start ${msg.sender === currentUser ? 'justify-end' : ''}`}>
+            {/* msg.sender !== currentUser 조건으로 아바타 표시를 제어 */}
             {msg.sender !== currentUser && (
-              <div className={`w-8 h-8 rounded-full ${playerData[msg.sender]?.avatarColor || 'bg-gray-500'} flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0`}>
-                {playerData[msg.sender]?.avatar || msg.sender.charAt(0)}
-              </div>
+              <div className="avatar-wrapper w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                {playerData?.[msg.sender]?.profileUrl ? (
+                    <img 
+                        src={playerData[msg.sender].profileUrl} 
+                        alt={`${msg.sender} 아바타`} 
+                        className="w-full h-full object-cover" 
+                    />
+                ) : (
+                    // 이미지 없을 경우 기존 이니셜/색상 폴백 (선택 사항)
+                    <div className={`w-full h-full flex items-center justify-center text-xs font-medium ${playerData?.[msg.sender]?.avatarColor || 'bg-gray-500'}`}>
+                        {playerData?.[msg.sender]?.avatar || msg.sender.charAt(0)}
+                    </div>
+                )}
+            </div>
             )}
             <div className={`waitingRoom-chat-bubble rounded-lg p-2 max-w-[80%] ${msg.sender === currentUser ? 'waitingRoom-chat-bubble-right bg-blue-600/50' : 'waitingRoom-chat-bubble-left bg-blue-900/50'}`}>
               <p className="text-xs waitingRoom-text mb-1">
-                {msg.sender === currentUser ? '코드마스터 (나)' : msg.sender}
+                {msg.sender === currentUser ? '코딩마스터 (나)' : msg.sender}
               </p>
               <p className="text-sm ">{msg.text}</p>
             </div>
+            {/* msg.sender === currentUser 조건으로 아바타 표시를 제어 */}
             {msg.sender === currentUser && (
               <div className={`w-8 h-8 rounded-full ${playerData[msg.sender]?.avatarColor || 'bg-gray-500'} flex items-center justify-center text-xs font-medium ml-2 flex-shrink-0`}>
                 {playerData[msg.sender]?.avatar || msg.sender.charAt(0)}

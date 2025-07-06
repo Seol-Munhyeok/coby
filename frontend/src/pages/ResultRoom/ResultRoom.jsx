@@ -1,12 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './ResultRoom.css';
 import { useNavigate } from 'react-router-dom';
 import ChatWindow from './components/ChatWindow'; // ChatWindow 컴포넌트 임포트
 import useContextMenu from './hooks/useContextMenu'; // useContextMenu 훅 임포트
 import PlayerInfoModal from './components/PlayerInfoModal'; // PlayerInfoModal 컴포넌트 임포트
+import { useWebSocket } from '../WebSocket/WebSocketContext';
+import ToastNotification from './components/ToastNotification';
 
 function ResultRoom() {
   const navigate = useNavigate();
+  const { messages, sendMessage, isConnected, error } = useWebSocket();
+  const [notification, setNotification] = useState(null);
+
+  // Use useEffect to show notifications based on WebSocket connection status
+  useEffect(() => {
+    if (isConnected) {
+      setNotification({ message: "채팅 서버에 연결되었습니다.", type: "success" });
+    } else if (error) {
+      setNotification({ message: error, type: "error" });
+    } else {
+      setNotification({ message: "채팅 서버와 연결이 끊어졌습니다.", type: "error" });
+    }
+    const timer = setTimeout(() => setNotification(null), 3000);
+    return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
+  }, [isConnected, error]);
+  
+  // Use the sendMessage function from the context
+  const handleSendMessage = (newMessage) => {
+    const messageData = {
+      // UID : 1,
+      sender: currentUser,
+      // avatarInitials: playerData[currentUser]?.avatar,
+      // avatarColor: playerData[currentUser]?.avatarColor,
+      profileUrl: 'https://example.com/avatars/user1.jpg',
+      text: newMessage,
+    };
+    sendMessage(messageData); // Call the context's sendMessage
+  };
 
   // 현재 사용자 정보
   const currentUser = "코딩마스터";
@@ -109,37 +139,6 @@ function ResultRoom() {
     setShowContextMenu,
   } = useContextMenu();
 
-  // 채팅 메시지 상태 (초기 게임 종료 메시지들 포함)
-  const [messages, setMessages] = useState([
-    {
-      sender: "사용자1",
-      avatarInitials: playerData["사용자1"].avatar,
-      avatarColor: playerData["사용자1"].avatarColor,
-      text: "게임이 종료되었습니다",
-      isSelf: false,
-    },
-    {
-      sender: "사용자2",
-      avatarInitials: playerData["사용자2"].avatar,
-      avatarColor: playerData["사용자2"].avatarColor,
-      text: "좋은 게임이었습니다!",
-      isSelf: false,
-    },
-    {
-      sender: "사용자3",
-      avatarInitials: playerData["사용자3"].avatar,
-      avatarColor: playerData["사용자3"].avatarColor,
-      text: "다음에 또 해요~",
-      isSelf: false,
-    },
-    {
-      sender: "사용자1",
-      avatarInitials: playerData["사용자1"].avatar,
-      avatarColor: playerData["사용자1"].avatarColor,
-      text: "수고하셨습니다",
-      isSelf: false,
-    }
-  ]);
 
   const quickRoomBtn = () => {
     alert('방에서 나갑니다!');
@@ -151,18 +150,6 @@ function ResultRoom() {
     navigate('/waitingRoom');
   };
 
-  // 메시지 전송 핸들러
-  const handleSendMessage = (newMessage) => {
-    console.log("Sending message:", newMessage);
-    const newMsg = {
-      sender: currentUser,
-      avatarInitials: playerData[currentUser].avatar,
-      avatarColor: playerData[currentUser].avatarColor,
-      text: newMessage,
-      isSelf: true,
-    };
-    setMessages((prevMessages) => [...prevMessages, newMsg]);
-  };
 
   return (
     <div className='resultroom'>
@@ -527,6 +514,14 @@ function ResultRoom() {
           selectedPlayerName={selectedPlayer ? selectedPlayer.name : ''}
         />
 
+        {notification && (
+        <ToastNotification
+            message={notification.message}
+            type={notification.type}
+            onClose={() => setNotification(null)}
+        />
+      )}
+
         {/* Context Menu 추가 */}
         {showContextMenu && selectedPlayer && (
           <div
@@ -548,13 +543,6 @@ function ResultRoom() {
               >
                 정보 보기
               </li>
-              {/* ResultRoom에서는 방장 위임, 강퇴하기 기능이 일반적으로 필요 없으므로 주석 처리하거나 제거했습니다. */}
-              {/* <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer" onClick={handleDelegateHost}>
-                방장 위임
-              </li>
-              <li className="px-4 py-2 hover:bg-red-700 cursor-pointer" onClick={handleKickPlayer}>
-                강퇴하기
-              </li> */}
             </ul>
           </div>
         )}
