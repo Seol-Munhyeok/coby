@@ -46,9 +46,20 @@ function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
           <div key={index} className={`flex items-start ${msg.sender === currentUser ? 'justify-end' : ''}`}>
             {/* msg.sender !== currentUser 조건으로 아바타 표시를 제어 */}
             {msg.sender !== currentUser && (
-              <div className={`w-8 h-8 rounded-full ${playerData[msg.sender]?.avatarColor || 'bg-gray-500'} flex items-center justify-center text-xs font-medium mr-2 flex-shrink-0`}>
-                {playerData[msg.sender]?.avatar || msg.sender.charAt(0)}
-              </div>
+              <div className="avatar-wrapper w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                {playerData?.[msg.sender]?.profileUrl ? (
+                    <img 
+                        src={playerData[msg.sender].profileUrl} 
+                        alt={`${msg.sender} 아바타`} 
+                        className="w-full h-full object-cover" 
+                    />
+                ) : (
+                    // 이미지 없을 경우 기존 이니셜/색상 폴백 (선택 사항)
+                    <div className={`w-full h-full flex items-center justify-center text-xs font-medium ${playerData?.[msg.sender]?.avatarColor || 'bg-gray-500'}`}>
+                        {playerData?.[msg.sender]?.avatar || msg.sender.charAt(0)}
+                    </div>
+                )}
+            </div>
             )}
             <div className={`waitingRoom-chat-bubble rounded-lg p-2 max-w-[80%] ${msg.sender === currentUser ? 'waitingRoom-chat-bubble-right bg-blue-600/50' : 'waitingRoom-chat-bubble-left bg-blue-900/50'}`}>
               <p className="text-xs waitingRoom-text mb-1">
