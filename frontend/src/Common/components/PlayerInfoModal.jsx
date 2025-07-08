@@ -2,7 +2,6 @@
 /**
  * 플레이어 정보 모달을 렌더링하는 컴포넌트입니다.
  */
-import '../ResultRoom.css';
 
 import React, { useEffect, useState } from 'react'; // Import useEffect and useState
 import PieChart from './PieChart';

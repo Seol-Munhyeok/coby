@@ -1,9 +1,9 @@
 /**
  * 채팅 기능을 담당하는 컴포넌트입니다.
  * 웹소켓 연동을 고려하여 메시지 목록과 전송 기능을 분리합니다.
+ * 채팅창 크기의 경우 결과창/대기창에 따라서 달라질 수 있음. 그 경우에는 파일을 다시 분리하거나, 매개변수로 크기를 입력받도록 수정
  */
 import React, { useState, useRef, useEffect } from 'react';
-import '../ResultRoom.css';
 
 function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
   const [inputMessage, setInputMessage] = useState('');

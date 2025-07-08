@@ -294,21 +294,6 @@ for num in range(len(n)):
 *//*
   // 부정행위 감지를 위한 useEffect
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // 페이지가 숨겨졌을 때 (다른 탭, 다른 브라우저, 최소화 등)
-        setWarningCount(prevCount => {
-          const newCount = prevCount + 1;
-          if (newCount >= MAX_WARNINGS) {
-            setCheatingDetected(true);
-            showModal("부정행위 감지", "부정행위가 3회 이상 감지되어 더 이상 코드를 제출할 수 없습니다.", "error");
-          } else {
-            showModal("경고!", `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
-          }
-          return newCount;
-        });
-      }
-    };
 
     const handleBlur = () => {
       // 현재 창에서 포커스가 없어졌을 때
@@ -328,33 +313,14 @@ for num in range(len(n)):
       }
     };
 
-    const handleKeyDown = (event) => {
-        if (event.altKey && event.key === 'Tab') {
-            event.preventDefault(); // 기본 Alt+Tab 동작 방지 (선택 사항)
-            setWarningCount(prevCount => {
-                const newCount = prevCount + 1;
-                if (newCount >= MAX_WARNINGS) {
-                    setCheatingDetected(true);
-                    showModal("부정행위 감지", "부정행위가 3회 이상 감지되어 더 이상 코드를 제출할 수 없습니다.", "error");
-                } else {
-                    showModal("경고!", `화면 이탈(Alt+Tab)이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
-                }
-                return newCount;
-            });
-        }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleBlur);
-    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [warningCount, cheatingDetected]); // warningCount와 cheatingDetected를 의존성 배열에 추가
 */
+
   // WebSocket 초기화 및 이벤트 핸들링
   useEffect(() => {
     const socketFactory = () => new SockJS('http://localhost:8080/ws/vs');
