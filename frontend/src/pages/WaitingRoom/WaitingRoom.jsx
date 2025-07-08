@@ -4,13 +4,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './WaitingRoom.css';
-import useContextMenu from './hooks/useContextMenu';
-import useConsoleHostCommand from './hooks/useConsoleHostCommand';
+import useContextMenu from '../../Common/hooks/useContextMenu';
 import PlayerCard from './components/PlayerCard';
-import PlayerInfoModal from './components/PlayerInfoModal';
-import ChatWindow from './components/ChatWindow';
+import PlayerInfoModal from '../../Common/components/PlayerInfoModal'
+import ChatWindow from '../../Common/components/ChatWindow';
 import RoomSettingsModal from './components/RoomSettingsModal';
-import ToastNotification from './components/ToastNotification';
+import ToastNotification from '../../Common/components/ToastNotification';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
 
 function WaitingRoom() {
@@ -137,7 +136,6 @@ function WaitingRoom() {
     setSelectedPlayer,
   } = useContextMenu();
 
-  // useConsoleHostCommand(setRoomHost);
 
   const enterRoomBtn1 = () => {
     if (!isCurrentUserHost) {
@@ -275,7 +273,7 @@ function WaitingRoom() {
   };
 
   return (
-    <div className={`WaitingRoom ${isDarkMode ? '' : 'light-mode'}`} onContextMenu={(e) => e.preventDefault()}>
+    <div className={`WaitingRoom ${isDarkMode ? '' : 'light-mode'}`}>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>COBY - Coding Online Battle with You</title>

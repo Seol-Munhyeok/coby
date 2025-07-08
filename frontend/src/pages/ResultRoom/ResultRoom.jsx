@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ResultRoom.css';
 import { useNavigate } from 'react-router-dom';
-import ChatWindow from './components/ChatWindow'; // ChatWindow 컴포넌트 임포트
-import useContextMenu from './hooks/useContextMenu'; // useContextMenu 훅 임포트
-import PlayerInfoModal from './components/PlayerInfoModal'; // PlayerInfoModal 컴포넌트 임포트
+import ChatWindow from '../../Common/components/ChatWindow'; // ChatWindow 컴포넌트 임포트
+import useContextMenu from '../../Common/hooks/useContextMenu'; // useContextMenu 훅 임포트
+import PlayerInfoModal from '../../Common/components/PlayerInfoModal'; // PlayerInfoModal 컴포넌트 임포트
 import { useWebSocket } from '../WebSocket/WebSocketContext';
-import ToastNotification from './components/ToastNotification';
+import ToastNotification from '../../Common/components/ToastNotification';
 
 function ResultRoom() {
   const navigate = useNavigate();
