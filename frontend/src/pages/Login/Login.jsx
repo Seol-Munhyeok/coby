@@ -215,12 +215,6 @@ const CobyLoginPage = () => {
     window.location.href = 'http://localhost:8080/oauth2/authorization/kakao'
   };
 
-  // const handleGitHubLogin = () => {
-  //   handleSocialLogin('GitHub');
-  //   // 여기에 실제 깃허브 OAuth 리디렉션 로직 추가 (필요시)
-  //   // 예: window.location.href = 'YOUR_GITHUB_AUTH_URL';
-  //   navigate('/nickname');
-  // };
 
   useEffect(() => {
     createStars();

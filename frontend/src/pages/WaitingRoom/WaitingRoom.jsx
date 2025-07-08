@@ -267,13 +267,8 @@ function WaitingRoom() {
 
   const canStartGame = isCurrentUserHost && allPlayersReady && (currentPlayers.length === maxParticipants);
 
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const toggleDarkMode = () => {
-      setIsDarkMode(prevMode => !prevMode);
-  };
-
   return (
-    <div className={`WaitingRoom ${isDarkMode ? '' : 'light-mode'}`}>
+    <div className="WaitingRoom">
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>COBY - Coding Online Battle with You</title>
@@ -286,18 +281,6 @@ function WaitingRoom() {
           <h1 className="text-2xl font-bold ">COBY</h1>
         </div>
         <div className="flex items-center space-x-6">
-          <button onClick={toggleDarkMode} className="waitingRoom-text hover:text-blue-100 transition">
-              {isDarkMode ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-
-              ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h1M3 12h1m15.325-4.707l-.707-.707M6.707 6.707l-.707-.707m1.414 14.14L4.929 19.071m14.14-1.414l-.707-.707M12 18a6 6 0 110-12 6 6 0 010 12z" />
-                  </svg>
-              )}
-          </button>
           <div className="flex items-center space-x-3">
             <div className="waitingRoom-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center">
               <span className="text-sm font-bold text-blue-200">다이아</span>
