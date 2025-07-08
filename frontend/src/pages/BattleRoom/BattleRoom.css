@@ -147,3 +147,37 @@
 .drawer-fully-open {
   width: var(--drawer-fully-open-width);
 }
+
+.BR-player-avatar.fever-time {
+  /* Tailwind CSS의 기본 색상을 오버라이드할 수 있습니다. */
+  background-color: #f97316; /* 오렌지-500과 유사 */
+  box-shadow: 0 0 15px 5px rgba(251, 146, 60, 0.7); /* 오렌지-400과 유사한 빛나는 효과 */
+  animation: pulse-fever 0.8s infinite alternate; /* 깜빡이는 애니메이션 */
+}
+
+@keyframes pulse-fever {
+  from {
+    transform: scale(1);
+    box-shadow: 0 0 15px 5px rgba(251, 146, 60, 0.7);
+  }
+  to {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px 8px rgba(234, 88, 12, 0.9); /* 더 강한 빛 효과 */
+  }
+}
+.BR-player-avatar.opponent-progress-active {
+  background-color: #3b82f6; /* 파란색 계열, Tailwind의 blue-500과 유사 */
+  box-shadow: 0 0 10px 3px rgba(59, 130, 246, 0.7); /* 파란색 빛나는 효과 */
+  animation: pulse-opponent-progress 1s infinite alternate; /* 부드러운 깜빡임 */
+}
+
+@keyframes pulse-opponent-progress {
+  from {
+    transform: scale(1);
+    box-shadow: 0 0 10px 3px rgba(59, 130, 246, 0.7);
+  }
+  to {
+    transform: scale(1.05); /* 약간만 커지게 */
+    box-shadow: 0 0 15px 5px rgba(29, 78, 216, 0.9); /* 더 강한 빛 효과 */
+  }
+}

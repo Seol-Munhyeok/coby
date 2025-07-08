@@ -1,29 +1,37 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState ,useCallback } from "react";
 import Editor from "@monaco-editor/react";
 import { useNavigate } from 'react-router-dom';
 import * as monaco from "monaco-editor";
 import './BattleRoom.css';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import WarningModal from './WarningModal';
-import FullscreenPromptModal from './FullscreenPromptModal'; // Import the new modal
+import FullscreenPromptModal from './FullscreenPromptModal';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
 
 export default function CodingBattle() {
   const editorRef = useRef(null);
-  const opponentRefs = [useRef(null), useRef(null), useRef(null)];
-  const timerRef = useRef(null);
+  //const opponentRefs = [useRef(null), useRef(null), useRef(null)];
+
+  // 기존 timerRef를 두 개로 분리합니다.
+  const timerIdRef = useRef(null); // setTimeout/setInterval ID를 위한 ref (숫자 저장)
+  const domTimerRef = useRef(null); // DOM 요소 (타이머 표시 span)를 위한 ref (DOM 요소 참조 저장)
+
   const intervalRef = useRef(null);
   const colors = ["bg-red-500", "bg-yellow-500", "bg-purple-500"];
   const navigate = useNavigate();
   const nicknameRef = useRef(null);
   const answerRef = useRef(null);
-  const languageRef = useRef(null)
-
-  //서버에서 받아오는 로딩창 변수수
+  const languageRef = useRef(null);
+  const [myUserId, setMyUserId] = useState('');
+  const [currentCodeValue, setCurrentCodeValue] = useState(''); // 에디터의 value prop에 바인딩
+  const [currentLanguage, setCurrentLanguage] = useState('python');
+  // 서버에서 받아오는 로딩창 변수
   const connectTimeRef = useRef(null);
   const startTimeRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
-
+  const [isFeverTime, setIsFeverTime] = useState(false);
   // State for the main battle timer
   const TOTAL_TIME_SECONDS = 15 * 60; // 15 minutes in seconds (your current setup)
   const DISPLAY_TOTAL_TIME_SECONDS = 60 * 60; // 1 hour for the display in the progress bar
@@ -50,7 +58,11 @@ export default function CodingBattle() {
   // Modal State for FullscreenPromptModal
   const [isFullscreenPromptOpen, setIsFullscreenPromptOpen] = useState(false);
 
+  // WebSocket 연결을 위한 ref
+  //const wsRef = useRef(null);
+  const stompClientRef = useRef(null);
 
+  
   const showModal = (title, message, type = 'info') => {
     setModalTitle(title);
     setModalMessage(message);
@@ -77,45 +89,11 @@ for num in range(len(n)):
 
   answerRef.value = defaultCode; // This might cause issues if defaultCode is large, consider using useState for code.
   nicknameRef.value = "python"; // Same here, consider useState.
-  const opponents = [
-    {
-        name: "사용자1",
-        avatarInitial: "상",
-        codeSnippet: `var twoSum = function(nums, target) {
-  const map = new Map();
-  for (let i = 0; i < nums.length; i++) {
-    const complement = target - nums[i];
-    if (map.has(complement)) return [map.get(complement), i];
-    map.set(nums[i], i);
-  }
-};`,
-        progress: "45%",
-        lineCount: 10 // Placeholder
-    },
-    {
-        name: "사용자2",
-        avatarInitial: "김",
-        codeSnippet: `var twoSum = function(nums, target) {
-  for (let i = 0; i < nums.length; i++) {
-    for (let j = i + 1; j < nums.length; j++) {
-      if (nums[i] + nums[j] === target) return [i, j];
-    }
-  }
-};`,
-        progress: "60%",
-        lineCount: 8 // Placeholder
-    },
-    {
-        name: "사용자3",
-        avatarInitial: "박",
-        codeSnippet: `var twoSum = function(nums, target) {
-  // 배열을 순회하면서 각 요소에 대해
-  // 나머지 요소들과의 합이 target과 같은지 확인
-};`,
-        progress: "30%",
-        lineCount: 5 // Placeholder
-    },
-  ];
+
+  // 상대방 정보는 더미 데이터로 시작하며, 실제로는 서버에서 받아와야 합니다.
+  const [opponents, setOpponents] = useState([]);
+
+
   const handleSubmit = async () => {
     // 부정행위가 감지되면 제출을 막음
     if (cheatingDetected) {
@@ -141,12 +119,12 @@ for num in range(len(n)):
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          code: answerRef.value,
+          code: editorRef.current.getValue(), // editorRef.current에서 직접 값 가져오기
           language: nicknameRef.value,
         }),
       });
 
-      console.info(answerRef.value, nicknameRef.value);
+      console.info(editorRef.current.getValue(), nicknameRef.value);
 
       if (!response.ok) {
         throw new Error("서버 응답 실패");
@@ -176,8 +154,6 @@ for num in range(len(n)):
     }
   };
 
-
-
   const handleGiveUp = async () => {
     showModal("포기", '수고하셨습니다!', "info");
     // Add a slight delay before navigating to allow user to see the modal
@@ -186,10 +162,8 @@ for num in range(len(n)):
     }, 1500);
   };
 
-
-
+  // Main battle timer useEffect
   useEffect(() => {
-    // This effect handles the main battle timer and progress bar
     intervalRef.current = setInterval(() => {
       setRemainingTime(prevTime => {
         if (prevTime <= 1) {
@@ -205,20 +179,34 @@ for num in range(len(n)):
       clearInterval(intervalRef.current);
     };
   }, []);
-
   useEffect(() => {
-    // Update progress bar width based on remaining time and total time
+    setCurrentCodeValue(defaultCode); // Monaco Editor의 초기 값 설정
+
+    // useRef 값 초기화 (DOM이 마운트된 후에 접근)
+    if (nicknameRef.current) {
+        nicknameRef.current.value = "player_one_nickname"; // 예시 닉네임
+    }
+    if (answerRef.current) {
+        answerRef.current.value = defaultCode; // answerRef가 텍스트 영역 등을 가리킨다면
+    }
+    if (languageRef.current) {
+        languageRef.current.value = "python"; // 예시 언어
+    }
+  }, []);
+
+  // Progress bar and time display useEffect (domTimerRef 사용으로 수정)
+  useEffect(() => {
     const newWidth = (remainingTime / TOTAL_TIME_SECONDS) * 100;
     setProgressBarWidth(newWidth);
 
-    // Format remaining time for display
     const minutes = String(Math.floor(remainingTime / 60)).padStart(2, '0');
     const seconds = String(remainingTime % 60).padStart(2, '0');
-    if (timerRef.current) {
-      timerRef.current.textContent = `${minutes}:${seconds}`;
+    
+    // domTimerRef.current가 유효한 DOM 요소를 참조하는지 확인
+    if (domTimerRef.current) {
+      domTimerRef.current.textContent = `${minutes}:${seconds}`;
     }
   }, [remainingTime]);
-
 
   // 언어 변경 핸들러
   const handleLanguageChange = () => {
@@ -238,7 +226,6 @@ for num in range(len(n)):
   const handleDrawerToggle = () => {
     setDrawerState((prevState) => (prevState + 1) % 3); // Cycles 0 -> 1 -> 2 -> 0
   };
-
 
   // Dark mode toggle function
   const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode state
@@ -261,7 +248,7 @@ for num in range(len(n)):
     }
   };
 
-  // 전체 화면 요청 함수
+  /*// 전체 화면 요청 함수
   const requestFullScreen = () => {
     if (document.documentElement.requestFullscreen) {
       document.documentElement.requestFullscreen().catch((e) => {
@@ -304,10 +291,24 @@ for num in range(len(n)):
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
     };
   }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
-
-
+*//*
   // 부정행위 감지를 위한 useEffect
   useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // 페이지가 숨겨졌을 때 (다른 탭, 다른 브라우저, 최소화 등)
+        setWarningCount(prevCount => {
+          const newCount = prevCount + 1;
+          if (newCount >= MAX_WARNINGS) {
+            setCheatingDetected(true);
+            showModal("부정행위 감지", "부정행위가 3회 이상 감지되어 더 이상 코드를 제출할 수 없습니다.", "error");
+          } else {
+            showModal("경고!", `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
+          }
+          return newCount;
+        });
+      }
+    };
 
     const handleBlur = () => {
       // 현재 창에서 포커스가 없어졌을 때
@@ -327,28 +328,204 @@ for num in range(len(n)):
       }
     };
 
+    const handleKeyDown = (event) => {
+        if (event.altKey && event.key === 'Tab') {
+            event.preventDefault(); // 기본 Alt+Tab 동작 방지 (선택 사항)
+            setWarningCount(prevCount => {
+                const newCount = prevCount + 1;
+                if (newCount >= MAX_WARNINGS) {
+                    setCheatingDetected(true);
+                    showModal("부정행위 감지", "부정행위가 3회 이상 감지되어 더 이상 코드를 제출할 수 없습니다.", "error");
+                } else {
+                    showModal("경고!", `화면 이탈(Alt+Tab)이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
+                }
+                return newCount;
+            });
+        }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleBlur);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [warningCount, cheatingDetected]); // warningCount와 cheatingDetected를 의존성 배열에 추가
-
-  
-// 클립보드 초기화 (페이지 로드 시 1회만 실행)
+*/
+  // WebSocket 초기화 및 이벤트 핸들링
   useEffect(() => {
-    async function clearClipboardOnLoad() {
-      try {
-        await navigator.clipboard.writeText('');
-        console.log('클립보드 내용이 페이지 로드 시 1회 삭제되었습니다.');
-      } catch (err) {
-        console.error('클립보드 삭제 실패 (페이지 로드 시):', err);
+    const socketFactory = () => new SockJS('http://localhost:8080/ws/vs');
+
+    // **고유한 사용자 ID 생성 및 상태 저장**
+    const generatedUserId = `my_local_user_id_${Math.floor(Math.random() * 1000000)}`;
+    setMyUserId(generatedUserId); // <-- 생성된 ID를 상태에 저장
+
+    const client = new Client({
+        webSocketFactory: socketFactory,
+        debug: (str) => {
+            console.log(new Date(), str);
+        },
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
+    });
+
+    client.onConnect = (frame) => {
+        console.log('STOMP 연결 성공:', frame);
+
+        client.publish({
+            destination: '/app/join_room',
+            body: JSON.stringify({
+                type: "join_room",
+                roomId: "local_battle_room_alpha",
+                userId: generatedUserId // <-- 생성된 ID 사용
+            })
+        });
+
+        client.subscribe('/topic/room/local_battle_room_alpha', (message) => {
+            const receivedMessage = JSON.parse(message.body);
+            console.log('서버로부터 메시지 수신:', receivedMessage);
+
+            if (receivedMessage.type === "code_update") {
+                // 내 코드는 내가 입력하므로, 상대방의 코드 업데이트만 처리
+                if (receivedMessage.userId !== generatedUserId) {
+                    setOpponents(prevOpponents => {
+                        const existingOpponent = prevOpponents.find(op => op.id === receivedMessage.userId);
+                        if (existingOpponent) {
+                            // 기존 상대방 업데이트
+                            const updatedOpponents = prevOpponents.map(op => {
+                                if (op.id === receivedMessage.userId) {
+                                    return {
+                                        ...op,
+                                        lineCount: receivedMessage.lineCount || op.lineCount,
+                                        // code: receivedMessage.code, // 상대방 에디터 동기화 시 필요
+                                    };
+                                }
+                                return op;
+                            });
+                            console.log("Updated Opponents after code_update:", updatedOpponents);
+                            return updatedOpponents;
+                        } else {
+                            // 새로운 상대방이 방에 들어와서 코드를 업데이트한 경우 추가
+                            const newOpponent = {
+                                id: receivedMessage.userId,
+                                name: `User ${receivedMessage.userId.substring(receivedMessage.userId.length - 4)}`,
+                                avatarInitial: receivedMessage.userId.charAt(0).toUpperCase(),
+                                progress: "0%",
+                                lineCount: receivedMessage.lineCount || 0,
+                                // code: receivedMessage.code,
+                            };
+                            const newOpponents = [...prevOpponents, newOpponent];
+                            console.log("New Opponent added:", newOpponents);
+                            return newOpponents;
+                        }
+                    });
+                }
+            } else if (receivedMessage.type === "submission_result") {
+                console.log(`User ${receivedMessage.userId} submitted: ${receivedMessage.passedTests}/${receivedMessage.totalTests} tests passed.`);
+                setIsLoading(false); // 제출 결과 받았으므로 로딩 해제
+
+                if (receivedMessage.userId === generatedUserId) {
+                    // 내 제출 결과
+                    setExecutionResult(`제출 결과: ${receivedMessage.passedTests} / ${receivedMessage.totalTests} 테스트 통과.`);
+                    showModal("제출 완료", `코드가 성공적으로 제출되었습니다. ${receivedMessage.passedTests} / ${receivedMessage.totalTests} 테스트 통과.`, "info");
+                } else {
+                    // 상대방 제출 결과
+                    setOpponents(prevOpponents => {
+                        const updatedOpponents = prevOpponents.map(op => {
+                            if (op.id === receivedMessage.userId) {
+                                const newProgress = (receivedMessage.passedTests / receivedMessage.totalTests) * 100;
+                                return {
+                                    ...op,
+                                    progress: `${newProgress.toFixed(0)}%`
+                                };
+                            }
+                            return op;
+                        });
+                        console.log("Updated Opponents after submission_result:", updatedOpponents);
+                        return updatedOpponents;
+                    });
+                }
+            } else if (receivedMessage.type === "room_participants") {
+                // 서버에서 보낸 초기 참여자 정보로 opponents 상태 초기화
+                // 이때 자신은 opponents 목록에서 제외합니다.
+                const newParticipants = receivedMessage.participants
+                    .filter(p => p.userId !== generatedUserId)
+                    .map(p => ({
+                        id: p.userId,
+                        name: p.userName || `User ${p.userId.substring(p.userId.length - 4)}`,
+                        avatarInitial: p.userName ? p.userName.charAt(0) : '?',
+                        progress: `${(p.progress || 0).toFixed(0)}%`,
+                        lineCount: p.lineCount || 0
+                    }));
+                setOpponents(newParticipants);
+                console.log("Opponents state initialized/updated from room_participants:", newParticipants);
+            }
+        });
+    };
+
+    client.onStompError = (frame) => {
+        console.error('STOMP 오류:', frame);
+        showModal("연결 오류", "STOMP 프로토콜 오류가 발생했습니다. 개발자 도구를 확인해주세요.", "error");
+    };
+
+    client.onWebSocketClose = (event) => {
+        console.log('웹소켓 연결 종료됨:', event);
+    };
+
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => {
+        if (stompClientRef.current && stompClientRef.current.connected) {
+            stompClientRef.current.deactivate();
+            console.log("STOMP 연결 해제됨");
+        }
+    };
+  }, []);
+
+  // Monaco Editor 내용 변경 시 서버로 업데이트 전송 (timerIdRef 사용으로 수정)
+  const handleEditorChange = useCallback((value) => {
+    setCurrentCodeValue(value); // 에디터 내용을 상태에 즉시 반영 (UI 렌더링용)
+
+    if (timerIdRef.current) clearTimeout(timerIdRef.current);
+
+    timerIdRef.current = setTimeout(() => {
+      if (stompClientRef.current && stompClientRef.current.connected && myUserId) {
+        const currentLineCount = value ? value.split('\n').length : 0;
+        setIsFeverTime(currentLineCount>= 15); 
+        stompClientRef.current.publish({
+          destination: '/app/code_update',
+          headers: {},
+          body: JSON.stringify({
+            type: "code_update",
+            roomId: "local_battle_room_alpha",
+            userId: myUserId,
+            lineCount: currentLineCount,
+            code: value, // 다른 클라이언트에 코드 내용을 보내 동기화할 수 있도록 포함
+          }),
+        });
+      } else {
+        console.warn("STOMP 클라이언트가 연결되지 않았거나 사용자 ID가 설정되지 않아 코드 업데이트 메시지를 보낼 수 없습니다.");
       }
-    }
-    clearClipboardOnLoad();
-  }, []); // 빈 배열은 컴포넌트 마운트 시 1회만 실행되도록 합니다.
+    }, 500); // 500ms 디바운스
+  }, [myUserId]);
 
+  // Monaco Editor 마운트 시 붙여넣기 방지 이벤트 리스너 추가
+  const handleEditorDidMount = useCallback((editor, monacoInstance) => {
+    editorRef.current = editor;
 
+    editor.getContainerDomNode().addEventListener('paste', (event) => {
+      console.log('Monaco Editor 컨테이너에서 paste 이벤트 감지');
+      event.preventDefault();
+      event.stopPropagation();
+
+      showModal("경고", "코드 에디터에 붙여넣기 기능을 사용할 수 없습니다.", "warning");
+    }, true);
+  }, []);
 
   return (
     <div className={`min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans ${isDarkMode ? '' : 'light-mode'}`}  onContextMenu={(e) => e.preventDefault()}>
@@ -368,7 +545,8 @@ for num in range(len(n)):
                 ></div>
             </div>
             <div className="flex justify-between w-64 text-sm mt-1">
-                <span ref={timerRef} className="BR-countdown-time text-orange-400 font-bold">{formatTime(remainingTime)}</span>
+                {/* domTimerRef를 span 요소에 연결 */}
+                <span ref={domTimerRef} className="BR-countdown-time text-orange-400 font-bold">{formatTime(remainingTime)}</span>
                 <span className="BR-total-time text-slate-400">제한시간: {formatTime(DISPLAY_TOTAL_TIME_SECONDS)}</span>
             </div>
         </div>
@@ -392,9 +570,8 @@ for num in range(len(n)):
                   </svg>
               )}
           </button>
-          
           <div className="flex items-center">
-            <div className="BR-player-avatar bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">나</div>
+            <div className={`BR-player-avatar bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold ${isFeverTime ? 'fever-time' : ''}`}>나</div>
             <div className="ml-2 text-sm font-medium">코딩마스터</div>
           </div>
         </div>
@@ -430,14 +607,16 @@ for num in range(len(n)):
           </div>
           {drawerState !== 0 && ( // Only show opponent list if not fully closed
             <div className="flex-1 overflow-y-auto">
-              {opponents.map((opponent, i) => (
-                <div key={i} className="mb-4 bg-slate-700 p-3 rounded-lg flex flex-col">
+              {opponents.map((opponent, i) => {
+                const isOpponentProgressActive = opponent.lineCount > 15;
+                return (
+                <div key={opponent.id} className="mb-4 bg-slate-700 p-3 rounded-lg flex flex-col">
                   {/* Always visible part (collapsed & expanded) */}
                   <div className="flex items-center justify-between">
                     {/* Updated structure for Avatar and Name */}
                     <div className="flex flex-col items-center">
-                      <div className={`BR-player-avatar ${colors[i]} text-white w-8 h-8 rounded-full flex items-center justify-center font-bold`}
-                      >
+                      <div className={`BR-player-avatar ${colors[i % colors.length]} text-white w-8 h-8 rounded-full flex items-center justify-center font-bold ${isOpponentProgressActive ? 'opponent-progress-active' : ''}`}
+                      >
                         {opponent.avatarInitial}
                       </div>
                       <div className="mt-1 text-sm font-medium">{opponent.name}</div>
@@ -459,7 +638,10 @@ for num in range(len(n)):
                       </div>
                       <div className="relative h-28 rounded-lg overflow-hidden opponent-screen-preview">
                         <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-30 p-2 text-sm text-white font-mono overflow-auto">
-                          <pre>{opponent.codeSnippet}</pre>
+                          {/* opponent.codeSnippet 대신 가상의 코드 블록 생성 */}
+                          <pre>
+                              {Array(opponent.lineCount).fill('// Some code line;').join('\n')}
+                          </pre>
                         </div>
                         <div className="absolute top-0 left-0 w-full h-full backdrop-blur-sm z-10 flex items-center justify-center">
                           <div className="bg-black/70 text-xs text-white px-4 py-1 rounded-full flex items-center gap-1">
@@ -475,7 +657,8 @@ for num in range(len(n)):
                     </>
                   )}
                 </div>
-              ))}
+                );
+                })}
             </div>
           )}
         </div>
@@ -524,23 +707,22 @@ for num in range(len(n)):
                         defaultLanguage="python"
                         defaultValue={defaultCode}
                         theme="vs-dark"
-                        onMount={(editor) => {
-                          editorRef.current = editor;
-                        }}
+                        onMount={handleEditorDidMount} // onMount 핸들러 연결
+                        onChange={handleEditorChange} // 에디터 내용 변경 시 이벤트 핸들러 연결
                         options={{
                           fontSize: 14,
                           minimap: { enabled: true },
                           scrollBeyondLastLine: false,
                           roundedSelection: true,
                           padding: { top: 10 },
+                          contextmenu: false, // 마우스 오른쪽 클릭 컨텍스트 메뉴 비활성화
                         }}
                       />
                     </div>
-                    {/* The buttons div below the editor is removed as requested */}
                   </Panel>
 
                   {/* Resizer between Editor and Execution Result */}
-                  <PanelResizeHandle className="horizontal-resize-handle" /> {/* CHANGED CLASS HERE */}
+                  <PanelResizeHandle className="horizontal-resize-handle" />
 
                   {/* Execution Result Section (Bottom-Right Panel) */}
                   <Panel defaultSize={30} minSize={10} className="bg-slate-800 rounded-xl p-4 flex flex-col"> {/* Added flex flex-col */}
@@ -588,7 +770,6 @@ for num in range(len(n)):
           </div>
         </div>
 
-
       {isLoading &&(
         <div id="loadingModal" className="fixed inset-0 flex items-center justify-center z-50">
           <div className="BR-modal-backdrop absolute inset-0 bg-black bg-opacity-50" />
@@ -628,8 +809,8 @@ for num in range(len(n)):
 
       <FullscreenPromptModal
           isOpen={isFullscreenPromptOpen}
-          onClose={() => setIsFullscreenPromptOpen(false)}
-          onEnterFullscreen={requestFullScreen}
+          //onClose={() => setIsFullscreenPromptOpen(false)}
+         // onEnterFullscreen={requestFullScreen}
         />
     </div>
   );
