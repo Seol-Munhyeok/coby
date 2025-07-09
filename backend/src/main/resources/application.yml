@@ -1,9 +1,41 @@
 spring:
   datasource:
-    url: jdbc:mariadb://localhost:3306/coby
-    username: root
-    password: 1234
-    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mysql://coby-db.cd6i8s24gb9g.ap-northeast-2.rds.amazonaws.com:3306/coby_db
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            redirect-uri: "{baseUrl}/login/oauth2/code/google"
+            scope:
+              - email
+              - profile
+            client-name: Google
+
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}  # REST API 키
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/kakao"
+            scope:
+              - profile_nickname
+            client-name: Kakao
+
+        provider:
+          google:
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
 
   jpa:
     hibernate:
@@ -12,3 +44,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG

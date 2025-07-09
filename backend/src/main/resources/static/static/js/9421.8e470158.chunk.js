@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkcoby_front=self.webpackChunkcoby_front||[]).push([[9421],{9421:(c,e,s)=>{s.r(e)}}]);

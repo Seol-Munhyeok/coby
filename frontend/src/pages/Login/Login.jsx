@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import './Login.css';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // axios를 사용하기 위해 추가
 
 const CobyLoginPage = () => {
   const navigate = useNavigate();
@@ -8,10 +9,8 @@ const CobyLoginPage = () => {
   const bubblesRef = useRef(null);
   const starBurstRef = useRef(null);
   const codeParticlesRef = useRef(null);
-  const enterRoomBtn1 = () => {
-    alert('닉네임 입력페이지로 이동합니다');
-    navigate('/nickname');
-  };  // 별 생성
+
+  // 별 생성
   const createStars = () => {
     const container = starsRef.current;
     if (!container) return;
@@ -191,7 +190,7 @@ const CobyLoginPage = () => {
     }, 500);
   };
 
-  // 소셜 로그인 처리 함수
+  // 소셜 로그인 버튼 클릭 처리
   const handleSocialLogin = (provider) => {
     const buttons = document.querySelectorAll('.social-btn');
     buttons.forEach(btn => {
@@ -209,8 +208,10 @@ const CobyLoginPage = () => {
       createStarBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
     }
 
+    // NOTE: 여기서는 실제 로그인 로직이 아닌 애니메이션만 처리
+    // 실제 OAuth 리디렉션은 각 버튼의 onClick 함수에서 처리합니다.
     setTimeout(() => {
-      alert(`${provider} 로그인 성공! COBY 코딩 대결에 오신 것을 환영합니다!`);
+      alert(`${provider} 로그인 시도 중...`);
       buttons.forEach(btn => {
         btn.classList.remove('opacity-50');
         btn.disabled = false;
@@ -218,15 +219,6 @@ const CobyLoginPage = () => {
     }, 800);
   };
 
-  // 프로그래밍 언어 로고 클릭 처리
-  const handleLogoClick = (e) => {
-    e.currentTarget.style.transform = 'scale(1.2) rotate(15deg)';
-    createStarBurst(e.clientX, e.clientY);
-
-    setTimeout(() => {
-      e.currentTarget.style.transform = '';
-    }, 500);
-  };
 
   // 로봇 클릭 처리
   const handleRobotClick = () => {
@@ -240,14 +232,59 @@ const CobyLoginPage = () => {
     }
   };
 
+  // 구글 로그인 처리 함수
+  const handleGoogleLogin = () => {
+    // 1. 로그인 버튼 연결할 URL
+    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+  };
+
+  // 카카오 및 깃허브는 기존 handleSocialLogin 애니메이션만 호출
+  const handleKakaoLogin = () => {
+    handleSocialLogin('Kakao');
+    // 여기에 실제 카카오 OAuth 리디렉션 로직 추가 (필요시)
+    // 예: window.location.href = 'YOUR_KAKAO_AUTH_URL';
+    navigate('/nickname');
+  };
+
+  const handleGitHubLogin = () => {
+    handleSocialLogin('GitHub');
+    // 여기에 실제 깃허브 OAuth 리디렉션 로직 추가 (필요시)
+    // 예: window.location.href = 'YOUR_GITHUB_AUTH_URL';
+    navigate('/nickname');
+  };
+
   useEffect(() => {
     createStars();
     createBubbles();
-  }, []);
+
+    // 2. 로그인 완료 후 이동할 프론트 URL 처리
+    // 현재 URL이 /oauth/success 인지 확인
+    const checkLoginSuccess = async () => {
+      if (window.location.pathname === '/oauth/success') {
+        try {
+          // 3. 로그인 성공 후 사용자 정보 요청 URL
+          const response = await axios.get('http://localhost:8080/login/success', {
+            withCredentials: true // 세션 쿠키 등을 주고받기 위해 필요
+          });
+          console.log('User Info:', response.data);
+          alert('Google 로그인 성공! COBY 코딩 대결에 오신 것을 환영합니다!');
+          // 사용자 정보를 받았다면 닉네임 입력 페이지로 이동
+          navigate('/nickname');
+        } catch (error) {
+          console.error('Failed to fetch user info after Google login:', error);
+          alert('로그인 처리 중 오류가 발생했습니다.');
+          navigate('/login'); // 로그인 실패 시 다시 로그인 페이지로
+        }
+      }
+    };
+
+    checkLoginSuccess();
+  }, [navigate]); // navigate가 변경될 때마다 useEffect 재실행 방지
 
   return (
     <div className='login'>
-      <div className="min-h-screen bg-[#0f172a] relative overflow-hidden">        {/* 배경 별 */}
+      <div className="min-h-screen bg-[#0f172a] relative overflow-hidden">
+        {/* 배경 별 */}
         <div className="bg-stars" ref={starsRef}></div>
 
         {/* 구름 효과 */}
@@ -256,7 +293,8 @@ const CobyLoginPage = () => {
         <div className="cloud" style={{ width: '250px', height: '250px', top: '60%', left: '15%' }}></div>
 
         {/* 부유하는 프로그래밍 언어 로고들 */}
-        <div className="floating-item" style={{ top: '15%', left: '10%', animationDelay: '0s' }} onClick={handleLogoClick}>
+        {/* 기존 로고들 유지 및 handleLogoClick 추가 */}
+        <div className="floating-item" style={{ top: '15%', left: '10%', animationDelay: '0s' }}>
           <svg width="50" height="50" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill="#0074BD" d="M47.617 98.12s-4.767 2.774 3.397 3.71c9.892 1.13 14.947.968 25.845-1.092 0 0 2.871 1.795 6.873 3.351-24.439 10.47-55.308-.607-36.115-5.969zm-2.988-13.665s-5.348 3.959 2.823 4.805c10.567 1.091 18.91 1.18 33.354-1.6 0 0 1.993 2.025 5.132 3.131-29.542 8.64-62.446.68-41.309-6.336z"></path>
             <path fill="#EA2D2E" d="M69.802 61.271c6.025 6.935-1.58 13.17-1.58 13.17s15.289-7.891 8.269-17.777c-6.559-9.215-11.587-13.792 15.635-29.58 0 .001-42.731 10.67-22.324 34.187z"></path>
@@ -266,28 +304,20 @@ const CobyLoginPage = () => {
           </svg>
         </div>
 
-        <div className="floating-item" style={{ top: '70%', left: '85%', animationDelay: '1s' }} onClick={handleLogoClick}>
-          <svg width="50" height="50" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#FFD845" d="M49.33 62h29.159C86.606 62 93 55.132 93 46.981V19.183c0-7.912-6.632-13.856-14.555-15.176-5.014-.835-10.195-1.215-15.187-1.191-4.99.023-9.612.448-13.805 1.191C37.145 6.188 36 12.458 36 19.183v10.784h29v4.033H26.814c-6.831 0-12.814 5.198-14.677 15.11-2.158 11.415-2.25 18.538 0 30.45C13.899 88.61 17.636 94 24.466 94h9.839V82.827c0-8.484 7.19-15.995 15.028-15.995l-.003.168z"></path>
-            <path fill="#3775A9" d="M85.714 92.419c-5.649 0-10.286 4.668-10.286 10.36 0 5.701 4.637 10.37 10.286 10.37 5.654 0 10.286-4.669 10.286-10.37 0-5.692-4.632-10.36-10.286-10.36zM49.33 122.984c-5.007 0-9.325-4.225-9.325-9.364 0-5.143 4.318-9.364 9.325-9.364 5.01 0 9.328 4.221 9.328 9.364 0 5.14-4.318 9.364-9.328 9.364zM78.021 44h-9.352V34.368c0-7.454-6.297-13.368-13.599-13.368H36.963c-7.304 0-13.598 6.147-13.598 13.368V66.84c0 7.453 6.294 13.16 13.598 13.16h18.107c7.302 0 13.599-5.707 13.599-13.16V57h9.352c7.304 0 9.978-5.819 9.978-13.009 0-7.195-2.674-13.991-9.978-13.991z"></path>
-          </svg>
+        <div className="floating-item" style={{ top: '70%', left: '85%', animationDelay: '1s' }}>
+          <img src="/python-logo.svg" alt="Python Logo" width="50" height="50" />
+        </div>
+        <div className="floating-item" style={{ top: '30%', left: '80%', animationDelay: '1s' }}>
+          <img src="/c++-logo.svg" alt="c++ Logo" width="50" height="50" />
         </div>
 
-        <div className="floating-item" style={{ top: '30%', left: '80%', animationDelay: '0.5s' }} onClick={handleLogoClick}>
-          <svg width="50" height="50" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#D26383" d="M115.4 30.7L67.1 2.9c-.8-.5-1.9-.7-3.1-.7-1.2 0-2.3.3-3.1.7l-48 27.9c-1.7 1-2.9 3.5-2.9 5.4v55.7c0 1.1.2 2.4 1 3.5l106.8-62c-.6-1.2-1.5-2.1-2.4-2.7z"></path>
-            <path fill="#9C033A" d="M10.7 95.3c.5.8 1.2 1.5 1.9 1.9l48.2 27.9c.8.5 1.9.7 3.1.7 1.2 0 2.3-.3 3.1-.7l48-27.9c1.7-1 2.9-3.5 2.9-5.4V36.1c0-.9-.1-1.9-.6-2.8l-106.6 62z"></path>
-            <path fill="#fff" d="M85.3 76.1C81.1 83.5 73.1 88.5 64 88.5c-13.5 0-24.5-11-24.5-24.5s11-24.5 24.5-24.5c9.1 0 17.1 5 21.3 12.5l13-7.5c-6.8-11.9-19.6-20-34.3-20-21.8 0-39.5 17.7-39.5 39.5s17.7 39.5 39.5 39.5c14.6 0 27.4-8 34.2-19.8l-12.9-7.6z"></path>
-            <path fill="#fff" d="M82.1 61.8h5.2v-5.3h4.4v5.3H97v4.4h-5.3v5.2h-4.4v-5.2h-5.2v-4.4zm18.5 0h5.2v-5.3h4.4v5.3h5.3v4.4h-5.3v5.2h-4.4v-5.2h-5.2v-4.4z"></path>
-          </svg>
-        </div>
-
-        <div className="floating-item" style={{ top: '60%', left: '15%', animationDelay: '1.5s' }} onClick={handleLogoClick}>
+        <div className="floating-item" style={{ top: '60%', left: '15%', animationDelay: '1.5s' }}>
           <svg width="50" height="50" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill="#F0DB4F" d="M1.408 1.408h125.184v125.185H1.408z"></path>
             <path fill="#323330" d="M116.347 96.736c-.917-5.711-4.641-10.508-15.672-14.981-3.832-1.761-8.104-3.022-9.377-5.926-.452-1.69-.512-2.642-.226-3.665.821-3.32 4.784-4.355 7.925-3.403 2.023.678 3.938 2.237 5.093 4.724 5.402-3.498 5.391-3.475 9.163-5.879-1.381-2.141-2.118-3.129-3.022-4.045-3.249-3.629-7.676-5.498-14.756-5.355l-3.688.477c-3.534.893-6.902 2.748-8.877 5.235-5.926 6.724-4.236 18.492 2.975 23.335 7.104 5.332 17.54 6.545 18.873 11.531 1.297 6.104-4.486 8.08-10.234 7.378-4.236-.881-6.592-3.034-9.139-6.949-4.688 2.713-4.688 2.713-9.508 5.485 1.143 2.499 2.344 3.63 4.26 5.795 9.068 9.198 31.76 8.746 35.83-5.176.165-.478 1.261-3.666.38-8.581zM69.462 58.943H57.753l-.048 30.272c0 6.438.333 12.34-.714 14.149-1.713 3.558-6.152 3.117-8.175 2.427-2.059-1.012-3.106-2.451-4.319-4.485-.333-.584-.583-1.036-.667-1.071l-9.52 5.83c1.583 3.249 3.915 6.069 6.902 7.901 4.462 2.678 10.459 3.499 16.731 2.059 4.082-1.189 7.604-3.652 9.448-7.401 2.666-4.915 2.094-10.864 2.07-17.444.06-10.735.001-21.468.001-32.237z"></path>
           </svg>
         </div>
+
 
         {/* 코드 파티클 컨테이너 */}
         <div ref={codeParticlesRef}></div>
@@ -301,7 +331,6 @@ const CobyLoginPage = () => {
           <div className="text-center mb-8 relative z-10">
             <div className="game-logo korean-font">
               COBY
-              <div className="logo-badge">BETA</div>
             </div>
             <p className="text-purple-300 mt-2">코딩 대결의 세계로 오세요!</p>
           </div>
@@ -334,7 +363,7 @@ const CobyLoginPage = () => {
             {/* 소셜 로그인 */}
             <div className="space-y-4">
               <button
-                onClick={enterRoomBtn1}
+                onClick={handleGoogleLogin} // Google 로그인 버튼 클릭 시 handleGoogleLogin 호출
                 className="social-btn btn-click-effect w-full bg-white text-gray-800"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -347,7 +376,7 @@ const CobyLoginPage = () => {
               </button>
 
               <button
-                onClick={() => handleSocialLogin('Kakao')}
+                onClick={handleKakaoLogin} // 카카오 로그인 버튼 클릭 시 handleKakaoLogin 호출
                 className="social-btn btn-click-effect w-full bg-yellow-300 text-gray-800"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
@@ -357,7 +386,7 @@ const CobyLoginPage = () => {
               </button>
 
               <button
-                onClick={() => handleSocialLogin('GitHub')}
+                onClick={handleGitHubLogin} // 깃허브 로그인 버튼 클릭 시 handleGitHubLogin 호출
                 className="social-btn btn-click-effect w-full bg-gray-800 text-white"
               >
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
