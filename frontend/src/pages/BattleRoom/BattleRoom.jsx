@@ -113,7 +113,7 @@ for num in range(len(n)):
     }, 100);
 
     try {
-      const response = await fetch("http://localhost:8080/api/submit", {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -323,7 +323,7 @@ for num in range(len(n)):
 
   // WebSocket 초기화 및 이벤트 핸들링
   useEffect(() => {
-    const socketFactory = () => new SockJS('http://localhost:8080/ws/vs');
+    const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws/vs`);
 
     // **고유한 사용자 ID 생성 및 상태 저장**
     const generatedUserId = `my_local_user_id_${Math.floor(Math.random() * 1000000)}`;

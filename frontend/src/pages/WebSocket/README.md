@@ -4,7 +4,7 @@
 
 ### 주요 기능
 
-* **WebSocket 연결 관리:** 컴포넌트 마운트 시 WebSocket(`ws://localhost:8080/ws/chat`)에 연결하고, 언마운트 시 연결을 정리합니다.
+* **WebSocket 연결 관리:** 환경 변수 `REACT_APP_API_URL` 값을 활용해 WebSocket(`ws://<HOST>/ws/chat`에 연결하고, 언마운트 시 연결을 정리합니다.
 * **실시간 메시지 수신:** 서버로부터 메시지를 수신하여 파싱하고, `messages` 상태에 추가합니다.
 * **메시지 전송:** `sendMessage` 함수를 통해 연결된 WebSocket으로 메시지를 전송합니다.
 * **연결 상태 및 오류 추적:** `isConnected` (연결 여부)와 `error` (연결 오류 메시지) 상태를 관리하여 연결 상태를 외부에 노출합니다.

@@ -207,12 +207,12 @@ const CobyLoginPage = () => {
   // 구글 로그인 처리 함수
   const handleGoogleLogin = () => {
     // 1. 로그인 버튼 연결할 URL
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/google`;
   };
 
   // 카카오 및 깃허브는 기존 handleSocialLogin 애니메이션만 호출
   const handleKakaoLogin = () => {
-    window.location.href = 'http://localhost:8080/oauth2/authorization/kakao'
+    window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/kakao`
   };
 
 
@@ -226,7 +226,7 @@ const CobyLoginPage = () => {
     //   if (window.location.pathname === '/oauth/success') {
     //     try {
     //       // 3. 로그인 성공 후 사용자 정보 요청 URL
-    //       const response = await axios.get('http://localhost:8080/login/success', {
+    //       const response = await axios.get(`${process.env.REACT_APP_API_URL}/login/success`, {
     //         withCredentials: true // 세션 쿠키 등을 주고받기 위해 필요
     //       });
     //       console.log('User Info:', response.data);

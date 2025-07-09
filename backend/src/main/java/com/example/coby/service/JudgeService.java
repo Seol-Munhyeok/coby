@@ -55,7 +55,7 @@ public class JudgeService {
 
             // 4. WebClient 요청 (동기적 처리)
             JudgeResultDto response = webClient.post()
-                    .uri("http://localhost:8000/compile")
+                    .uri("http://localhost:8001/compile")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(builder.build()))
                     .retrieve()
