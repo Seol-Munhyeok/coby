@@ -4,6 +4,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+
 # Python 가상환경
 venv/
 judge/venv/
@@ -44,3 +45,6 @@ out/
 
 # IntelliJ config
 *.xml
+
+deploy.sh
+deploy-back.sh
