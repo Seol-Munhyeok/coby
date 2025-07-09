@@ -12,7 +12,7 @@ import java.io.IOException;
 @Component
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
-    private static final String REDIRECT_URL = "http://localhost:3000/nickname";
+    private static final String REDIRECT_URL = "http://54.180.197.9:8080/nickname";
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,

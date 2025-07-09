@@ -12,7 +12,8 @@ export const WebSocketProvider = ({ children }) => {
   useEffect(() => {
     if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
       console.log('Attempting to connect WebSocket...');
-      ws.current = new WebSocket('ws://localhost:8080/ws/chat');
+      const wsUrl = process.env.REACT_APP_API_URL.replace(/^http/, 'ws');
+      ws.current = new WebSocket(`${wsUrl}/ws/chat`);
 
       ws.current.onopen = () => {
         console.log('WebSocket connected');
