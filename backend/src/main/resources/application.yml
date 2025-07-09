@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://coby-db.cd6i8s24gb9g.ap-northeast-2.rds.amazonaws.com:3306/cobyDB
+    url: jdbc:mysql://coby-db.cd6i8s24gb9g.ap-northeast-2.rds.amazonaws.com:3306/coby_db
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -39,7 +39,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
