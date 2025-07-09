@@ -47,3 +47,5 @@ out/
 
 **/.env.idea/
 backend/.env
+*.pem
+.env*
