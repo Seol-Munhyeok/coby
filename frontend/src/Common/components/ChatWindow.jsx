@@ -1,3 +1,4 @@
+// ChatWindow.jsx
 /**
  * 채팅 기능을 담당하는 컴포넌트입니다.
  * 웹소켓 연동을 고려하여 메시지 목록과 전송 기능을 분리합니다.
@@ -63,7 +64,7 @@ function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
             )}
             <div className={`waitingRoom-chat-bubble rounded-lg p-2 max-w-[80%] ${msg.sender === currentUser ? 'waitingRoom-chat-bubble-right bg-blue-600/50' : 'waitingRoom-chat-bubble-left bg-blue-900/50'}`}>
               <p className="text-xs waitingRoom-text mb-1">
-                {msg.sender === currentUser ? '코딩마스터 (나)' : msg.sender}
+                {msg.sender === currentUser ? `${currentUser} (나)` : msg.sender}
               </p>
               <p className="text-sm ">{msg.text}</p>
             </div>

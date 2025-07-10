@@ -8,6 +8,9 @@ import WarningModal from './WarningModal';
 import FullscreenPromptModal from './FullscreenPromptModal';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
+import { useUserStore } from '../../store/userStore'
+import Cookies from 'js-cookie'
+
 
 export default function CodingBattle() {
   const editorRef = useRef(null);
@@ -61,6 +64,21 @@ export default function CodingBattle() {
   // WebSocket 연결을 위한 ref
   //const wsRef = useRef(null);
   const stompClientRef = useRef(null);
+
+  const nickname = useUserStore((state) => state.nickname)
+  const setNickname = useUserStore((state) => state.setNickname)
+
+  useEffect(() => {
+      if (!nickname) {
+      const cookieNick = Cookies.get('nickname')
+      if (cookieNick) {
+          setNickname(cookieNick)
+      }
+      }
+  }, [nickname, setNickname])
+
+   // 현재 사용자 닉네임을 가져옵니다.
+  const currentUser = nickname || '게스트';
 
   
   const showModal = (title, message, type = 'info') => {
@@ -227,11 +245,6 @@ for num in range(len(n)):
     setDrawerState((prevState) => (prevState + 1) % 3); // Cycles 0 -> 1 -> 2 -> 0
   };
 
-  // Dark mode toggle function
-  const [isDarkMode, setIsDarkMode] = useState(true); // Dark mode state
-  const toggleDarkMode = () => {
-      setIsDarkMode(prevMode => !prevMode);
-  };
 
   // Function to format time for display (e.g., 00:00:00 or 00:00)
   const formatTime = (totalSeconds) => {
@@ -494,7 +507,7 @@ for num in range(len(n)):
   }, []);
 
   return (
-    <div className={`min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans ${isDarkMode ? '' : 'light-mode'}`}  onContextMenu={(e) => e.preventDefault()}>
+    <div className={`min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans`}  onContextMenu={(e) => e.preventDefault()}>
       <header className="bg-slate-800 py-4 px-6 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
@@ -524,21 +537,9 @@ for num in range(len(n)):
               <option value="cpp">C++</option>
             </select>
 
-          <button onClick={toggleDarkMode} className="waitingRoom-text hover:text-blue-100 transition">
-              {isDarkMode ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-
-              ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h1M3 12h1m15.325-4.707l-.707-.707M6.707 6.707l-.707-.707m1.414 14.14L4.929 19.071m14.14-1.414l-.707-.707M12 18a6 6 0 110-12 6 6 0 010 12z" />
-                  </svg>
-              )}
-          </button>
           <div className="flex items-center">
             <div className={`BR-player-avatar bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold ${isFeverTime ? 'fever-time' : ''}`}>나</div>
-            <div className="ml-2 text-sm font-medium">코딩마스터</div>
+            <div className="ml-2 text-sm font-medium">{currentUser}</div>
           </div>
         </div>
       </header>

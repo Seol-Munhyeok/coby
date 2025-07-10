@@ -1,12 +1,30 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import './MainPage.css';
 import { useNavigate } from 'react-router-dom';
+import { useUserStore } from '../../store/userStore'
+import Cookies from 'js-cookie'
+
 
 function MainPage() {
     const [isCreateModalOpen, setCreateModalOpen] = useState(false);
     const [isRoomCreatedModalOpen, setRoomCreatedModalOpen] = useState(false);
     const navigate = useNavigate();
     const inputRef = useRef(null);
+
+    const nickname = useUserStore((state) => state.nickname)
+    const setNickname = useUserStore((state) => state.setNickname)
+
+    useEffect(() => {
+        if (!nickname) {
+        const cookieNick = Cookies.get('nickname')
+        if (cookieNick) {
+            setNickname(cookieNick)
+        }
+        }
+    }, [nickname, setNickname])
+
+     // 현재 사용자 닉네임을 가져옵니다.
+  const currentUser = nickname || '게스트';
 
     // 방 만들기 모달 열기
     const openCreateRoomModal = () => {
@@ -83,7 +101,7 @@ function MainPage() {
                     <div className="main-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center">
                     <span className="text-sm font-bold text-blue-200">다이아</span>
                     </div>
-                    <span className="font-medium">코드마스터</span>
+                    <span className="font-medium">{currentUser}</span>
                 </button>
                 </div>
             </nav>
@@ -98,7 +116,7 @@ function MainPage() {
                         <span className="text-lg font-bold text-blue-200">다이아</span>
                         </div>
                         <div>
-                        <h2 className="text-xl font-bold text-white">코드마스터</h2>
+                        <h2 className="text-xl font-bold text-white">{currentUser}</h2>
                         <p className="text-blue-300">승률: 78% (승 45 / 패 13)</p>
                         </div>
                     </div>

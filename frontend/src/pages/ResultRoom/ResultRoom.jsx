@@ -6,6 +6,9 @@ import useContextMenu from '../../Common/hooks/useContextMenu'; // useContextMen
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal'; // PlayerInfoModal 컴포넌트 임포트
 import { useWebSocket } from '../WebSocket/WebSocketContext';
 import ToastNotification from '../../Common/components/ToastNotification';
+import { useUserStore } from '../../store/userStore'
+import Cookies from 'js-cookie'
+
 
 function ResultRoom() {
   const navigate = useNavigate();
@@ -38,11 +41,44 @@ function ResultRoom() {
     sendMessage(messageData); // Call the context's sendMessage
   };
 
-  // 현재 사용자 정보
-  const currentUser = "코딩마스터";
+
+const nickname = useUserStore((state) => state.nickname)
+  const setNickname = useUserStore((state) => state.setNickname)
+
+  useEffect(() => {
+      if (!nickname) {
+      const cookieNick = Cookies.get('nickname')
+      if (cookieNick) {
+          setNickname(cookieNick)
+      }
+      }
+  }, [nickname, setNickname])
+
+  // 현재 사용자 닉네임을 가져옵니다.
+  const currentUser = nickname || '게스트';
 
   // 플레이어 정보 데이터 (대기방과 동일)
   const playerData = {
+    [currentUser]: { // '코딩마스터' 대신 currentUser 닉네임을 키로 사용
+      avatar: currentUser.length >= 2 ? currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase() : currentUser.charAt(0).toUpperCase(), // 닉네임 앞 두 글자
+      avatarColor: 'bg-green-500', // 기본 색상 (원한다면 동적으로 변경 가능)
+      tier: '다이아', // 기본 티어
+      level: 28, // 기본 레벨
+      winRate: '78%',
+      wins: 45,
+      losses: 13,
+      preferredTypes: {
+        '알고리즘': 30,
+        '자료구조': 40,
+        'SQL': 20,
+        '동적계획법': 10
+      },
+      recentGames: [
+        { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
+        { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
+        { name: 'SQL 챌린지 #12', time: '2일 전', result: '패배' }
+      ]
+    },
     '사용자1': {
       avatar: 'KM',
       avatarColor: 'bg-red-500',
@@ -81,26 +117,6 @@ function ResultRoom() {
         { name: '알고리즘 배틀 #128', time: '2시간 전', result: '패배' },
         { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
         { name: 'SQL 챌린지 #12', time: '2일 전', result: '승리' }
-      ]
-    },
-    '코딩마스터': {
-      avatar: 'CM',
-      avatarColor: 'bg-green-500',
-      tier: '다이아',
-      level: 28,
-      winRate: '78%',
-      wins: 45,
-      losses: 13,
-      preferredTypes: {
-        '알고리즘': 30,
-        '자료구조': 40,
-        'SQL': 20,
-        '동적계획법': 10
-      },
-      recentGames: [
-        { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
-        { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
-        { name: 'SQL 챌린지 #12', time: '2일 전', result: '패배' }
       ]
     },
     '사용자3': {
@@ -155,9 +171,9 @@ function ResultRoom() {
     <div className='resultroom'>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>코딩 대결 - 게임 종료</title>
+      <title>COBY - 결과</title>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
-      <style dangerouslySetInnerHTML={{ __html: "\n        body {\n            font-family: 'Noto Sans KR', sans-serif;\n            background-color: #0f172a;\n            color: #f8fafc;\n        }\n        .card {\n            background-color: #1e293b;\n            border-radius: 0.75rem;\n            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);\n        }\n        .code-block {\n            background-color: #0f172a;\n            border-radius: 0.5rem;\n            font-family: monospace;\n            overflow-x: auto;\n        }\n        .chat-container {\n            height: 400px;\n            overflow-y: auto;\n            scrollbar-width: thin;\n            scrollbar-color: #475569 #1e293b;\n        }\n        .chat-container::-webkit-scrollbar {\n            width: 8px;\n        }\n        .chat-container::-webkit-scrollbar-track {\n            background: #1e293b;\n        }\n        .chat-container::-webkit-scrollbar-thumb {\n            background-color: #475569;\n            border-radius: 20px;\n        }\n        .chat-message {\n            border-radius: 1rem;\n            max-width: 80%;\n        }\n        .chat-message.mine {\n            background-color: #3b82f6;\n            margin-left: auto;\n        }\n        .chat-message.others {\n            background-color: #334155;\n        }\n        .player-avatar {\n            width: 2rem;\n            height: 2rem;\n            border-radius: 50%;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            font-weight: bold;\n        }\n        .btn-primary {\n            background-color: #3b82f6;\n            transition: all 0.2s ease;\n        }\n        .btn-primary:hover {\n            background-color: #2563eb;\n            transform: translateY(-2px);\n        }\n        .btn-secondary {\n            background-color: #475569;\n            transition: all 0.2s ease;\n        }\n        .btn-secondary:hover {\n            background-color: #334155;\n            transform: translateY(-2px);\n        }\n        .progress-bar {\n            height: 8px;\n            background-color: #475569;\n            border-radius: 9999px;\n            overflow: hidden;\n        }\n        .progress-fill {\n            height: 100%;\n            border-radius: 9999px;\n            transition: width 1s ease;\n        }\n        .xp-animation {\n            animation: pulse 2s infinite;\n        }\n        @keyframes pulse {\n            0% { transform: scale(1); }\n            50% { transform: scale(1.05); }\n            100% { transform: scale(1); }\n        }\n        .result-badge {\n            padding: 0.25rem 0.75rem;\n            border-radius: 9999px;\n            font-weight: 600;\n            font-size: 0.875rem;\n        }\n        .result-badge.success {\n            background-color: #10b981;\n            color: white;\n        }\n        .result-badge.warning {\n            background-color: #f59e0b;\n            color: white;\n        }\n        .result-badge.error {\n            background-color: #ef4444;\n            color: white;\n        }\n        .tab-active {\n            border-bottom: 2px solid #3b82f6;\n            color: #3b82f6;\n        }\n        .confetti {\n            position: absolute;\n            width: 10px;\n            height: 10px;\n            background-color: #f00;\n            border-radius: 50%;\n            animation: fall 5s ease-out forwards;\n        }\n        @keyframes fall {\n            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }\n            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }\n        }\n    " }} />
+      <style dangerouslySetInnerHTML={{ __html: "\n        body {\n            font-family: 'Noto Sans KR', sans-serif;\n            background-color: #0f172a;\n            color: #f8fafc;\n        }\n        .card {\n            background-color: #1e293b;\n            border-radius: 0.75rem;\n            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);\n        }\n        .code-block {\n            background-color: #0f172a;\n            border-radius: 0.5rem;\n            font-family: monospace;\n            overflow-x: auto;\n        }\n        .chat-container {\n            height: 400px;\n            overflow-y: auto;\n            scrollbar-width: thin;\n            scrollbar-color: #475569 #1e293b;\n        }\n        .chat-container::-webkit-scrollbar {\n            width: 8px;\n        }\n        .chat-container::-webkit-scrollbar-track {\n            background: #1e293b;\n        }\n        .chat-container::-webkit-scrollbar-thumb {\n            background-color: #475569;\n            border-radius: 20px;\n        }\n        .chat-message {\n            border-radius: 1rem;\n            max-width: 80%;\n        }\n        .chat-message.mine {\n            background-color: #3b82f6;\n            margin-left: auto;\n        }\n        .chat-message.others {\n            background-color: #334155;\n        }\n        .player-avatar {\n            width: 2rem;\n            height: 2rem;\n            border-radius: 50%;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            font-weight: bold;\n        }\n        .btn-primary {\n            background-color: #3b82f6;\n            transition: all 0.2s ease;\n        }\n        .btn-primary:hover {\n            background-color: #2563eb;\n            transform: translateY(-2px);\n        }\n        .btn-secondary {\n            background-color: #475569;\n            transition: all 0.2s ease;\n        }\n        .btn-secondary:hover {\n            background-color: #334155;\n            transform: translateY(-2px);\n        }\n        .progress-bar {\n            height: 8px;\n            background-color: #475569;\n            border-radius: 9999px;\n            overflow: hidden;\n        }\n        .progress-fill {\n            height: 100%;\n            border-radius: 9999px;\n            transition: width 1s ease;\n        }\n        .xp-animation {\n            animation: pulse 2s infinite;\n        }\n        @keyframes pulse {\n            0% { transform: scale(1); }\n            50% { transform: scale(1.05); }\n            100% { transform: scale(1); }\n        }\n        .result-badge {\n            padding: 0.25rem 0.75rem;\n            border-radius: 9999px;\n            font-weight: 600;\n            font-size: 0.875rem;\n        }\n        .result-badge.success {\n            background-color: #10b981;\n            color: white;\n        }\n        .result-badge.warning {\n            background-color: #f59e0b;\n            color: white;\n        }\n        .result-badge.error {\n            background-color: #ef4444;\n            color: white;\n        }\n        .tab-active {\n            border-bottom: 2px solid #3b82f6;\n            color: #3b82f6;\n        }\n        .confetti {\n            position: absolute;\n            width: 10px;\n            height: 10px;\n            background-color: #f00;\n            border-radius: 50%;\n            animation: fall 5s ease-out forwards;\n        }\n        @keyframes fall {\n            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }\n            50% { transform: translateY(100vh) rotate(360deg); opacity: 0; }\n            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }\n        }\n    " }} />
       <div className="min-h-screen flex flex-col">
         <header className="bg-slate-800 py-4 px-6 flex justify-between items-center">
           <div className="flex items-center space-x-2">
@@ -169,9 +185,9 @@ function ResultRoom() {
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-400">방 ID: ABCD1234</span>
             <div className="flex items-center ml-4">
-              <div className="player-avatar bg-green-500 text-white">CM</div>
+              <div className={`player-avatar ${playerData[currentUser]?.avatarColor} text-white`}>{playerData[currentUser]?.avatar}</div> {/* */}
               <div className="ml-2">
-                <div className="text-sm font-medium">코딩마스터</div>
+                <div className="text-sm font-medium">{currentUser}</div>
               </div>
             </div>
           </div>
@@ -368,8 +384,8 @@ function ResultRoom() {
                         </td>
                       </tr>
                       <tr className="bg-blue-900 bg-opacity-20 cursor-pointer hover:bg-blue-800"
-                          onClick={(e) => handlePlayerCardClick(e, { name: '코딩마스터' })}
-                          onContextMenu={(e) => handlePlayerCardClick(e, { name: '코딩마스터' })}>
+                          onClick={(e) => handlePlayerCardClick(e, { name: currentUser })}
+                          onContextMenu={(e) => handlePlayerCardClick(e, { name: currentUser })}>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <span className="text-gray-300">2</span>
@@ -377,8 +393,8 @@ function ResultRoom() {
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="player-avatar bg-green-500 text-white">CM</div>
-                            <div className="ml-2">코딩마스터</div>
+                            <div className={`player-avatar ${playerData[currentUser]?.avatarColor} text-white`}>{playerData[currentUser]?.avatar}</div> {/* */}
+                            <div className="ml-2">{currentUser}</div> {/* */}
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">12:24</td>

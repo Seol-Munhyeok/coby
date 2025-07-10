@@ -1,17 +1,67 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './MyPage.css';
+import { useUserStore } from '../../store/userStore';
+import Cookies from 'js-cookie';
+
 
 function MyPage() {
+  const nickname = useUserStore((state) => state.nickname);
+  const setNickname = useUserStore((state) => state.setNickname);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
+  const [tempNickname, setTempNickname] = useState(''); // State to hold the nickname in the modal
+  const nicknameInputRef = useRef(null); // Ref for the nickname input field
+
+  useEffect(() => {
+    if (!nickname) {
+      const cookieNick = Cookies.get('nickname');
+      if (cookieNick) {
+        setNickname(cookieNick);
+      }
+    }
+  }, [nickname, setNickname]);
+
+   // 현재 사용자 닉네임을 가져옵니다.
+  const currentUser = nickname || '게스트';
+
+  // Handler to open the modal
+  const handleOpenModal = () => {
+    setTempNickname(nickname || ''); // Set current nickname to modal input
+    setIsModalOpen(true);
+    setTimeout(() => {
+      if (nicknameInputRef.current) {
+        nicknameInputRef.current.focus(); // Focus on the input when modal opens
+        nicknameInputRef.current.select(); // Select the text for easy editing
+      }
+    }, 100);
+  };
+
+  // Handler to close the modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // Handler for saving the new nickname
+  const handleSaveNickname = () => {
+    // In a real application, you would send this to your backend
+    if (tempNickname.length >= 2 && tempNickname.length <= 12) {
+      setNickname(tempNickname);
+      Cookies.set('nickname', tempNickname, { expires: 7 }); // Save to cookie
+      setIsModalOpen(false);
+    } else {
+      alert('닉네임은 2~12자 이내로 설정해주세요.');
+    }
+  };
+
   return (
     <div>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>코딩 대결 - 마이페이지</title>
+      <title>COBY - 마이페이지</title>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
       <style dangerouslySetInnerHTML={{ __html: "\n        body {\n            font-family: 'Noto Sans KR', sans-serif;\n            background-color: #0f172a;\n            color: #f8fafc;\n        }\n        .card {\n            background-color: #1e293b;\n            border-radius: 0.75rem;\n            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);\n        }\n        .btn-primary {\n            background-color: #3b82f6;\n            transition: all 0.2s ease;\n        }\n        .btn-primary:hover {\n            background-color: #2563eb;\n            transform: translateY(-2px);\n        }\n        .btn-secondary {\n            background-color: #475569;\n            transition: all 0.2s ease;\n        }\n        .btn-secondary:hover {\n            background-color: #334155;\n            transform: translateY(-2px);\n        }\n        .progress-bar {\n            height: 8px;\n            background-color: #475569;\n            border-radius: 9999px;\n            overflow: hidden;\n        }\n        .progress-fill {\n            height: 100%;\n            border-radius: 9999px;\n            transition: width 1s ease;\n        }\n        .tab-active {\n            border-bottom: 2px solid #3b82f6;\n            color: #3b82f6;\n        }\n        .tier-badge {\n            position: relative;\n            width: 120px;\n            height: 120px;\n        }\n        .tier-badge::before {\n            content: '';\n            position: absolute;\n            top: 0;\n            left: 0;\n            width: 100%;\n            height: 100%;\n            background: linear-gradient(135deg, rgba(59, 130, 246, 0.5), rgba(16, 185, 129, 0.5));\n            border-radius: 50%;\n            z-index: -1;\n            filter: blur(10px);\n        }\n        .tier-icon {\n            width: 100%;\n            height: 100%;\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            border-radius: 50%;\n            background: linear-gradient(135deg, #3b82f6, #10b981);\n            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);\n        }\n        .result-badge {\n            padding: 0.25rem 0.75rem;\n            border-radius: 9999px;\n            font-weight: 600;\n            font-size: 0.75rem;\n        }\n        .result-badge.win {\n            background-color: #10b981;\n            color: white;\n        }\n        .result-badge.lose {\n            background-color: #ef4444;\n            color: white;\n        }\n        .avatar-upload {\n            position: relative;\n            width: 120px;\n            height: 120px;\n            border-radius: 50%;\n            overflow: hidden;\n            cursor: pointer;\n        }\n        .avatar-upload:hover .avatar-overlay {\n            opacity: 1;\n        }\n        .avatar-overlay {\n            position: absolute;\n            top: 0;\n            left: 0;\n            width: 100%;\n            height: 100%;\n            background-color: rgba(0, 0, 0, 0.5);\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            opacity: 0;\n            transition: opacity 0.3s ease;\n        }\n        .stat-card {\n            transition: all 0.3s ease;\n        }\n        .stat-card:hover {\n            transform: translateY(-5px);\n        }\n        .chart-container {\n            position: relative;\n            width: 100%;\n            height: 200px;\n        }\n        .chart-bar {\n            position: absolute;\n            bottom: 0;\n            width: 8%;\n            background: linear-gradient(to top, #3b82f6, #60a5fa);\n            border-radius: 4px 4px 0 0;\n            transition: height 1s ease;\n        }\n        .match-card {\n            transition: all 0.3s ease;\n        }\n        .match-card:hover {\n            transform: translateX(5px);\n        }\n        .modal {\n            position: fixed;\n            top: 0;\n            left: 0;\n            width: 100%;\n            height: 100%;\n            background-color: rgba(0, 0, 0, 0.5);\n            display: flex;\n            align-items: center;\n            justify-content: center;\n            z-index: 50;\n            opacity: 0;\n            pointer-events: none;\n            transition: opacity 0.3s ease;\n        }\n        .modal.active {\n            opacity: 1;\n            pointer-events: auto;\n        }\n        .modal-content {\n            background-color: #1e293b;\n            border-radius: 0.75rem;\n            width: 90%;\n            max-width: 500px;\n            transform: translateY(20px);\n            transition: transform 0.3s ease;\n        }\n        .modal.active .modal-content {\n            transform: translateY(0);\n        }\n    " }} />
       <div className="min-h-screen flex flex-col">
         <header className="bg-slate-800 py-4 px-6 flex justify-between items-center">
-          <button className="flex items-center space-x-2" onclick="window.location.href='3-main.html'">
+          <button className="flex items-center space-x-2" onClick={() => window.location.href='/mainpage'}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
             </svg>
@@ -37,8 +87,8 @@ function MyPage() {
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-1">
-                        <h3 className="text-xl font-bold mr-2" id="display-nickname">코딩마스터</h3>
-                        <button id="edit-nickname-btn" className="text-gray-400 hover:text-blue-500">
+                        <h3 className="text-xl font-bold mr-2" id="display-nickname">{currentUser}</h3>
+                        <button id="edit-nickname-btn" className="text-gray-400 hover:text-blue-500" onClick={handleOpenModal}> {/* Add onClick handler */}
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                           </svg>
@@ -332,11 +382,11 @@ function MyPage() {
         </main>
       </div>
       {/* 닉네임 변경 모달 */}
-      <div className="modal" id="nickname-modal">
+      <div className={`modal ${isModalOpen ? 'active' : ''}`} id="nickname-modal"> {/* Dynamically add 'active' class */}
         <div className="modal-content p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold">닉네임 변경</h3>
-            <button className="text-gray-400 hover:text-white" id="close-modal">
+            <button className="text-gray-400 hover:text-white" onClick={handleCloseModal}> {/* Add onClick handler */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -344,17 +394,24 @@ function MyPage() {
           </div>
           <div className="mb-4">
             <label htmlFor="nickname" className="block text-sm font-medium text-gray-400 mb-1">새 닉네임</label>
-            <input type="text" id="nickname" className="w-full bg-slate-700 border-none rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" defaultValue="코딩마스터" />
+            <input
+              type="text"
+              id="nickname"
+              ref={nicknameInputRef} // Attach ref to input
+              className="w-full bg-slate-700 border-none rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={tempNickname} // Control input value with state
+              onChange={(e) => setTempNickname(e.target.value)} // Update tempNickname on change
+              placeholder="2~12자 이내"
+            />
             <p className="text-xs text-gray-400 mt-1">닉네임은 2~12자 이내로 설정해주세요.</p>
           </div>
           <div className="flex justify-end space-x-3">
-            <button className="btn-secondary py-2 px-4 rounded-lg text-sm font-medium" id="cancel-nickname">취소</button>
-            <button className="btn-primary py-2 px-4 rounded-lg text-sm font-medium" id="save-nickname">저장</button>
+            <button className="btn-secondary py-2 px-4 rounded-lg text-sm font-medium" onClick={handleCloseModal}>취소</button> {/* Add onClick handler */}
+            <button className="btn-primary py-2 px-4 rounded-lg text-sm font-medium" onClick={handleSaveNickname}>저장</button> {/* Add onClick handler */}
           </div>
         </div>
       </div>
     </div>
-
   );
 }
 
