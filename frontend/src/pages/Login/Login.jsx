@@ -216,14 +216,14 @@ const CobyLoginPage = () => {
   };
 
   // 로컬 테스트용 로그인
-  const handleLocalLogin = () => {
-    const nicknameExists = Cookies.get('nickname'); // 쿠키에서 닉네임 정보 확인
-    if (nicknameExists) {
-      navigate('/mainpage'); // 닉네임이 있으면 /mainpage으로 이동
-    } else {
-      navigate('/nickname'); // 닉네임이 없으면 /nickname으로 이동
-    }
-  };
+  // const handleLocalLogin = () => {
+  //   const nicknameExists = Cookies.get('nickname'); // 쿠키에서 닉네임 정보 확인
+  //   if (nicknameExists) {
+  //     navigate('/mainpage'); // 닉네임이 있으면 /mainpage으로 이동
+  //   } else {
+  //     navigate('/nickname'); // 닉네임이 없으면 /nickname으로 이동
+  //   }
+  // };
 
   
   useEffect(() => {
@@ -358,12 +358,6 @@ const CobyLoginPage = () => {
                 <span>카카오로 로그인</span>
               </button>
 
-              <button
-                onClick={handleLocalLogin} // 깃허브 로그인 버튼 클릭 시 handleGitHubLogin 호출
-                className="social-btn btn-click-effect w-full bg-gray-800 text-white"
-              >
-                <span>로컬로 로그인(테스트용)</span>
-              </button>
             </div>
           </div>
         </div>
