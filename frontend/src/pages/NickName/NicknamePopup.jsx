@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './NicknamePopup.css';
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie'
+import { useUserStore } from '../../store/userStore'
 
 const NicknameSetup = () => {
   const navigate = useNavigate();
@@ -289,6 +291,8 @@ const NicknameSetup = () => {
     // 완료 처리
     displayToast(`${nickname}님, 환영합니다!`, 'success');
   
+    Cookies.set('nickname', nickname, { expires: 1 }) // 1일 유지
+
     // 다음 페이지로 이동
     setTimeout(() => {
       navigate('/mainpage');

@@ -1,3 +1,4 @@
+// WaitingRoom.jsx
 /**
  * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
  */
@@ -11,9 +12,49 @@ import ChatWindow from '../../Common/components/ChatWindow';
 import RoomSettingsModal from './components/RoomSettingsModal';
 import ToastNotification from '../../Common/components/ToastNotification';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
+import { useUserStore } from '../../store/userStore'
+import Cookies from 'js-cookie'
+
 
 function WaitingRoom() {
+  const navigate = useNavigate();
+
+  const nickname = useUserStore((state) => state.nickname)
+  const setNickname = useUserStore((state) => state.setNickname)
+
+  useEffect(() => {
+      if (!nickname) {
+      const cookieNick = Cookies.get('nickname')
+      if (cookieNick) {
+          setNickname(cookieNick)
+      }
+      }
+  }, [nickname, setNickname])
+
+  // 현재 사용자 닉네임을 가져옵니다.
+  const currentUser = nickname || '게스트';
+
   const playerData = {
+    [currentUser]: { // 코드마스터 대신 currentUser 닉네임을 키로 사용
+        avatar: currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase(), // 닉네임 앞 두 글자
+        avatarColor: 'bg-blue-700', // 기본 색상 (원한다면 동적으로 변경 가능)
+        tier: '다이아', // 기본 티어
+        level: 28, // 기본 레벨
+        winRate: '78%',
+        wins: 45,
+        losses: 13,
+        preferredTypes: {
+            '알고리즘': 30,
+            '자료구조': 40,
+            'SQL': 20,
+            '동적계획법': 10
+        },
+        recentGames: [
+            { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
+            { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
+            { name: 'SQL 챌린지 #12', time: '2일 전', result: '패배' }
+        ]
+    },
     '사용자1': {
         avatar: 'KM',
         avatarColor: 'bg-blue-700',
@@ -54,26 +95,6 @@ function WaitingRoom() {
             { name: 'SQL 챌린지 #12', time: '2일 전', result: '승리' }
         ]
     },
-    '코드마스터': {
-        avatar: 'CM',
-        avatarColor: 'bg-green-700',
-        tier: '다이아',
-        level: 28,
-        winRate: '78%',
-        wins: 45,
-        losses: 13,
-        preferredTypes: {
-            '알고리즘': 30,
-            '자료구조': 40,
-            'SQL': 20,
-            '동적계획법': 10
-        },
-        recentGames: [
-            { name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리' },
-            { name: '자료구조 마스터 #45', time: '어제', result: '승리' },
-            { name: 'SQL 챌린지 #12', time: '2일 전', result: '패배' }
-        ]
-    },
     '사용자4': {
         avatar: 'SJ',
         avatarColor: 'bg-yellow-700',
@@ -96,18 +117,17 @@ function WaitingRoom() {
     }
   };
 
+
   const basePlayersData = [
+    { name: currentUser, avatarInitials: currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase(), tier: "다이아", level: "Lv.28", isReady: false, avatarColor: 'bg-blue-700' }, // 코드마스터 대신 currentUser 사용
     { name: "사용자1", avatarInitials: "KM", tier: "마스터", level: "Lv.42", isReady: true, avatarColor: 'bg-blue-700' },
     { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isReady: true, avatarColor: 'bg-purple-700' },
-    { name: "코드마스터", avatarInitials: "CM", tier: "다이아", level: "Lv.28", isReady: false, avatarColor: 'bg-green-700' },
     { name: "사용자4", avatarInitials: "SJ", tier: "다이아", level: "Lv.31", isReady: true, avatarColor: 'bg-yellow-700' },
   ];
 
-  const navigate = useNavigate();
 
   const [isReady, setIsReady] = useState(false);
-  const [roomHost, setRoomHost] = useState("코드마스터");
-  const currentUser = "코드마스터";
+  const [roomHost, setRoomHost] = useState(currentUser); // 방장도 currentUser로 초기화
   const isCurrentUserHost = currentUser === roomHost;
   const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
   const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
@@ -285,7 +305,7 @@ function WaitingRoom() {
             <div className="waitingRoom-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center">
               <span className="text-sm font-bold text-blue-200">다이아</span>
             </div>
-            <span className="font-medium">코드마스터</span>
+            <span className="font-medium">{currentUser}</span>
           </div>
           <button id="leaveRoomBtn" className="bg-red-600 hover:bg-red-700  px-4 py-2 rounded-lg flex items-center transition" onClick={quickbtn}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
