@@ -150,28 +150,38 @@ const NicknameSetup = () => {
     // 프로필 제출 핸들러 (폼 제출 시)
     const handleSubmitProfile = (event) => {
         event.preventDefault(); // 폼 기본 제출 동작 방지
-
+    
         const trimmedNickname = nickname.trim();
-
+    
         if (!validateNickname(trimmedNickname)) {
             setNicknameError('닉네임은 2~12자 이내의 한글, 영문, 숫자만 사용 가능합니다.');
+            setTimeout(() => {
+                setNicknameError('');
+            }, 2000); 
             return;
         }
-
+    
         if (!nicknameStatus.isChecked) {
             setNicknameError('닉네임 중복 확인을 해주세요.');
+            setTimeout(() => {
+                setNicknameError('');
+            }, 2000);
             return;
         }
-
+    
         if (!selectedLanguage) {
             setNicknameError('주 사용 언어를 선택해주세요.');
-            return;
+            setTimeout(() => {
+                setNicknameError('');
+            }, 2000);
+            return; 
         }
-
-        setNicknameError('');
-        alert(`환영합니다, ${trimmedNickname}님! 선택하신 언어는 ${selectedLanguage}입니다.`);
-        // 실제 서버 전송 로직은 여기에 추가
-        // goTomainPage(); // 성공 시 메인 페이지로 이동
+    
+        // 모든 유효성 검사를 통과했을 때만 실행
+        setNicknameError(''); 
+        console.log(`환영합니다, ${trimmedNickname}님! 선택하신 언어는 ${selectedLanguage}입니다.`);
+    
+        goTomainPage(); // 모든 조건이 충족되면 메인 페이지로 이동
     };
 
     // 컴포넌트 마운트 시 별 생성 및 카드 정렬
@@ -290,7 +300,7 @@ const NicknameSetup = () => {
                         </div>
 
                         <div className="mb-8">
-                            <button type="submit" className="btn-submit w-full py-4 px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors" onClick={goTomainPage}>시작하기</button>
+                            <button type="submit" className="btn-submit w-full py-4 px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">시작하기</button>
                         </div>
                     </form>
 
