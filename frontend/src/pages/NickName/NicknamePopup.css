@@ -1,557 +1,176 @@
-:root {
-  --bg-dark: #0f172a;
-  --primary: #8b5cf6;
-  --primary-light: #a78bfa;
-  --secondary: #f472b6;
-  --accent: #38bdf8;
-  --text-light: #e2e8f0;
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Fira+Code:wght@400;500&family=Montserrat:wght@700;800;900&display=swap');
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
-.nickname {
-  font-family: 'Nunito', 'Noto Sans KR', sans-serif;
-  background-color: var(--bg-dark);
-  color: var(--text-light);
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  min-height: 100vh;
+.main-container {
+    display: flex;
+    min-height: 100vh;
 }
 
-.korean-font {
-  font-family: 'Jua', 'Noto Sans KR', sans-serif;
+.nickname-section {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+    z-index: 10;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.2);
 }
 
-/* 배경 효과 */
-.bg-stars {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
+.night-sky {
+    background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
+    position: relative;
+    overflow: hidden;
 }
 
 .star {
-  position: absolute;
-  background-color: white;
-  border-radius: 50%;
-  filter: blur(1px);
-  opacity: 0.7;
+    position: absolute;
+    background-color: white;
+    border-radius: 50%;
+    animation: twinkle var(--duration) infinite ease-in-out;
+    opacity: var(--opacity);
 }
 
-/* 닉네임 설정 컨테이너 */
-.nickname-container {
-  background: rgba(30, 41, 59, 0.7);
-  border-radius: 24px;
-  border: 3px solid rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
-  overflow: hidden;
-  position: relative;
-  z-index: 10;
+@keyframes twinkle {
+    0%, 100% {
+        opacity: var(--opacity);
+        transform: scale(1);
+    }
+    50% {
+        opacity: var(--opacity-half);
+        transform: scale(1.2);
+    }
 }
 
-.nickname-container::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-  z-index: 0;
-  pointer-events: none; /* 이벤트 통과 */
+.shooting-star {
+    position: absolute;
+    width: 100px;
+    height: 1px;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1));
+    transform: rotate(var(--angle));
+    animation: shooting var(--duration) infinite linear;
+    animation-delay: var(--delay);
+    opacity: 0;
 }
 
-/* 버튼 스타일 */
-.game-btn {
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  border: none;
-  color: white;
-  font-weight: bold;
-  border-radius: 12px;
-  padding: 12px 24px;
-  font-size: 1.1rem;
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
-  transform: translateY(0);
-  cursor: pointer;
+@keyframes shooting {
+    0% {
+        opacity: 0;
+        transform: translateX(-100px) rotate(var(--angle));
+    }
+    5% {
+        opacity: 1;
+    }
+    20% {
+        opacity: 1;
+    }
+    30% {
+        opacity: 0;
+        transform: translateX(calc(100vw + 100px)) rotate(var(--angle));
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(calc(100vw + 100px)) rotate(var(--angle));
+    }
 }
 
-.game-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.2);
+.card {
+    position: absolute;
+    width: 280px;
+    height: 400px;
+    z-index: 5;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4), 0 0 20px rgba(255, 255, 255, 0.3);
+    transition: box-shadow 0.3s, transform 0.3s;
+    cursor: pointer;
 }
 
-.game-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+.card:hover {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+    z-index: 10;
+    transform: scale(1.05);
 }
 
-.game-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: translateY(0);
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+.card.selected {
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.8);
+    z-index: 15;
+    transform: scale(1.1);
 }
 
-/* 입력 필드 스타일 */
-.input-field {
-  background: rgba(15, 23, 42, 0.6);
-  border: 2px solid rgba(139, 92, 246, 0.3);
-  border-radius: 12px;
-  color: white;
-  padding: 12px 16px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  width: 100%;
-  position: relative;
-  z-index: 5; /* z-index 추가 */
+.card-pattern {
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.1),
+        rgba(255, 255, 255, 0.1) 10px,
+        transparent 10px,
+        transparent 20px
+    );
 }
 
-.input-field:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60%;
 }
 
-.input-field::placeholder {
-  color: rgba(226, 232, 240, 0.5);
+.language-logo {
+    width: 120px;
+    height: 120px;
 }
 
-/* 중복확인 버튼 */
-.check-btn {
-  background: rgba(56, 189, 248, 0.8);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 5; /* z-index 추가 */
+.logo-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    letter-spacing: -1px;
 }
 
-.check-btn:hover {
-  background: rgba(56, 189, 248, 1);
-  transform: translateY(-2px);
+.btn-check {
+    transition: all 0.2s ease;
 }
 
-.check-btn:active {
-  transform: translateY(0);
+.btn-check:hover {
+    background-color: #1e40af;
 }
 
-.check-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: translateY(0);
+.btn-submit {
+    transition: all 0.3s ease;
 }
 
-/* 정책 리스트 */
-.policy-list li {
-  position: relative;
-  padding-left: 1.5rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: rgba(226, 232, 240, 0.8);
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
 }
 
-.policy-list li::before {
-  content: '•';
-  position: absolute;
-  left: 0.5rem;
-  color: var(--accent);
+.btn-submit:active {
+    transform: translateY(0);
 }
 
-/* 로봇 캐릭터 */
-.robot {
-  width: 140px;
-  height: 140px;
-  position: relative;
-  margin: 0 auto;
-  cursor: pointer;
-  z-index: 10;
-}
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+    }
 
-.robot-head {
-  width: 80px;
-  height: 70px;
-  background: #38bdf8;
-  border-radius: 40px 40px 30px 30px;
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  z-index: 2;
-}
+    .nickname-section, .night-sky {
+        width: 100%;
+    }
 
-.robot-face {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
+    .nickname-section {
+        padding: 2rem 1rem;
+    }
 
-.robot-eyes {
-  display: flex;
-  gap: 15px;
-  margin-top: 15px;
-}
+    .night-sky {
+        height: 600px;
+    }
 
-.robot-eye {
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.robot-eye::after {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: #0f172a;
-  border-radius: 50%;
-  animation: blink 3s infinite;
-}
-
-.robot-mouth {
-  width: 30px;
-  height: 10px;
-  background: white;
-  border-radius: 5px;
-  margin-top: 10px;
-  position: relative;
-  overflow: hidden;
-}
-
-.robot-antenna {
-  position: absolute;
-  top: -15px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 20px;
-  background: #f472b6;
-  border-radius: 4px;
-  z-index: 1;
-}
-
-.robot-antenna::before {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
-  background: #f472b6;
-  border-radius: 50%;
-  box-shadow: 0 0 10px rgba(244, 114, 182, 0.7);
-  animation: pulse 2s infinite;
-}
-
-.robot-body {
-  width: 100px;
-  height: 70px;
-  background: #8b5cf6;
-  border-radius: 20px;
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.robot-body::before {
-  content: '';
-  position: absolute;
-  width: 40px;
-  height: 20px;
-  background: #a78bfa;
-  border-radius: 10px;
-  top: 10px;
-}
-
-.robot-arm {
-  position: absolute;
-  width: 15px;
-  height: 40px;
-  background: #38bdf8;
-  border-radius: 8px;
-  top: 50%;
-  transform-origin: top center;
-}
-
-.robot-arm.left {
-  left: -5px;
-  transform: rotate(20deg);
-  animation: wave-left 3s infinite;
-}
-
-.robot-arm.right {
-  right: -5px;
-  transform: rotate(-20deg);
-  animation: wave-right 3s infinite;
-}
-
-.robot-leg {
-  position: absolute;
-  width: 20px;
-  height: 25px;
-  background: #38bdf8;
-  border-radius: 8px;
-  bottom: -15px;
-}
-
-.robot-leg.left {
-  left: 25px;
-  animation: bounce-left 2s infinite;
-}
-
-.robot-leg.right {
-  right: 25px;
-  animation: bounce-right 2s infinite;
-}
-
-.robot-shadow {
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 15px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 50%;
-  filter: blur(5px);
-  z-index: -1;
-  animation: shadow-pulse 2s infinite;
-}
-
-/* 로봇 애니메이션 */
-@keyframes blink {
-  0%, 45%, 50%, 55%, 100% { transform: scale(1); }
-  48%, 52% { transform: scale(0.5); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
-  50% { opacity: 1; transform: translateX(-50%) scale(1.2); }
-}
-
-@keyframes wave-left {
-  0%, 100% { transform: rotate(20deg); }
-  50% { transform: rotate(40deg); }
-}
-
-@keyframes wave-right {
-  0%, 100% { transform: rotate(-20deg); }
-  50% { transform: rotate(-40deg); }
-}
-
-@keyframes bounce-left {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-
-@keyframes bounce-right {
-  0%, 100% { transform: translateY(0); }
-  75% { transform: translateY(-5px); }
-}
-
-@keyframes shadow-pulse {
-  0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.2; }
-  50% { transform: translateX(-50%) scale(0.8); opacity: 0.1; }
-}
-
-/* 구름 효과 */
-.cloud {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 50%;
-  filter: blur(20px);
-  z-index: 0;
-  pointer-events: none; /* 이벤트 통과 */
-}
-
-/* 로고 스타일 */
-.game-logo {
-  position: relative;
-  font-weight: 800;
-  font-size: 3rem;
-  color: white;
-  text-shadow: 0 2px 10px rgba(139, 92, 246, 0.5);
-  letter-spacing: -1px;
-  z-index: 10;
-}
-
-.logo-badge {
-  position: absolute;
-  top: -10px;
-  right: -30px;
-  background: #f472b6;
-  color: white;
-  font-size: 0.8rem;
-  font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 10px;
-  transform: rotate(15deg);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-/* 버튼 클릭 효과 */
-.btn-click-effect {
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-click-effect::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  z-index: -1;
-}
-
-.btn-click-effect.active::before {
-  animation: ripple 0.6s ease-out;
-}
-
-@keyframes ripple {
-  0% {
-      width: 0;
-      height: 0;
-      opacity: 0.5;
-  }
-  100% {
-      width: 300px;
-      height: 300px;
-      opacity: 0;
-  }
-}
-
-/* 토스트 메시지 */
-.toast-message {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(56, 189, 248, 0.9);
-  color: white;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.toast-message.show {
-  opacity: 1;
-}
-
-.toast-message.error {
-  background: rgba(244, 63, 94, 0.9);
-}
-
-.toast-message.success {
-  background: rgba(34, 197, 94, 0.9);
-}
-
-/* 별 뿌리기 효과 */
-.star-burst {
-  position: absolute;
-  width: 5px;
-  height: 5px;
-  background: white;
-  border-radius: 50%;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 100;
-}
-
-@keyframes burst {
-  0% {
-      transform: translate(0, 0) scale(0);
-      opacity: 1;
-  }
-  100% {
-      transform: translate(var(--tx), var(--ty)) scale(1);
-      opacity: 0;
-  }
-}
-
-/* 제목 스타일 개선 */
-.nickname-title {
-  background: linear-gradient(135deg, #8b5cf6 0%, #f472b6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-fill-color: transparent;
-  font-weight: 800;
-  text-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
-  letter-spacing: -0.5px;
-  position: relative;
-  display: inline-block;
-  white-space: nowrap; /* 줄바꿈 방지 */
-}
-
-.nickname-title::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, #8b5cf6 0%, #f472b6 100%);
-  border-radius: 3px;
-}
-
-.title-container {
-  position: relative;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  text-align: center;
-  width: 100%; /* 너비 100%로 설정 */
-  overflow: hidden; /* 넘치는 내용 숨김 */
-}
-
-.title-container::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.5) 50%, transparent 100%);
-  pointer-events: none; /* 이벤트 통과 */
-}
-
-/* 폼 요소 컨테이너 */
-.form-content {
-  position: relative;
-  z-index: 5; /* 폼 요소들의 z-index 증가 */
+    .card {
+        width: 220px;
+        height: 320px;
+    }
 }
