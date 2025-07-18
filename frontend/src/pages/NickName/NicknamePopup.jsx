@@ -11,9 +11,8 @@ const NicknameSetup = () => {
     const [nicknameStatus, setNicknameStatus] = useState({ message: '', type: '', isChecked: false });
     const [nicknameError, setNicknameError] = useState('');
     const [selectedLanguage, setSelectedLanguage] = useState(null);
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastType, setToastType] = useState('info');
-    const [showToast, setShowToast] = useState(false);
+    const [startBtnDisable, setStartBtnDisable] = useState(false);
+    const setCookieNickname = useUserStore((state) => state.setNickname)
 
     // 별 및 유성 생성 함수 (useEffect 내부에서 실행될 것)
     const createStars = () => {
@@ -95,18 +94,10 @@ const NicknameSetup = () => {
         const regex = /^[가-힣a-zA-Z0-9]{2,12}$/;
         return regex.test(inputNickname);
     };
-    const displayToast = (message, type = 'info') => {
-        setToastMessage(message);
-        setToastType(type);
-        setShowToast(true);
-
-        setTimeout(() => {
-            setShowToast(false);
-        }, 3000);
-    };
+    
 
     // 닉네임 중복 확인 핸들러
-    const handleCheckNickname = () => {
+    const handleCheckNickname = async () => { // async 키워드 추가
         const trimmedNickname = nickname.trim();
 
         if (!validateNickname(trimmedNickname)) {
@@ -118,15 +109,26 @@ const NicknameSetup = () => {
         setNicknameError('');
         setNicknameStatus({ message: '확인 중...', type: 'text-blue-500', isChecked: false });
 
-        setTimeout(() => {
-            const isDuplicate = Math.random() < 0.3; // 30% 확률로 중복 시뮬레이션
+        try {
+            console.log('닉네임 중복 확인 요청:', `${process.env.REACT_APP_API_URL}/api/users/check-nickname?nickname=${trimmedNickname}`); // 요청 URL 로깅
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/check-nickname?nickname=${trimmedNickname}`);
+            const data = await response.json();
+            console.log('닉네임 중복 확인 응답 데이터:', data); // 응답 데이터 로깅
 
-            if (isDuplicate) {
-                setNicknameStatus({ message: '이미 사용 중인 닉네임입니다.', type: 'text-red-500', isChecked: false });
+            if (response.ok) {
+                if (data.isDuplicate) {
+                    setNicknameStatus({ message: '이미 사용 중인 닉네임입니다.', type: 'text-red-500', isChecked: false });
+                } else {
+                    setNicknameStatus({ message: '사용 가능한 닉네임입니다.', type: 'text-green-500', isChecked: true });
+                }
             } else {
-                setNicknameStatus({ message: '사용 가능한 닉네임입니다.', type: 'text-green-500', isChecked: true });
+                // 서버에서 오류 응답 (예: 400 Bad Request)을 보낸 경우
+                setNicknameStatus({ message: data.message || '닉네임 확인 중 오류가 발생했습니다.', type: 'text-red-500', isChecked: false });
             }
-        }, 800);
+        } catch (error) {
+            console.error('닉네임 중복 확인 중 오류 발생:', error); // 에러 객체 로깅
+            setNicknameStatus({ message: '서버와 통신 중 오류가 발생했습니다.', type: 'text-red-500', isChecked: false });
+        }
     };
 
     // 언어 카드 클릭 핸들러
@@ -139,13 +141,42 @@ const NicknameSetup = () => {
     };
 
     // "시작하기" 버튼 클릭 핸들러
-    const goTomainPage = () => {
-    displayToast(`${nickname}님, 환영합니다!`, 'success');
-    Cookies.set('nickname', nickname, { expires: 1 }) // 1일 유지
-    setTimeout(() => { // 1.5초 후 페이지 이동 (시뮬레이션)
-        navigate('/mainpage');
-    }, 1500);
-};
+    const goTomainPage = async () => { // async 키워드 추가
+        setStartBtnDisable(true); //중복 클릭 방지
+
+        try {
+            // 서버에 닉네임 저장 PUT 요청
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/nickname`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 필요하다면 인증 토큰 등을 추가
+                    // 'Authorization': `Bearer ${yourAuthToken}`
+                },
+                body: JSON.stringify({ nickname: nickname })
+            });
+
+            if (response.ok) {
+                console.log('닉네임이 성공적으로 저장되었습니다.');
+                Cookies.set('nickname', nickname, { expires: 1 }) // 1일 유지
+                setCookieNickname(nickname) //닉네임을 쿠키에 저장
+
+                setTimeout(() => { // 1.5초 후 페이지 이동 (시뮬레이션)
+                    navigate('/mainpage');
+                }, 1500);
+
+            } else {
+                const errorData = await response.json();
+                console.error('닉네임 저장 실패:', errorData.message || '알 수 없는 오류');
+                setNicknameError('닉네임 저장에 실패했습니다. 다시 시도해주세요.');
+                setStartBtnDisable(false); // 오류 발생 시 버튼 활성화
+            }
+        } catch (error) {
+            console.error('네트워크 오류:', error);
+            setNicknameError('서버와 통신 중 오류가 발생했습니다. 네트워크 연결을 확인해주세요.');
+            setStartBtnDisable(false); // 오류 발생 시 버튼 활성화
+        }
+    };
 
     // 프로필 제출 핸들러 (폼 제출 시)
     const handleSubmitProfile = (event) => {
@@ -300,7 +331,7 @@ const NicknameSetup = () => {
                         </div>
 
                         <div className="mb-8">
-                            <button type="submit" className="btn-submit w-full py-4 px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">시작하기</button>
+                            <button type="submit" className="btn-submit w-full py-4 px-6 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors" disabled={startBtnDisable}>시작하기</button>
                         </div>
                     </form>
 
