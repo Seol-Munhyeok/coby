@@ -116,10 +116,10 @@ const NicknameSetup = () => {
             console.log('닉네임 중복 확인 응답 데이터:', data); // 응답 데이터 로깅
 
             if (response.ok) {
-                if (data.isDuplicate) {
-                    setNicknameStatus({ message: '이미 사용 중인 닉네임입니다.', type: 'text-red-500', isChecked: false });
+                if (data.available) {
+                    setNicknameStatus({ message: data.message, type: 'text-green-500', isChecked: true });
                 } else {
-                    setNicknameStatus({ message: '사용 가능한 닉네임입니다.', type: 'text-green-500', isChecked: true });
+                    setNicknameStatus({ message: data.message, type: 'text-red-500', isChecked: false });
                 }
             } else {
                 // 서버에서 오류 응답 (예: 400 Bad Request)을 보낸 경우
@@ -154,7 +154,10 @@ const NicknameSetup = () => {
                     // 필요하다면 인증 토큰 등을 추가
                     // 'Authorization': `Bearer ${yourAuthToken}`
                 },
-                body: JSON.stringify({ nickname: nickname })
+                body: JSON.stringify({ 
+                    nickname: nickname,
+                    selectedLanguage: selectedLanguage
+                 })
             });
 
             if (response.ok) {
