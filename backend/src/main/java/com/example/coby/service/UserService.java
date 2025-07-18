@@ -5,7 +5,10 @@ import com.example.coby.dto.ChangeNicknameResponse;
 import com.example.coby.dto.NicknameCheckResponse;
 import com.example.coby.entity.User;
 import com.example.coby.repository.UserRepository;
+import com.example.coby.security.CustomOAuth2User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +29,21 @@ public class UserService {
 
     @Transactional
     public ChangeNicknameResponse changeNickname(ChangeNicknameRequest request) {
-        boolean duplicate = userRepository.existsByNickname(request.newNickname());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomOAuth2User principal = (CustomOAuth2User) auth.getPrincipal();
+        Long userId = principal.getUserId();
+
+        boolean duplicate = userRepository.existsByNickname(request.nickname());
         if (duplicate) {
             return new ChangeNicknameResponse(false, "이미 사용 중인 닉네임입니다.");
         }
 
-        User user = userRepository.findById(request.userId())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다."));
-        user.changeNickname(request.newNickname());
+        user.changeNickname(request.nickname());
+
+        System.out.println("🧾 변경 전 nickname: " + user.getNickname());
+        System.out.println("📝 요청된 nickname: " + request.nickname());
 
         return new ChangeNicknameResponse(true, "닉네임이 성공적으로 변경되었습니다.");
     }

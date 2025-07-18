@@ -24,6 +24,7 @@ public class RoomService {
     }
 
     public Room createRoom(CreateRoomRequest req) {
+        System.out.println("🔥 방 생성 요청 들어옴");
         Room room = Room.builder()
                 .roomName(req.getRoomName())
                 .difficulty(req.getDifficulty())
@@ -34,6 +35,8 @@ public class RoomService {
                 .isPrivate(req.isPrivate())
                 .password(req.getPassword())
                 .itemMode(req.isItemMode())
+                .currentCapacity(0)
+                .maxCapacity(req.getMaxParticipants())
                 .build();
         return roomRepository.save(room);
     }
