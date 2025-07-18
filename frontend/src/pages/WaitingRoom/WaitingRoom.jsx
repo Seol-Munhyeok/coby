@@ -9,7 +9,7 @@ import useContextMenu from '../../Common/hooks/useContextMenu';
 import PlayerCard from './components/PlayerCard';
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal'
 import ChatWindow from '../../Common/components/ChatWindow';
-import RoomSettingsModal from './components/RoomSettingsModal';
+import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import ToastNotification from '../../Common/components/ToastNotification';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
 import { useUserStore } from '../../store/userStore'
@@ -139,10 +139,10 @@ function WaitingRoom() {
   const [activePlayerNames, setActivePlayerNames] = useState(initialActivePlayerNames);
 
   const [roomName, setRoomName] = useState("알고리즘 배틀 #129");
-  const [problemType, setProblemType] = useState("알고리즘");
   const [difficulty, setDifficulty] = useState("보통");
   const [timeLimit, setTimeLimit] = useState("30분");
   const [maxParticipants, setMaxParticipants] = useState(4);
+  const [itemMode, setItemMode] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
   const [password, setPassword] = useState("");
 
@@ -244,10 +244,10 @@ function WaitingRoom() {
 
   const handleSaveRoomSettings = (settings) => {
     setRoomName(settings.roomName);
-    setProblemType(settings.problemType);
     setDifficulty(settings.difficulty);
     setTimeLimit(settings.timeLimit);
     setMaxParticipants(settings.maxParticipants);
+    setItemMode(settings.itemMode)
     setIsPrivate(settings.isPrivate);
     setPassword(settings.password);
     setNotification({ message: "방 설정이 저장되었습니다.", type: "success" });
@@ -379,10 +379,6 @@ function WaitingRoom() {
               <div className="waitingRoom-glass-effect rounded-lg px-4 py-2">
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
                   <div className="flex items-center">
-                    <span className="waitingRoom-text">문제 유형:</span>
-                    <span className=" font-medium ml-1">{problemType}</span>
-                  </div>
-                  <div className="flex items-center">
                     <span className="waitingRoom-text">난이도:</span>
                     <span className="text-yellow-400 font-medium ml-1">{difficulty}</span>
                   </div>
@@ -473,10 +469,10 @@ function WaitingRoom() {
         onSave={handleSaveRoomSettings}
         initialSettings={{
           roomName,
-          problemType,
           difficulty,
           timeLimit,
           maxParticipants,
+          itemMode,
           isPrivate,
           password,
         }}

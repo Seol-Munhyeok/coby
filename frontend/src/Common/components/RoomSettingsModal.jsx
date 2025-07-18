@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // axios import
 
 function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, currentParticipantsCount }) {
   const [settings, setSettings] = useState(initialSettings);
@@ -18,7 +19,7 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => { // 비동기 함수로 변경
     // New validation: maxParticipants vs currentParticipantsCount
     if (settings.maxParticipants < currentParticipantsCount) {
       alert(`현재 참가자(${currentParticipantsCount}명)보다 최대 참가자 수를 적게 설정할 수 없습니다.`);
@@ -37,11 +38,33 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
       return; // 저장 중단
     }
 
-    // 비밀방이 아니면 비밀번호 초기화
-    if (!settings.isPrivate) {
-      onSave({ ...settings, password: "" });
-    } else {
-      onSave(settings);
+    const roomData = {
+      roomName: settings.roomName, //방이름 str
+      difficulty: settings.difficulty, //문제 난이도 str
+      timeLimit: settings.timeLimit, //제한 시간 str
+      maxParticipants: settings.maxParticipants, //최대 인원 int
+      currentPart : currentParticipantsCount, //int
+      status : 0, //int
+      isPrivate: settings.isPrivate, //bool
+      password: settings.isPrivate ? settings.password : '', // 비밀방이 아니면 비밀번호 초기화 //str
+      itemMode: settings.itemMode // 새로운 itemMode 추가 //bool
+    };
+
+    try {
+      // 서버에 방 생성 요청
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms`, roomData, {
+        withCredentials: true // 필요한 경우 쿠키 포함
+      });
+
+      if (response.status === 201) { // 성공적인 생성 (HTTP 201 Created)
+        alert('방이 성공적으로 생성되었습니다!');
+        onSave(roomData); // 상위 컴포넌트로 저장된 설정 전달
+      } else {
+        alert('방 생성에 실패했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('방 생성 중 오류 발생:', error);
+      alert('방 생성 중 오류가 발생했습니다.');
     }
   };
 
@@ -65,22 +88,6 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
               onChange={handleChange}
               className="w-full px-3 py-2 bg-blue-900/30 border border-blue-800 rounded-md  focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
-          </div>
-
-          <div>
-            <label htmlFor="problemType" className="block waitingRoom-text text-sm font-medium mb-1">문제 유형</label>
-            <select
-              id="problemType"
-              name="problemType"
-              value={settings.problemType}
-              onChange={handleChange}
-              className="w-full px-3 py-2 bg-blue-900/30 border border-blue-800 rounded-md  focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="알고리즘">알고리즘</option>
-              <option value="자료구조">자료구조</option>
-              <option value="SQL">SQL</option>
-              <option value="네트워크">네트워크</option>
-            </select>
           </div>
 
           <div>
@@ -112,6 +119,35 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
               <option value="45분">45분</option>
               <option value="60분">60분</option>
             </select>
+          </div>
+
+          {/* 노템전/아이템전 선택 버튼 추가 */}
+          <div>
+            <label className="block waitingRoom-text text-sm font-medium mb-1">모드 선택</label>
+            <div className="flex space-x-4">
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="itemMode"
+                  value="노템전"
+                  checked={settings.itemMode === false}
+                  onChange={handleChange}
+                  className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                />
+                <span className="ml-2">노템전</span>
+              </label>
+              <label className="inline-flex items-center">
+                <input
+                  type="radio"
+                  name="itemMode"
+                  value="아이템전"
+                  checked={settings.itemMode === true}
+                  onChange={handleChange}
+                  className="form-radio h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                />
+                <span className="ml-2">아이템전</span>
+              </label>
+            </div>
           </div>
 
           <div>
