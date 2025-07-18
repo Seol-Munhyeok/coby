@@ -42,6 +42,10 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다."));
         user.changeNickname(request.nickname());
 
+        if (request.selectedLanguage() != null && !request.selectedLanguage().isBlank()) {
+            user.changePreferredLanguage(request.selectedLanguage());
+        }
+
         System.out.println("🧾 변경 전 nickname: " + user.getNickname());
         System.out.println("📝 요청된 nickname: " + request.nickname());
 

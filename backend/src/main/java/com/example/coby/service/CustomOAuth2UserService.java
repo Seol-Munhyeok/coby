@@ -65,7 +65,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
             User user = userRepository.findBySsoProviderAndProviderId(fProvider, fProviderId)
                     .orElseGet(() -> userRepository.save(
-                            User.createSocialUser(fNickname, fEmail, fProvider, fProviderId, defaultTier)
+                            User.createSocialUser(null, fEmail, fProvider, fProviderId, defaultTier)
                     ));
 
             // ✅ 기존 유저도 tier가 null이면 디폴트 세팅
