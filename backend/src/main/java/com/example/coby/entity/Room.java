@@ -16,11 +16,21 @@ public class Room {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
+    private String roomName;
 
-    private int maxCapacity;
+    private int maxParticipants;
 
-    private int currentCapacity;
+    private int currentPart;
+
+    private String difficulty;
+
+    private String timeLimit;
+
+    private boolean isPrivate;
+
+    private String password;
+
+    private boolean itemMode;
 
     private String language;
 

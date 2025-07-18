@@ -41,4 +41,9 @@ public class User {
     private Tier tier;
 
     private int tierPoint;
+
+    public void changeNickname(String newNickname) {
+        this.nickname = newNickname;
+    }
 }
+

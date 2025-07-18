@@ -8,20 +8,28 @@ import java.time.LocalDateTime;
 @Builder
 public record RoomResponse(
         Long id,
-        String title,
-        int maxCapacity,
-        int currentCapacity,
-        String language,
+        String roomName,
+        int maxParticipants,
+        int currentPart,
+        String difficulty,
+        String timeLimit,
+        boolean isPrivate,
+        String password,
+        boolean itemMode,
         LocalDateTime createdAt,
         int status
 ) {
     public static RoomResponse from(Room room) {
         return RoomResponse.builder()
                 .id(room.getId())
-                .title(room.getTitle())
-                .maxCapacity(room.getMaxCapacity())
-                .currentCapacity(room.getCurrentCapacity())
-                .language(room.getLanguage())
+                .roomName(room.getRoomName())
+                .maxParticipants(room.getMaxParticipants())
+                .currentPart(room.getCurrentPart())
+                .difficulty(room.getDifficulty())
+                .timeLimit(room.getTimeLimit())
+                .isPrivate(room.isPrivate())
+                .password(room.getPassword())
+                .itemMode(room.isItemMode())
                 .createdAt(room.getCreatedAt())
                 .status(room.getStatus())
                 .build();
