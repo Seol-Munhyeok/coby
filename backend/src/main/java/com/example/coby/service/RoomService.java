@@ -1,7 +1,6 @@
 package com.example.coby.service;
 
 import com.example.coby.dto.CreateRoomRequest;
-import com.example.coby.entity.Problem;
 import com.example.coby.entity.Room;
 import com.example.coby.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,27 +24,28 @@ public class RoomService {
     }
 
     public Room createRoom(CreateRoomRequest req) {
+        System.out.println("🔥 방 생성 요청 들어옴");
         Room room = Room.builder()
-                .title(req.getTitle())
-                .maxCapacity(req.getMaxCapacity())
+                .roomName(req.getRoomName())
+                .difficulty(req.getDifficulty())
+                .timeLimit(req.getTimeLimit())
+                .maxParticipants(req.getMaxParticipants())
+                .currentPart(req.getCurrentPart())
+                .status(req.getStatus())
+                .isPrivate(req.isPrivate())
+                .password(req.getPassword())
+                .itemMode(req.isItemMode())
                 .currentCapacity(0)
-                .language(req.getLanguage())
-                .createdAt(LocalDateTime.now())
-                .status(0)
+                .maxCapacity(req.getMaxParticipants())
                 .build();
-        if (req.getProblemId() != null) {
-            Problem problem = new Problem();
-            problem.setId(req.getProblemId());
-            room.setProblem(problem);
-        }
         return roomRepository.save(room);
     }
 
     public Room joinRoom(Long roomId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
-        if (room.getCurrentCapacity() < room.getMaxCapacity()) {
-            room.setCurrentCapacity(room.getCurrentCapacity() + 1);
+        if (room.getCurrentPart() < room.getMaxParticipants()) {
+            room.setCurrentPart(room.getCurrentPart() + 1);
             roomRepository.save(room);
         }
         return room;

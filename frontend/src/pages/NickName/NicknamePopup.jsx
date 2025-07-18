@@ -148,6 +148,7 @@ const NicknameSetup = () => {
             // 서버에 닉네임 저장 PUT 요청
             const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/nickname`, {
                 method: 'PUT',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     // 필요하다면 인증 토큰 등을 추가

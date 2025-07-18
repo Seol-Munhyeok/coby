@@ -5,6 +5,7 @@ import com.example.coby.dto.RoomResponse;
 import com.example.coby.entity.Room;
 import com.example.coby.service.RoomService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ public class RoomController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public RoomResponse createRoom(@RequestBody CreateRoomRequest request) {
         Room room = roomService.createRoom(request);
         return RoomResponse.from(room);
