@@ -16,7 +16,7 @@ public class User {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 50, unique = true, nullable = false)
+    @Column(length = 50, unique = true)
     private String nickname;
 
     @Column(length = 50)
@@ -68,6 +68,11 @@ public class User {
     public void changeNickname(String newNickname) {
         this.nickname = newNickname;
     }
+
+    public void changePreferredLanguage(String language) {
+        this.preferredLanguage = language;
+    }
+
 
 }
 
