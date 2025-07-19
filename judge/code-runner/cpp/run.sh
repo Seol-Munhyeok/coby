@@ -1,7 +1,7 @@
 #!/bin/bash
-cd /app/code_root/$TARGET_UUID
+cd /app/code_root
 
-g++ /app/code_root/$TARGET_UUID/Main.cpp -o /app/code_root/$TARGET_UUID/Main.out
+g++ Main.cpp -o Main.out
 # 두 파일을 병렬로 한 줄씩 읽음
 test_count=0
 total_real_time=0

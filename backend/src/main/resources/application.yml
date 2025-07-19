@@ -3,7 +3,7 @@ spring:
     url: jdbc:mysql://coby-db.cd6i8s24gb9g.ap-northeast-2.rds.amazonaws.com:3306/cobyDB
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+#    driver-class-name: com.mysql.cj.jdbc.Driver
 
   mvc:
     pathmatch:
@@ -48,7 +48,26 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        show_sql: true
+
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      s3:
+        enabled: true
+      sqs:
+        enabled: true
+
+aws:
+  s3:
+    bucket: coby-code-bucket
+  sqs:
+    queue:
+      url: https://sqs.ap-northeast-2.amazonaws.com/997241705477/Compile-Request
 
 logging:
   level:
     org.springframework.security: DEBUG
+
+

@@ -1,0 +1,56 @@
+1. User DB
+    
+    
+    | 회원 id(primary)(bigint/auto_increase) | 닉네임(varchar(50)) | 이메일(varchar(50)) | sso 제공사(varchar(10)) | 제공사 id(varchar(255)) | 생성시간(CreateTime) | 마지막 접속 시간(DateTime(6) | 선호 언어(varchar(50)) | 누적 신고 수(int) | 티어(foreign) | 티어 포인트(int) |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    |  |  |  |  |  |  |  |  |  |  |  |
+    |  |  |  |  |  |  |  |  |  |  |  |
+2. 문제 DB
+    
+    
+    | 문제 id(primary)(bigint/auto_increase) | 문제 제목(varchar(255)) | 문제 내용(LongText) | 실행 제한 시간(int) | 실행 제한 메모리(int) | 난이도(foreign)(int) |
+    | --- | --- | --- | --- | --- | --- |
+    |  |  |  |  |  |  |
+    |  |  |  |  |  |  |
+3. testcase DB
+    
+    
+    | 테스트케이스 id(primary)(bigint) | 문제 id(foreign)(bigint) | 출력값 타입(varchar(50)) | 테스트 케이스(LongText) | 정답(LongText) |
+    | --- | --- | --- | --- | --- |
+    |  |  |  |  |  |
+    |  |  |  |  |  |
+4. 대전방
+    
+    
+    | 방 id(primary)(bigint/auto_increase) | 제목(varchar(255)) | 최대 정원(2~4) | 현재 인원(1~4) | 언어 종류(varchar(50)) | 생성 시간(CreateTime) | 상태(대기 0 , 진행 중 1 , 결과 2)(tinyint) | 문제 id(foreign)(bigint) |
+    | --- | --- | --- | --- | --- | --- | --- | --- |
+    |  |  |  |  |  |  |  |  |
+    |  |  |  |  |  |  |  |  |
+5. 대전방 - 유저 관계 테이블
+    
+    
+    | 대전방 id(foreign)(bigint) | 사용자 id(foreign)(bigint) | 권한(방장 0,참가자1)(boolean) |
+    | --- | --- | --- |
+    |  |  |  |
+    |  |  |  |
+6. 코드
+    
+    
+    | 코드 id(primary)(bigint) | 방 id(foreign)(bigint) | 코드 내용(LongText) | 사용 언어(varchar(50)) | 실행시간(int) | 메모리(int) | 생성시간(CreateTime) | 상태(pass 0,fail 1)(boolean) | 회원 id(foreign)(bigint) | 문제 id(foreign) |
+    | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+    |  |  |  |  |  |  |  |  |  |  |
+    |  |  |  |  |  |  |  |  |  |  |
+7. 티어
+    
+    
+    | 티어 id(int/) | 이미지(url)(varchar(255)) | 티어 포인트 최하(int) | 티어포인트 최상(int) |
+    | --- | --- | --- | --- |
+    |  |  |  |  |
+    |  |  |  |  |
+8. 문제 난이도
+    
+    
+    | 난이도 id (primary)(int/1~9) | 난이도 종류(varchar(50)) | 해결시 얻는 티어 포인트(int) |
+    | --- | --- | --- |
+    |  |  |  |
+    |  |  |  |
