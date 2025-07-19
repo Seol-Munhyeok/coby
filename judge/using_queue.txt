@@ -1,0 +1,12 @@
+
+   1     docker run -d -p 8001:8001 \
+   2       -v /var/run/docker.sock:/var/run/docker.sock \
+   3       -v {aws 서버상의 tmp 폴더 위치}:/app/tmp \
+   4       -e HOST_TMP_PATH="{aws 서버상의 tmp 폴더 위치}" \
+   5       --name code-compiler-api \
+   6       custiya/code-compiler-api:latest
+
+       * -p 8000:8000: 호스트의 8000번 포트와 컨테이너의 8000번 포트를 연결합니다.
+       * -v /var/run/docker.sock...: Docker-in-Docker를 가능하게 합니다.
+       * -v C:\... : 호스트의 `tmp` 폴더를 Judge 컨테이너의 `/app/tmp`에 연결합니다.
+       * -e HOST_TMP_PATH=...: main.py가 사용할 호스트의 `tmp` 경로를 환경 변수로 전달합니다.

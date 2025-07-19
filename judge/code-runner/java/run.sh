@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /app/code_root/$TARGET_UUID
+cd /app/code_root
 javac Main.java
 # 두 파일을 병렬로 한 줄씩 읽음
 test_count=0

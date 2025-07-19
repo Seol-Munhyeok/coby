@@ -1,0 +1,115 @@
+# 채점 시스템 최종 구조 및 설정 요약
+
+이 문서는 AWS Lambda 기반의 다중 언어(Java, Python, C++) 채점 시스템의 최종 아키텍처, 각 구성 요소의 역할, 그리고 배포 시 필요한 설정 사항들을 요약합니다.
+
+---
+
+## 1. 전체 아키텍처 흐름
+
+1.  **클라이언트 -> EC2 백엔드 서버:** 사용자가 제출한 코드와 채점 요청이 기존 EC2 백엔드 서버로 전달됩니다.
+2.  **EC2 백엔드 서버:**
+    *   제출된 소스 코드를 S3 버킷(`coby-code-bucket`)의 `submissions/{submission_id}/` 경로에 저장합니다.
+    *   채점 요청에 필요한 메타데이터(submission_id, problem_id, user_id, s3_code_path, language)를 포함하는 JSON 메시지를 SQS 큐(`judge-request-queue`)로 전송합니다.
+3.  **SQS 큐 (`judge-request-queue`):** 채점 요청 메시지를 임시로 저장합니다.
+4.  **Lambda 함수 (`judge-lambda-function`):**
+    *   SQS 큐에 메시지가 도착하면 자동으로 트리거됩니다.
+    *   메시지에서 `s3_code_path`를 파싱하여 사용자 소스 코드를 S3에서 Lambda의 `/tmp` 디렉토리로 다운로드합니다.
+    *   `problem_id`를 사용하여 RDS 데이터베이스에 직접 연결하고, 해당 문제의 `testcase_s3_path`와 `expected_result_s3_path`를 조회합니다.
+    *   조회된 S3 경로를 사용하여 S3에서 테스트케이스(`testcase.txt`)와 정답 파일(`result.txt`)을 Lambda의 `/tmp` 디렉토리로 다운로드합니다.
+    *   `run.sh` 스크립트를 실행하여 사용자 코드를 컴파일/실행하고, 시간/메모리 측정 및 정답 비교를 수행합니다.
+    *   `run.sh`가 생성한 `judge_result.json` 파일을 읽어 채점 결과를 파싱합니다.
+    *   파싱된 채점 결과를 EC2 백엔드 서버의 지정된 API 엔드포인트(`BACKEND_URL` 환경 변수)로 HTTP POST 요청을 통해 통보합니다.
+5.  **RDS 데이터베이스:** 문제 정보(problem_id, testcase_s3_path, expected_result_s3_path)를 저장합니다.
+6.  **S3 버킷 (`coby-code-bucket` 등):** 사용자 제출 코드, 테스트케이스, 정답 파일 등을 저장합니다.
+
+---
+
+## 2. 구성 파일별 역할 및 설정
+
+### 2.1. `Dockerfile`
+
+-   **역할:** Lambda 함수가 실행될 Docker 이미지를 빌드합니다. Java, Python, C++ 컴파일러/인터프리터, `dos2unix`, `requests`, `pymysql` 등 필요한 모든 도구와 라이브러리를 설치합니다.
+-   **코드:**
+    ```dockerfile
+    # Dockerfile
+    FROM public.ecr.aws/lambda/python:3.9
+    RUN yum update -y && \
+        yum install -y java-11-amazon-corretto-devel gcc-c++ dos2unix && \
+        pip install requests pymysql && \
+        yum clean all
+    WORKDIR ${LAMBDA_TASK_ROOT}
+    COPY app.py ${LAMBDA_TASK_ROOT}
+    COPY run.sh ${LAMBDA_TASK_ROOT}
+    RUN chmod +x ${LAMBDA_TASK_ROOT}/run.sh
+    CMD [ "app.handler" ]
+    ```
+-   **설정 필요 사항:** 없음. 이 파일 자체는 수정할 필요가 없습니다.
+
+### 2.2. `run.sh`
+
+-   **역할:** `app.py`에 의해 호출되어 실제 채점 로직(컴파일, 실행, 시간/메모리 측정, 정답 비교)을 수행합니다. 결과를 `judge_result.json` 파일로 출력합니다.
+-   **코드:** (내용이 길어 생략. `judge_system_files_explanation.txt` 참조)
+-   **설정 필요 사항:**
+    *   **`ulimit` (선택 사항):** 사용자 코드의 CPU 시간 및 메모리 사용량을 Lambda의 전체 제한과 별개로 더 엄격하게 제어하고 싶다면, 스크립트 내의 주석 처리된 `ulimit` 설정을 해제하고 적절한 값을 설정해야 합니다.
+
+### 2.3. `app.py`
+
+-   **역할:** SQS 메시지 처리, S3 파일 다운로드, RDS 데이터 조회, `run.sh` 실행, 채점 결과 파싱 및 백엔드 통보 등 채점 과정의 전체적인 오케스트레이션을 담당합니다.
+-   **코드:** (내용이 길어 생략. `judge_system_files_explanation.txt` 참조)
+-   **설정 필요 사항 (Lambda 배포 후 AWS Console에서 환경 변수로 설정):**
+    *   `RDS_HOST`: RDS 인스턴스의 엔드포인트 (사설 IP 또는 DNS 이름). (예: `my-rds-instance.xxxxxxxx.ap-northeast-2.rds.amazonaws.com`)
+    *   `RDS_USER`: RDS 데이터베이스 사용자 이름.
+    *   `RDS_PASSWORD`: RDS 데이터베이스 비밀번호.
+    *   `RDS_DB_NAME`: 연결할 데이터베이스 이름.
+    *   `BACKEND_URL`: EC2 백엔드 서버의 사설 IP 주소와 포트, 경로. (예: `http://172.31.X.X:8080/judge-result`)
+
+---
+
+## 3. AWS 인프라 설정 (Lambda 배포 전/후)
+
+### 3.1. IAM 역할
+
+-   **`lambda-judge-role` (Lambda 함수용):**
+    *   `AWSLambdaBasicExecutionRole` (CloudWatch Logs에 로그 기록)
+    *   S3 버킷(`coby-code-bucket` 및 테스트케이스/정답 버킷)에 대한 `s3:GetObject` (읽기) 권한.
+    *   RDS 데이터베이스에 대한 `rds:Connect` (연결) 권한.
+-   **`ec2-backend-role` (EC2 인스턴스용):**
+    *   S3 버킷(`coby-code-bucket`)에 대한 `s3:PutObject` (쓰기) 권한.
+    *   SQS 큐(`judge-request-queue`)에 대한 `sqs:SendMessage` (메시지 전송) 권한.
+
+### 3.2. S3 버킷
+
+-   **사용자 제출 코드 버킷:** `coby-code-bucket` (EC2가 쓰기, Lambda가 읽기)
+-   **테스트케이스/정답 버킷:** 별도의 버킷 또는 `coby-code-bucket` 내의 특정 경로 (Lambda가 읽기)
+    *   RDS `problems` 테이블에는 `s3://[버킷이름]/problems/{problem_id}/testcase.txt`와 같은 S3 경로가 저장되어야 합니다.
+
+### 3.3. SQS 큐
+
+-   **`judge-request-queue`:** EC2가 메시지를 보내고, Lambda가 메시지를 읽는 표준 큐.
+
+### 3.4. RDS 데이터베이스
+
+-   **테이블 구조:** `problems` 테이블에 `problem_id`, `testcase_s3_path`, `expected_result_s3_path` 컬럼이 있어야 합니다.
+-   **보안 그룹:**
+    *   RDS 보안 그룹: Lambda 함수의 보안 그룹으로부터 RDS 포트(예: MySQL 3306)에 대한 인바운드 트래픽을 허용해야 합니다.
+
+### 3.5. Lambda 함수 설정 (배포 후)
+
+-   **메모리 및 시간 초과:** 채점할 코드의 예상 리소스 사용량에 따라 충분히 할당합니다.
+-   **VPC 연결:** Lambda 함수를 EC2 및 RDS와 **동일한 VPC**에 연결해야 합니다. (프라이빗 서브넷 선택)
+-   **보안 그룹:**
+    *   Lambda 함수의 보안 그룹: EC2 백엔드 서버의 포트(예: 8080) 및 RDS 데이터베이스의 포트(예: MySQL 3306)로 아웃바운드 트래픽을 허용해야 합니다.
+    *   EC2 백엔드 서버의 보안 그룹: Lambda 함수의 보안 그룹으로부터 해당 포트(예: 8080)로 인바운드 트래픽을 허용해야 합니다.
+
+---
+
+## 4. 다음 단계
+
+1.  **EC2 인스턴스의 사설 IP 주소를 확인합니다.**
+2.  **`app.py`의 `BACKEND_URL` 환경 변수에 해당 사설 IP 주소와 포트, 경로를 포함하여 설정할 준비를 합니다.**
+3.  **로컬 컴퓨터에서 Docker 이미지를 빌드하고 AWS ECR에 푸시합니다.**
+4.  **AWS Console에서 Lambda 함수를 생성하고, ECR의 이미지를 사용하도록 설정합니다.**
+5.  **Lambda 함수에 필요한 환경 변수와 VPC 연결, IAM 권한을 설정합니다.**
+6.  **EC2 및 RDS의 보안 그룹을 적절히 설정하여 Lambda와의 통신을 허용합니다.**
+
+이 요약본이 전체적인 구조를 이해하고 배포를 진행하는 데 도움이 되기를 바랍니다.

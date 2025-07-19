@@ -1,5 +1,5 @@
 #!/bin/bash
-cd /app/code_root/$TARGET_UUID
+cd /app/code_root
 
 # 통계 변수 초기화
 test_count=0

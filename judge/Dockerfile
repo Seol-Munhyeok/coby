@@ -4,6 +4,7 @@ FROM python:3.9-slim-buster
 # 작업 디렉토리 설정
 WORKDIR /app
 
+RUN mkdir -p /app/tmp && chmod 777 /app/tmp
 # 필요한 시스템 패키지 설치
 # Docker 클라이언트를 설치하기 위한 curl, gpg, apt-transport-https 등이 필요합니다.
 RUN apt-get update && apt-get install -y --no-install-recommends \
