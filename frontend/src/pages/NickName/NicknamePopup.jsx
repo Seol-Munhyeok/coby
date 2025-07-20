@@ -41,6 +41,11 @@ const NicknameSetup = () => {
                 // API 응답에서 nickname 필드를 확인
                 if (data.nickname !== null && data.nickname !== undefined && data.nickname !== '') {
                     console.log("닉네임이 존재합니다. 메인 페이지로 이동합니다.");
+
+                    // **닉네임을 쿠키에 저장**
+                    Cookies.set('nickname', data.nickname, { expires: 1 });
+                    setCookieNickname(data.nickname);
+
                     navigate('/mainpage'); // 닉네임이 null이 아니라면 '/mainpage' 경로로 이동
                 } else {
                     // 닉네임이 없으면 현재 페이지 유지 (또는 로그인/닉네임 설정 페이지로 이동)
