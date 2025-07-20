@@ -40,7 +40,28 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.2'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.4.0')
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs'
+	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 }
+
+//dependencyManagement {
+//	imports {
+//		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+//	}
+//	dependencies {
+//		dependency 'ch.qos.logback:logback-bom:1.5.13'
+//		dependency 'org.yaml:snakeyaml:2.0'
+//	}
+//}
+
+//configurations.all {
+//	resolutionStrategy {
+//		force 'ch.qos.logback:logback-core:1.5.13'
+//		force 'ch.qos.logback:logback-classic:1.5.13'
+//	}
+//}
 
 tasks.named('test') {
 	useJUnitPlatform()
