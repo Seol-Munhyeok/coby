@@ -6,6 +6,7 @@ import { useUserStore } from '../../store/userStore'
 
 const NicknameSetup = () => {
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
     const nightSkyRef = useRef(null);
     const [nickname, setNickname] = useState('');
     const [nicknameStatus, setNicknameStatus] = useState({ message: '', type: '', isChecked: false });
@@ -13,6 +14,54 @@ const NicknameSetup = () => {
     const [selectedLanguage, setSelectedLanguage] = useState(null);
     const [startBtnDisable, setStartBtnDisable] = useState(false);
     const setCookieNickname = useUserStore((state) => state.setNickname)
+
+
+    useEffect(() => {
+        const checkUserNickname = async () => {
+            setIsLoading(true); // API 요청 시작 전에 로딩 상태를 true로 설정
+            try {
+                // API 요청 시 환경 변수 사용
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                });
+
+
+                // 응답이 성공적이지 않다면 오류 처리
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log("사용자 데이터:", data);
+
+                // API 응답에서 nickname 필드를 확인
+                if (data.nickname !== null && data.nickname !== undefined && data.nickname !== '') {
+                    console.log("닉네임이 존재합니다. 메인 페이지로 이동합니다.");
+
+                    // **닉네임을 쿠키에 저장**
+                    Cookies.set('nickname', data.nickname, { expires: 1 });
+                    setCookieNickname(data.nickname);
+
+                    navigate('/mainpage'); // 닉네임이 null이 아니라면 '/mainpage' 경로로 이동
+                } else {
+                    // 닉네임이 없으면 현재 페이지 유지 (또는 로그인/닉네임 설정 페이지로 이동)
+                    console.log("닉네임이 null이거나 비어있습니다. 현재 페이지를 유지합니다.");
+                }
+            } catch (error) {
+                console.error('사용자 정보 가져오기 중 에러 발생:', error);
+                // 네트워크 오류 또는 서버 응답 오류 시 처리
+            } finally {
+                setIsLoading(false); // API 요청 완료 또는 에러 발생 후 로딩 상태를 false로 설정
+            }
+        };
+
+        checkUserNickname(); // 컴포넌트 마운트 시 함수 실행
+    }, [navigate]); // navigate 함수가 변경될 때마다 useEffect 재실행 (보통 한 번만 실행되므로 빈 배열 또는 navigate 추가)
+
 
     // 별 및 유성 생성 함수 (useEffect 내부에서 실행될 것)
     const createStars = () => {
@@ -290,6 +339,14 @@ const NicknameSetup = () => {
 
     return (
         <div className="main-container">
+            {/* 로딩 모달 조건부 렌더링 */}
+            {isLoading && (
+                <div className="nick-loading-overlay-centered">
+                    <div className="nick-loading-spinner"></div>
+                    <p className="nick-loading-text">사용자 정보를 확인 중입니다...</p>
+                </div>
+            )}
+            
             {/* Left side - Nickname Section */}
             <div className="nickname-section w-full md:w-1/3">
                 <div className="mb-8">
