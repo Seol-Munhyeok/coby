@@ -41,7 +41,7 @@ phases:
         - mv frontend/build build_output/frontend
         - mv backend/build/libs/*.jar build_output/backend
         - cp appspec.yml build_output/
-        - cd -r scripts build_output/
+        - cp -r scripts build_output/
 
 artifacts:
   files:
