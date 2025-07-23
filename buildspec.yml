@@ -9,39 +9,39 @@ env:
 phases:
   install:
     runtime-versions:
-      nodejs: 22
+      nodejs: 20
       java: corretto17
     commands:
       - echo "Installing dependencies"
       
-    pre_build:
-      commands:
-        - echo "Starting pre-build phase"
-        - cd frontend
-        - npm install
-        - cd ..
+  pre_build:
+    commands:
+      - echo "Starting pre-build phase"
+      - cd frontend
+      - npm install
+      - cd ..
         
-    build:
-      commands:
-        - echo "Starting build process"
-        - echo "Building React frontend"
-        - cd frontend
-        - npm run build
-        - cd ..
-        - echo "Building SpringBoot Backend"
-        - cd backend
-        - chmod -x ./gradlew
-        - ./gradlew build -x test
+  build:
+    commands:
+      - echo "Starting build process"
+      - echo "Building React frontend"
+      - cd frontend
+      - npm run build
+      - cd ..
+      - echo "Building SpringBoot Backend"
+      - cd backend
+      - chmod -x ./gradlew
+      - ./gradlew build -x test
         
-    post_build:
-      commands:
-        - echo "Build Completed. Preparing artifact"
-        - mkdir -p build_output/frontend
-        - mkdir -p build_output/backend
-        - mv frontend/build build_output/frontend
-        - mv backend/build/libs/*.jar build_output/backend
-        - cp appspec.yml build_output/
-        - cp -r scripts build_output/
+  post_build:
+    commands:
+      - echo "Build Completed. Preparing artifact"
+      - mkdir -p build_output/frontend
+      - mkdir -p build_output/backend
+      - mv frontend/build build_output/frontend
+      - mv backend/build/libs/*.jar build_output/backend
+      - cp appspec.yml build_output/
+      - cp -r scripts build_output/
 
 artifacts:
   files:
