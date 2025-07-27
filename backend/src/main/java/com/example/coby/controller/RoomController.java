@@ -2,6 +2,7 @@ package com.example.coby.controller;
 
 import com.example.coby.dto.CreateRoomRequest;
 import com.example.coby.dto.RoomResponse;
+import com.example.coby.dto.VerifyPasswordRequest;
 import com.example.coby.entity.Room;
 import com.example.coby.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,15 @@ public class RoomController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(RoomResponse.from(room));
+    }
+
+    @PostMapping("/{id}/verify-password")
+    public ResponseEntity<Void> verifyPassword(@PathVariable Long id,
+                                               @RequestBody VerifyPasswordRequest request) {
+        boolean valid = roomService.verifyPassword(id, request.password());
+        if (!valid) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok().build();
     }
 }

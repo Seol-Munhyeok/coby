@@ -14,7 +14,6 @@ public record RoomResponse(
         String difficulty,
         String timeLimit,
         boolean isPrivate,
-        String password,
         boolean itemMode,
         LocalDateTime createdAt,
         int status
@@ -28,7 +27,6 @@ public record RoomResponse(
                 .difficulty(room.getDifficulty())
                 .timeLimit(room.getTimeLimit())
                 .isPrivate(room.isPrivate())
-                .password(room.getPassword())
                 .itemMode(room.isItemMode())
                 .createdAt(room.getCreatedAt())
                 .status(room.getStatus())
