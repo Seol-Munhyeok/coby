@@ -13,7 +13,6 @@ import RoomList from './RoomList';
 
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
-    const [isRoomCreatedModalOpen, setRoomCreatedModalOpen] = useState(false);
     const [rooms, setRooms] = useState([]);
     const userIconButtonRef = useRef(null);
     const [isUserMenuOpen, setUserMenuOpen] = useState(false);
@@ -61,13 +60,10 @@ function MainPage() {
     const handleSaveNewRoomSettings = (settings) => {
         setNewRoomSettings(settings); // 저장된 설정 업데이트
         showRoomSettingsModal(false); // 생성 모달 닫기
-        setRoomCreatedModalOpen(true);
         fetchRooms(); // 방 생성 후 목록 갱신
+        //이후 만든 방으로 이동
     };
 
-    const closeCreatedRoomModel = () => {
-        setRoomCreatedModalOpen(false);
-    };
 
     const enterRoomBtn = () => {
         alert('방에 입장합니다!');

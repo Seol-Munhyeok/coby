@@ -122,7 +122,7 @@ function MyCard() {
                                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-white">승률</span>
-                                        <span className="text-white font-bold">68%</span>
+                                        <span className="text-white font-bold">0%</span>
                                     </div>
                                     <div className="w-full bg-gray-300 rounded-full h-2.5">
                                         <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '68%' }}></div>
@@ -132,15 +132,15 @@ function MyCard() {
                                 {/* 승리, 패배, 총 게임 정보 박스들 */}
                                 <div className="grid grid-cols-3 gap-2 mb-4">
                                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
-                                        <div className="text-2xl font-bold text-white">42</div>
+                                        <div className="text-2xl font-bold text-white">0</div>
                                         <div className="text-xs text-blue-300">승리</div>
                                     </div>
                                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
-                                        <div className="text-2xl font-bold text-white">20</div>
+                                        <div className="text-2xl font-bold text-white">0</div>
                                         <div className="text-xs text-red-300">패배</div>
                                     </div>
                                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
-                                        <div className="text-2xl font-bold text-white">62</div>
+                                        <div className="text-2xl font-bold text-white">0</div>
                                         <div className="text-xs text-gray-300">총 게임</div>
                                     </div>
                                 </div>
@@ -148,12 +148,12 @@ function MyCard() {
                                 {/* 레이팅, 랭킹 정보 박스 */}
                                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
                                     <div className="flex justify-between items-center mb-1">
-                                        <span className="text-white text-sm">레이팅</span>
-                                        <span className="text-white font-bold">1,842</span>
+                                        <span className="text-white text-sm">점수</span>
+                                        <span className="text-white font-bold">0</span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-white text-sm">랭킹</span>
-                                        <span className="text-white font-bold">12위</span>
+                                        <span className="text-white font-bold">0 위</span>
                                     </div>
                                 </div>
 
