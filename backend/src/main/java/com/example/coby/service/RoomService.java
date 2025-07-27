@@ -24,7 +24,6 @@ public class RoomService {
     }
 
     public Room createRoom(CreateRoomRequest req) {
-        System.out.println("🔥 방 생성 요청 들어옴");
         Room room = Room.builder()
                 .roomName(req.getRoomName())
                 .difficulty(req.getDifficulty())
@@ -49,5 +48,12 @@ public class RoomService {
             roomRepository.save(room);
         }
         return room;
+    }
+
+    public boolean verifyPassword(Long roomId, String password) {
+        Room room = roomRepository.findById(roomId).orElse(null);
+        if (room == null) return false;
+        if (!room.isPrivate()) return true;
+        return room.getPassword() != null && room.getPassword().equals(password);
     }
 }
