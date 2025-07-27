@@ -1,55 +1,32 @@
-# MainPage.jsx
+# MyCard.jsx:
+사용자 프로필 카드(앞면, 뒷면)와 관련된 JSX 및 로직(닉네임 로딩, 별 생성 효과)을 포함합니다.
 
-이 파일은 COBY 애플리케이션의 메인 페이지를 구현하는 React 컴포넌트인 `MainPage`를 정의합니다. 사용자는 이 페이지에서 새로운 코딩 배틀 룸을 생성하거나, 기존 룸에 참여할 수 있습니다.
+useUserStore에서 nickname과 setNickname을 가져와 사용합니다.
 
-## 주요 기능
+MainPage.css의 스타일이 필요하므로 MainPage.css를 임포트 합니다. (모듈화된 CSS 파일로 변경 고려 가능)
 
-* **방 생성:** 새로운 코딩 배틀 룸을 생성할 수 있는 모달을 제공합니다.
-* **방 참여:** 기존 룸에 입장 코드를 입력하여 참여할 수 있습니다.
-* **룸 관리:** 생성된 룸의 정보를 표시하고, 입장 코드를 공유하거나 복사할 수 있습니다.
-* **페이지 이동:** 게임 대기방(`waitingRoom`)으로 이동하는 기능을 제공합니다.
+# TierInfo.jsx:
 
-## 컴포넌트 구조 및 상태 관리
+티어 정보 섹션의 JSX를 포함합니다.
 
-`MainPage` 컴포넌트는 `useState`와 `useRef` 훅을 활용하여 모달 상태, 입력 필드 참조 등을 관리합니다.
+# RankCard.jsx:
 
-### State 변수 (`useState`)
+rank, name, rating, wins, losses, tier, languageLogo를 props로 받아 랭킹 카드 하나를 렌더링하는 함수형 컴포넌트입니다.
 
-* `isCreateModalOpen`: 방 만들기 모달의 열림 상태를 제어합니다.
-* `isRoomCreatedModalOpen`: 방 생성 완료 모달의 열림 상태를 제어합니다.
+1위 카드는 다른 카드와 스타일이 약간 다르므로 isFirstPlace prop을 통해 조건부 렌더링을 적용했습니다.
 
-### Ref 변수 (`useRef`)
+언어 로고 SVG는 languageLogo prop에 따라 동적으로 렌더링되도록 LanguageLogoSvg 내부 컴포넌트를 정의했습니다.
 
-* `inputRef`: 방 제목 입력 필드를 참조합니다.
+# RoomList.jsx:
 
-### 주요 함수 (`function`)
+참여 가능한 방 목록을 렌더링하는 컴포넌트입니다.
 
-* `openCreateRoomModal()`: "방 만들기" 모달을 엽니다.
-* `closeCreateRoomModel()`: "방 만들기" 모달을 닫습니다.
-* `confirmCreateRoom()`: 방 제목을 검사한 후, 유효하면 "방 만들기" 모달을 닫고 "생성 완료" 모달을 엽니다.
-* `closeCreatedRoomModel()`: "생성 완료" 모달을 닫습니다.
-* `enterRoomBtn()`: 사용자에게 알림을 표시하고 게임 대기방(`waitingRoom`)으로 이동합니다.
-* `handleRoomJoin()`: "참여하기" 버튼 클릭 시, 사용자에게 알림을 표시하고 게임 대기방(`waitingRoom`)으로 이동합니다.
+rooms, enterRoomBtn, fetchRooms를 props로 받습니다. fetchRooms를 받아서 방 목록 새로고침 버튼에 연결했습니다.
 
-## UI 요소 및 상호작용
+# MainPage.jsx:
 
-* **방 만들기 버튼:** 클릭 시 `isCreateModalOpen` 상태를 `true`로 설정하여 방 만들기 모달을 엽니다.
-* **방 참여하기 버튼:** 클릭 시 `handleRoomJoin` 함수를 호출합니다.
-* **"방 만들기" 모달:**
-    * 방 제목을 입력할 수 있는 `<input>` 필드가 포함됩니다.
-    * "생성" 버튼 클릭 시 `confirmCreateRoom` 함수를 호출합니다.
-    * "X" 버튼 클릭 시 `closeCreateRoomModel` 함수를 호출합니다.
-* **"생성 완료" 모달:**
-    * 생성된 룸의 입장 코드를 표시합니다. (예: `BATTLE-58392`)
-    * 입장 코드를 복사할 수 있는 "복사" 버튼이 있습니다.
-    * "입장하기" 버튼 클릭 시 `enterRoomBtn` 함수를 호출하여 게임 대기방으로 이동합니다.
-    * "X" 버튼 클릭 시 `closeCreatedRoomModel` 함수를 호출합니다.
+기존 MainPage의 주요 로직과 상태를 유지합니다.
 
-## CSS 파일
+MyCard, TierInfo, RankCard, RoomList 컴포넌트를 임포트하여 적절한 위치에 배치하고 필요한 props를 전달합니다.
 
-* `MainPage.css`: 컴포넌트의 스타일링을 담당하는 CSS 파일입니다.
-
-## 의존성
-
-* `react`, `react-dom`
-* `react-router-dom`
+API 호출(fetchRooms) 및 모달 관련 상태 관리는 MainPage에서 계속 담당합니다.
