@@ -13,7 +13,7 @@ phases:
       java: corretto17
     commands:
       - echo "Installing dependencies"
-      - echo "Current directory: $(pwd)"
+      - echo "Current directory = $(pwd)"
       - ls -al
 
   pre_build:
