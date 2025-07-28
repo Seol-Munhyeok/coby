@@ -38,8 +38,12 @@ phases:
       - echo "Build Completed. Preparing artifact"
       - mkdir -p build_output/frontend
       - mkdir -p build_output/backend
-      - mv frontend/build build_output/frontend
-      - mv backend/build/libs/*.jar build_output/backend
+      - echo "== frontend 디렉토리 리스트 =="
+      - ls -al frontend
+      - echo "== frontend/build 디렉토리 리스트 =="
+      - ls -al frontend/build || echo "❌ frontend/build 없음!"
+      - mv frontend/build build_output/frontend || echo "⚠️ mv frontend/build 실패"
+      - mv backend/build/libs/*.jar build_output/backend || echo "⚠️ jar 파일 없음!"
       - cp appspec.yml build_output/
       - cp -r scripts build_output/
 
