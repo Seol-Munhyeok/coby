@@ -25,4 +25,10 @@ fi
 
 # Spring 서버 실행
 echo "✅ 실행 중: $JAR_FILE"
-nohup java -jar "$JAR_FILE" > "$LOG_FILE" 2>&1 &
+nohup java \
+  -Dspring.datasource.username="$DB_USERNAME" \
+  -Dspring.datasource.password="$DB_PASSWORD" \
+  -Dspring.security.oauth2.client.registration.google.client-id="$GOOGLE_CLIENT_ID" \
+  -Dspring.security.oauth2.client.registration.google.client-secret="$GOOGLE_CLIENT_SECRET" \
+  -Dspring.security.oauth2.client.registration.kakao.client-id="$KAKAO_CLIENT_ID" \
+  -jar "$JAR_FILE" > "$LOG_FILE" 2>&1 &
