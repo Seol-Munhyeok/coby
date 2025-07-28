@@ -36,26 +36,15 @@ phases:
 
   post_build:
     commands:
-      - echo "📦 배포 아티팩트 준비"
-
       - mkdir -p build_output/scripts
-      - mkdir -p build_output/backend
-      - mkdir -p build_output/frontend
-
       - cp scripts/*.sh build_output/scripts/
-      - |
-        cat <<EOF > build_output/scripts/env.sh
-        export DB_USERNAME=${DB_USERNAME}
-        export DB_PASSWORD=${DB_PASSWORD}
-        export GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-        export GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-        export KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
-        EOF
-
+      - echo "export DB_USERNAME=${DB_USERNAME}" >> build_output/scripts/env.sh
+      - echo "export DB_PASSWORD=${DB_PASSWORD}" >> build_output/scripts/env.sh
+      - echo "export GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> build_output/scripts/env.sh
+      - echo "export GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}" >> build_output/scripts/env.sh
+      - echo "export KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}" >> build_output/scripts/env.sh
       - chmod +x build_output/scripts/*.sh
 
-      - cp -r frontend/build build_output/frontend
-      - mv backend/build/libs/*.jar build_output/backend || echo "⚠️ 백엔드 JAR 복사 실패"
 
 artifacts:
   base-directory: build_output
