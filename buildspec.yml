@@ -42,4 +42,14 @@ phases:
       - mkdir -p build_output/frontend
       - mkdir -p build_output/backend
       - echo "== 현재 위치: $(pwd) =="
-      - ls -al ./frontend || echo "❌
+      - ls -al ./frontend || echo "❌ frontend 폴더가 없습니다!"
+      - ls -al ./frontend/build || echo "❌ frontend/build 폴더가 없습니다!"
+      - mv ./frontend/build ./build_output/frontend || echo "⚠️ React 빌드 결과 복사 실패"
+      - mv ./backend/build/libs/*.jar ./build_output/backend || echo "⚠️ 백엔드 JAR 복사 실패"
+      - cp ./appspec.yml ./build_output/
+      - cp -r ./scripts ./build_output/
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: build_output
