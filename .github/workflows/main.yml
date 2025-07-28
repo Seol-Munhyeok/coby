@@ -23,16 +23,14 @@ jobs:
         run: aws sts get-caller-identity
 
       # ✅ start_server.sh에 secrets 삽입
-      - name: Inject secrets into start_server.sh
+      - name: Create env.sh from secrets
         run: |
-          echo "export GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" > scripts/_start_env.sh
-          echo "export GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> scripts/_start_env.sh
-          echo "export KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" >> scripts/_start_env.sh
-          echo "export DB_USERNAME=${{ secrets.DB_USERNAME }}" >> scripts/_start_env.sh
-          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> scripts/_start_env.sh
-          cat scripts/start_server.sh >> scripts/_start_env.sh
-          mv scripts/_start_env.sh scripts/start_server.sh
-          chmod +x scripts/start_server.sh
+          echo "export DB_USERNAME=${{ secrets.DB_USERNAME }}" > scripts/env.sh
+          echo "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> scripts/env.sh
+          echo "export GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> scripts/env.sh
+          echo "export GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> scripts/env.sh
+          echo "export KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" >> scripts/env.sh
+          chmod +x scripts/env.sh
 
       - name: Zip source code
         run: zip -r source.zip .

@@ -5,6 +5,14 @@ BACKEND_DIR="$APP_DIR/backend"
 FRONTEND_BUILD_DIR="$APP_DIR/frontend/build"
 LOG_FILE="$APP_DIR/server.log"
 
+# ✅ 환경 변수 로드
+if [ -f "$APP_DIR/scripts/env.sh" ]; then
+  echo "🔧 환경 변수 로딩 중..."
+  source "$APP_DIR/scripts/env.sh"
+else
+  echo "❌ env.sh 파일이 없어 환경변수를 로딩할 수 없습니다."
+fi
+
 # 가장 큰 JAR 파일을 선택 (plain.jar 회피)
 JAR_FILE=$(find "$BACKEND_DIR" -name "*.jar" | grep -v "plain" | sort | tail -n 1)
 
