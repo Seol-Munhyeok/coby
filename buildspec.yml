@@ -2,9 +2,8 @@ version: 0.2
 
 env:
   secret-manager:
-    DB_URL:       "coby-app/db-credentials:DB_URL"
-    DB_USERNAME:  "coby-app/db-credentials:DB_USERNAME"
-    DB_PASSWORD:  "coby-app/db-credentials:DB_PASSWORD"
+    DB_USERNAME: "coby-app/db-credentials:DB_USERNAME"
+    DB_PASSWORD: "coby-app/db-credentials:DB_PASSWORD"
     GOOGLE_CLIENT_ID: "coby-app/db-credentials:GOOGLE_CLIENT_ID"
     GOOGLE_CLIENT_SECRET: "coby-app/db-credentials:GOOGLE_CLIENT_SECRET"
     KAKAO_CLIENT_ID: "coby-app/db-credentials:KAKAO_CLIENT_ID"
@@ -44,8 +43,8 @@ phases:
       - mkdir -p build_output/frontend
 
       - cp scripts/*.sh build_output/scripts/
-
-      - cat <<EOF > build_output/scripts/env.sh
+      - |
+        cat <<EOF > build_output/scripts/env.sh
         export DB_USERNAME=${DB_USERNAME}
         export DB_PASSWORD=${DB_PASSWORD}
         export GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
