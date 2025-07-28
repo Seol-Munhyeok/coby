@@ -1,27 +1,50 @@
 version: 0.2
+
 env:
   secret-manager:
     DB_URL:       "coby-app/db-credentials:DB_URL"
     DB_USERNAME:  "coby-app/db-credentials:DB_USERNAME"
     DB_PASSWORD:  "coby-app/db-credentials:DB_PASSWORD"
+    GOOGLE_CLIENT_ID: "coby-app/db-credentials:GOOGLE_CLIENT_ID"
+    GOOGLE_CLIENT_SECRET: "coby-app/db-credentials:GOOGLE_CLIENT_SECRET"
+    KAKAO_CLIENT_ID: "coby-app/db-credentials:KAKAO_CLIENT_ID"
+
 phases:
   install:
-    ...
+    runtime-versions:
+      nodejs: 20
+      java: corretto17
+
   pre_build:
-    ...
+    commands:
+      - echo "📦 프론트엔드 의존성 설치"
+      - cd frontend
+      - npm install
+      - cd ..
+
   build:
-    ...
+    commands:
+      - echo "🛠️ 프론트엔드 빌드"
+      - cd frontend
+      - npm run build
+      - cd ..
+
+      - echo "🛠️ 백엔드 Gradle 빌드"
+      - cd backend
+      - chmod +x ./gradlew
+      - ./gradlew build -x test
+      - cd ..
+
   post_build:
     commands:
-      - echo "Build Completed. Preparing artifact"
+      - echo "📦 배포 아티팩트 준비"
 
-      # ① build_output/scripts 디렉터리 확보
       - mkdir -p build_output/scripts
+      - mkdir -p build_output/backend
+      - mkdir -p build_output/frontend
 
-      # ② start_server.sh · stop_server.sh … 복사
       - cp scripts/*.sh build_output/scripts/
 
-      # ③ **여기서 env.sh를 새로 생성**  (Secrets Manager 값 사용)
       - cat <<EOF > build_output/scripts/env.sh
         export DB_USERNAME=${DB_USERNAME}
         export DB_PASSWORD=${DB_PASSWORD}
@@ -29,9 +52,13 @@ phases:
         export GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
         export KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
         EOF
+
       - chmod +x build_output/scripts/*.sh
 
+      - cp -r frontend/build build_output/frontend
+      - mv backend/build/libs/*.jar build_output/backend || echo "⚠️ 백엔드 JAR 복사 실패"
+
 artifacts:
-  base-directory: build_output       # ← 그대로
+  base-directory: build_output
   files:
-    - '**/*'                         # build_output 아래 전부
+    - '**/*'
