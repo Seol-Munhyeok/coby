@@ -1,30 +1,43 @@
 #!/bin/bash
+set -euo pipefail   # 에러나면 바로 종료 + 미정의 변수 잡기
 
-APP_DIR="/home/ubuntu/app"
+# ────────────── 경로 자동 감지 ──────────────
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"   # start_server.sh 위치 (…/scripts)
+APP_DIR="$(dirname "$SCRIPT_DIR")"            # 그 상위 폴더 (revision 루트)
 BACKEND_DIR="$APP_DIR/backend"
 FRONTEND_BUILD_DIR="$APP_DIR/frontend/build"
 LOG_FILE="$APP_DIR/server.log"
+ENV_FILE="$SCRIPT_DIR/env.sh"                 # scripts/env.sh
 
-# ✅ 환경 변수 로드
-if [ -f "$APP_DIR/scripts/env.sh" ]; then
-  echo "🔧 환경 변수 로딩 중..."
-  source "$APP_DIR/scripts/env.sh"
+echo "📁 SCRIPT_DIR = $SCRIPT_DIR"
+echo "📁 APP_DIR    = $APP_DIR"
+
+# ────────────── 환경 변수 로드 ──────────────
+if [ -f "$ENV_FILE" ]; then
+  echo "🔧 env.sh 로드 중..."
+  set -a          # source 되는 변수 전부 export
+  source "$ENV_FILE"
+  set +a
 else
-  echo "❌ env.sh 파일이 없어 환경변수를 로딩할 수 없습니다."
+  echo "❌ $ENV_FILE 을(를) 찾을 수 없습니다."
 fi
 
-# 가장 큰 JAR 파일을 선택 (plain.jar 회피)
-JAR_FILE=$(find "$BACKEND_DIR" -name "*.jar" | grep -v "plain" | sort | tail -n 1)
+# ────────────── JAR 선택 ──────────────
+JAR_FILE=$(find "$BACKEND_DIR" -type f -name "*.jar" ! -name "*plain*.jar" | sort | tail -n 1)
+if [ -z "$JAR_FILE" ]; then
+  echo "❌ JAR 파일을 찾지 못했습니다."
+  exit 1
+fi
 
-# React 빌드 결과 복사
+# ────────────── 프론트 빌드 배포 (선택) ──────────────
 if [ -d "$FRONTEND_BUILD_DIR" ]; then
   sudo cp -r "$FRONTEND_BUILD_DIR"/* /var/www/html
 else
-  echo "❌ frontend/build 폴더 없음"
+  echo "⚠️  frontend/build 폴더 없음 — 건너뜀"
 fi
 
-# Spring 서버 실행
-echo "✅ 실행 중: $JAR_FILE"
+# ────────────── 스프링 부트 실행 ──────────────
+echo "🚀 실행 중: $JAR_FILE"
 nohup java \
   -Dspring.datasource.username="$DB_USERNAME" \
   -Dspring.datasource.password="$DB_PASSWORD" \
