@@ -1,55 +1,37 @@
 version: 0.2
-
 env:
   secret-manager:
-    DB_URL: "coby-app/db-credentials:DB_URL"
-    DB_USERNAME: "coby-app/db-credentials:DB_USERNAME"
-    DB_PASSWORD: "coby-app/db-credentials:DB_PASSWORD"
-
+    DB_URL:       "coby-app/db-credentials:DB_URL"
+    DB_USERNAME:  "coby-app/db-credentials:DB_USERNAME"
+    DB_PASSWORD:  "coby-app/db-credentials:DB_PASSWORD"
 phases:
   install:
-    runtime-versions:
-      nodejs: 20
-      java: corretto17
-    commands:
-      - echo "Installing dependencies"
-      - echo "Current directory = $(pwd)"
-      - ls -al
-
+    ...
   pre_build:
-    commands:
-      - echo "Starting pre-build phase"
-      - cd frontend
-      - npm install
-      - cd ..
-
+    ...
   build:
-    commands:
-      - echo "Starting build process"
-      - echo "Building React frontend"
-      - cd frontend
-      - npm run build
-      - cd ..
-      - echo "Building SpringBoot backend"
-      - cd backend
-      - chmod +x ./gradlew
-      - ./gradlew build -x test
-      - cd ..
-
+    ...
   post_build:
     commands:
       - echo "Build Completed. Preparing artifact"
-      - mkdir -p build_output/frontend
-      - mkdir -p build_output/backend
-      - echo "== 현재 위치 = $(pwd) =="
-      - ls -al ./frontend || echo "❌ frontend 폴더가 없습니다!"
-      - ls -al ./frontend/build || echo "❌ frontend/build 폴더가 없습니다!"
-      - mv ./frontend/build ./build_output/frontend || echo "⚠️ React 빌드 결과 복사 실패"
-      - mv ./backend/build/libs/*.jar ./build_output/backend || echo "⚠️ 백엔드 JAR 복사 실패"
-      - cp ./appspec.yml ./build_output/
-      - cp -r ./scripts ./build_output/
+
+      # ① build_output/scripts 디렉터리 확보
+      - mkdir -p build_output/scripts
+
+      # ② start_server.sh · stop_server.sh … 복사
+      - cp scripts/*.sh build_output/scripts/
+
+      # ③ **여기서 env.sh를 새로 생성**  (Secrets Manager 값 사용)
+      - cat <<EOF > build_output/scripts/env.sh
+        export DB_USERNAME=${DB_USERNAME}
+        export DB_PASSWORD=${DB_PASSWORD}
+        export GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+        export GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+        export KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+        EOF
+      - chmod +x build_output/scripts/*.sh
 
 artifacts:
+  base-directory: build_output       # ← 그대로
   files:
-    - '**/*'
-  base-directory: build_output
+    - '**/*'                         # build_output 아래 전부
