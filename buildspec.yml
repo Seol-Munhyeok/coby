@@ -19,7 +19,7 @@ phases:
   pre_build:
     commands:
       - echo "Starting pre-build phase"
-      - cd ./frontend
+      - cd frontend
       - npm install
       - cd ..
 
@@ -27,11 +27,11 @@ phases:
     commands:
       - echo "Starting build process"
       - echo "Building React frontend"
-      - cd ./frontend
+      - cd frontend
       - npm run build
       - cd ..
       - echo "Building SpringBoot backend"
-      - cd ./backend
+      - cd backend
       - chmod +x ./gradlew
       - ./gradlew build -x test
       - cd ..
@@ -39,12 +39,10 @@ phases:
   post_build:
     commands:
       - echo "Build Completed. Preparing artifact"
-      - mkdir -p ./build_output/frontend
-      - mkdir -p ./build_output/backend
+      - mkdir -p build_output/frontend
+      - mkdir -p build_output/backend
       - echo "== 현재 위치: $(pwd) =="
-      - echo "== frontend 디렉토리 리스트 =="
       - ls -al ./frontend || echo "❌ frontend 폴더가 없습니다!"
-      - echo "== frontend/build 디렉토리 리스트 =="
       - ls -al ./frontend/build || echo "❌ frontend/build 폴더가 없습니다!"
       - mv ./frontend/build ./build_output/frontend || echo "⚠️ React 빌드 결과 복사 실패"
       - mv ./backend/build/libs/*.jar ./build_output/backend || echo "⚠️ 백엔드 JAR 복사 실패"
