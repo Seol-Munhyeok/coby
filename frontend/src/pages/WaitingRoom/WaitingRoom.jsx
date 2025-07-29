@@ -255,16 +255,6 @@ function WaitingRoom() {
     setShowRoomSettingsModal(false);
   };
 
-  const handleCopyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(entranceCode);
-      setNotification({ message: "입장 코드가 복사되었습니다!", type: "success" });
-    } catch (err) {
-      setNotification({ message: "클립보드 복사에 실패했습니다.", type: "error" });
-      console.error('Failed to copy: ', err);
-    }
-    setTimeout(() => setNotification(null), 3000);
-  };
 
   const currentPlayers = basePlayersData
     .filter(player => activePlayerNames.includes(player.name))
@@ -325,7 +315,7 @@ function WaitingRoom() {
             <div className="flex items-center space-x-3">
               {isCurrentUserHost && (
                 <button
-                  className="px-4 py-2 rounded-lg flex items-center transition bg-blue-600 hover:bg-blue-700 "
+                  className="px-4 py-2 rounded-lg flex items-center transition bg-blue-600 hover:bg-blue-700"
                   onClick={() => setShowRoomSettingsModal(true)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -335,18 +325,7 @@ function WaitingRoom() {
                   설정
                 </button>
               )}
-              <div className="flex items-center">
-                <span className="text-sm waitingRoom-text mr-2">입장 코드:</span>
-                <div className="bg-white shadow-md rounded-lg px-3 py-1 flex items-center">
-                  <span className=" font-medium mr-2">{entranceCode}</span>
-                  <button className="waitingRoom-text hover:waitingRoom-text transition" onClick={handleCopyCode}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
-                      <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
+            
               <button
                 id="readyBtn"
                 className={`px-4 py-2 rounded-lg flex items-center transition ${
@@ -378,7 +357,7 @@ function WaitingRoom() {
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
             <div className="lg:col-span-3">
-              <div className="bg-white shadow-md rounded-lg px-4 py-2">
+              <div className="bg-gray-100 shadow-md rounded-lg px-4 py-2">
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
                   <div className="flex items-center">
                     <span className="waitingRoom-text">난이도:</span>
