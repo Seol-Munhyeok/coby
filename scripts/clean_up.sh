@@ -3,9 +3,9 @@ APP_DIR="/home/ubuntu/app"
 WEB_DIR="/var/www/html"
 
 if [ -d "$APP_DIR" ]; then
-  rm -rf ${APP_DIR}/*
+  sudo rm -rf ${APP_DIR}/*
 fi
 
 if [ -f "${WEB_DIR}/index.html" ]; then
-  rm -rf ${WEB_DIR}/*
+  sudo rm -rf ${WEB_DIR}/*
 fi
