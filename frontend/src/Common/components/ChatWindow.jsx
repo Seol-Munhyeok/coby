@@ -34,7 +34,7 @@ function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
   };
 
   return (
-    <div className="waitingRoom-glass-effect rounded-lg p-4 flex flex-col h-full">
+    <div className="bg-white shadow-md rounded-lg p-4 flex flex-col h-full">
       <h3 className="text-lg font-semibold  mb-3 flex items-center">
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 waitingRoom-text" viewBox="0 0 20 20" fill="currentColor">
           <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />

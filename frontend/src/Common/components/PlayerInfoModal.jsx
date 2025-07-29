@@ -79,7 +79,7 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
       {/* 모달 컨테이너의 너비와 높이를 조정 (가로 600px, 세로 450px) */}
       <div className="waitingRoom-glass-effect rounded-xl w-[750px] h-[550px] p-6 waitingRoom-animate-fade-in flex flex-col">
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h2 className="text-xl font-bold ">플레이어 정보</h2>
+          <h2 className="text-xl font-bold text-white">플레이어 정보</h2>
           <button id="closePlayerModal" className="waitingRoom-text hover: transition" onClick={onClose}> {/* Use onClose prop */}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -98,7 +98,7 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
               </div>
             </div>
             <div>
-              <h3 id="playerName" className="text-lg font-bold ">{selectedPlayerName}</h3> {/* Use selectedPlayerName */}
+              <h3 id="playerName" className="text-lg font-bold text-white">{selectedPlayerName}</h3> {/* Use selectedPlayerName */}
               <div className="flex items-center">
                 <div id="playerTier" className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-2">
                   <span className="text-[0.6rem] font-bold text-blue-200">{playerData.tier}</span> {/* Use playerData.tier */}
@@ -114,11 +114,11 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="waitingRoom-glass-effect rounded-lg p-2">
                 <p className="text-xs waitingRoom-text">승률</p>
-                <p id="playerWinRate" className="text-xl font-bold ">{playerData.winRate}</p> {/* Use playerData.winRate */}
+                <p id="playerWinRate" className="text-xl font-bold text-white">{playerData.winRate}</p> {/* Use playerData.winRate */}
               </div>
               <div className="waitingRoom-glass-effect rounded-lg p-2">
                 <p className="text-xs waitingRoom-text">승리</p>
-                <p id="playerWins" className="text-xl font-bold text-green-400">{playerData.wins}</p> {/* Use playerData.wins */}
+                <p id="playerWins" className="text-xl font-bold text-green-400 ">{playerData.wins}</p> {/* Use playerData.wins */}
               </div>
               <div className="waitingRoom-glass-effect rounded-lg p-2">
                 <p className="text-xs waitingRoom-text">패배</p>
@@ -133,7 +133,7 @@ function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName })
           {/* 최근 기록 섹션 (왼쪽) */}
           <div className="waitingRoom-glass-effect rounded-lg p-4">
             <h4 className="text-sm font-medium waitingRoom-text mb-2">최근 기록</h4>
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               {renderRecentGames(playerData.recentGames)} {/* Render recent games dynamically */}
             </div>
           </div>
