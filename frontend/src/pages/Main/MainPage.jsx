@@ -42,8 +42,11 @@ function MainPage() {
                     credentials: 'include',
                 });
 
+                console.log("가져오기 시도");
                 setId(parseInt(userResponse.data.id)); // userStore에 userId 저장
+                console.log("userid정상");
                 setNickname(userResponse.data.nickname); // userStore에 nickname 저장 (MyCard에서 사용)
+                console.log("user닉네임정상");
 
                 // 방 목록 가져오기
                 await fetchRooms();
