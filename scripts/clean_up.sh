@@ -7,5 +7,5 @@ if [ -d "$APP_DIR" ]; then
 fi
 
 if [ -f "${WEB_DIR}/index.html" ]; then
-  sudo rm -f ${WEB_DIR}/*
+  sudo rm -rf ${WEB_DIR}/*
 fi
