@@ -1,7 +1,9 @@
 package com.example.coby.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
@@ -9,6 +11,7 @@ import com.example.coby.dto.JoinRoomMessage;
 import com.example.coby.dto.CodeUpdateMessage;
 import com.example.coby.dto.RoomParticipant;
 import com.example.coby.dto.RoomParticipantsMessage;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +23,8 @@ public class Battleroomcontroller {
     private SimpMessagingTemplate messagingTemplate;
 
     private final Map<String, Map<String, RoomParticipant>> rooms = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionToRoom = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
 
     @MessageMapping("/code_update")
     public void handleCodeUpdate(CodeUpdateMessage message) {
@@ -48,8 +53,12 @@ public class Battleroomcontroller {
     }
 
     @MessageMapping("/join_room")
-    public void handleJoinRoom(JoinRoomMessage message) {
-        System.out.println("User " + message.userId() + " joined room " + message.roomId());
+    public void handleJoinRoom(JoinRoomMessage message, SimpMessageHeaderAccessor headerAccessor) {
+        String sessionId = headerAccessor.getSessionId();
+        System.out.println("User " + message.userId() + " joined room " + message.roomId() + " session=" + sessionId);
+
+        sessionToRoom.put(sessionId, message.roomId());
+        sessionToUser.put(sessionId, message.userId());
 
         rooms.computeIfAbsent(message.roomId(), k -> new ConcurrentHashMap<>())
                 .put(message.userId(), RoomParticipant.builder()
@@ -67,5 +76,25 @@ public class Battleroomcontroller {
                 .build();
 
         messagingTemplate.convertAndSend("/topic/room/" + message.roomId(), roomParticipantsMessage);
+    }
+
+    @EventListener
+    public void handleSessionDisconnect(SessionDisconnectEvent event) {
+        String sessionId = event.getSessionId();
+        String roomId = sessionToRoom.remove(sessionId);
+        String userId = sessionToUser.remove(sessionId);
+        if (roomId != null && userId != null) {
+            rooms.computeIfPresent(roomId, (rId, participants) -> {
+                participants.remove(userId);
+                return participants;
+            });
+
+            RoomParticipantsMessage msg = RoomParticipantsMessage.builder()
+                    .type("room_participants")
+                    .roomId(roomId)
+                    .participants(rooms.getOrDefault(roomId, Map.of()).values().stream().toList())
+                    .build();
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, msg);
+        }
     }
 }
