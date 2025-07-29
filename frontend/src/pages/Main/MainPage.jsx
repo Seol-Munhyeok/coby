@@ -42,15 +42,20 @@ function MainPage() {
                     credentials: 'include',
                 });
 
-                setId(userResponse.data.id); // userStore에 userId 저장
-                setNickname(userResponse.data.nickname); // userStore에 nickname 저장 (MyCard에서 사용)
+                const data = await response.json()
+
+                console.log("가져오기 시도");
+                setId(parseInt(data.id)); // userStore에 userId 저장
+                console.log("userid정상");
+                setNickname(data.nickname); // userStore에 nickname 저장 (MyCard에서 사용)
+                console.log("user닉네임정상");
 
                 // 방 목록 가져오기
                 await fetchRooms();
             } catch (error) {
                 console.error('Error fetching user data or rooms:', error);
                 alert('사용자 정보 또는 방 목록을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
-                navigate('/'); // 실패 시 로그인 페이지로 이동 또는 적절한 에러 처리
+                // navigate('/'); // 실패 시 로그인 페이지로 이동 또는 적절한 에러 처리
             }
         };
 
