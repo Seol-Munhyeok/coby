@@ -3,7 +3,7 @@
  * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import './WaitingRoom.css';
 import useContextMenu from '../../Common/hooks/useContextMenu';
 import PlayerCard from './components/PlayerCard';
@@ -18,6 +18,7 @@ import Cookies from 'js-cookie'
 
 function WaitingRoom() {
   const navigate = useNavigate();
+  const { roomId } = useParams();
 
   const nickname = useUserStore((state) => state.nickname)
   const setNickname = useUserStore((state) => state.setNickname)
@@ -177,7 +178,7 @@ function WaitingRoom() {
     }
 
     alert('방에 입장합니다!');
-    navigate('/gamepage');
+    navigate(`/gamepage/${roomId}`);
   };
 
   const quickbtn = () => {
@@ -255,16 +256,6 @@ function WaitingRoom() {
     setShowRoomSettingsModal(false);
   };
 
-  const handleCopyCode = async () => {
-    try {
-      await navigator.clipboard.writeText(entranceCode);
-      setNotification({ message: "입장 코드가 복사되었습니다!", type: "success" });
-    } catch (err) {
-      setNotification({ message: "클립보드 복사에 실패했습니다.", type: "error" });
-      console.error('Failed to copy: ', err);
-    }
-    setTimeout(() => setNotification(null), 3000);
-  };
 
   const currentPlayers = basePlayersData
     .filter(player => activePlayerNames.includes(player.name))
@@ -293,37 +284,39 @@ function WaitingRoom() {
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>COBY - Coding Online Battle with You</title>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet" />
-      <nav className="waitingRoom-glass-effect waitingRoom-main-container sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-blue-900/30">
-        <div className="flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-          <h1 className="text-2xl font-bold ">COBY</h1>
-        </div>
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-3">
-            <div className="waitingRoom-tier-badge w-10 h-10 rounded-full bg-blue-900 flex items-center justify-center">
-              <span className="text-sm font-bold text-blue-200">다이아</span>
-            </div>
-            <span className="font-medium">{currentUser}</span>
+
+      {/* Header */}
+      <header className="bg-gray-800 text-white shadow-lg">
+          <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+              <div className="flex items-center">
+                  <h1 className="logo-text text-3xl mr-8">COBY</h1>
+                  <nav className="hidden md:flex space-x-6">
+                  </nav>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button id="leaveRoomBtn" className="bg-red-600 hover:bg-red-700  px-4 py-2 rounded-lg flex items-center transition" onClick={quickbtn}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414a1 1 0 00-.293-.707L11.414 2.414A1 1 0 0010.707 2H4a1 1 0 00-1 1zm9 4a1 1 0 00-1-1H8a1 1 0 00-1 1v8a1 1 0 001 1h3a1 1 0 001-1V7z" clipRule="evenodd" />
+                    <path d="M3 7.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 4a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5z" />
+                  </svg>
+                    나가기
+                </button>
+
+                  <button className="p-2 rounded-full hover:bg-gray-700 transition-colors">
+                      <i className="fas fa-user-circle text-xl"></i>
+                  </button>
+                </div>
           </div>
-          <button id="leaveRoomBtn" className="bg-red-600 hover:bg-red-700  px-4 py-2 rounded-lg flex items-center transition" onClick={quickbtn}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414a1 1 0 00-.293-.707L11.414 2.414A1 1 0 0010.707 2H4a1 1 0 00-1 1zm9 4a1 1 0 00-1-1H8a1 1 0 00-1 1v8a1 1 0 001 1h3a1 1 0 001-1V7z" clipRule="evenodd" />
-              <path d="M3 7.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 4a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5z" />
-            </svg>
-            나가기
-          </button>
-        </div>
-      </nav>
+      </header>
+        
       <main className="container mx-auto px-4 pt-4 transform scale-95 origin-top">
-        <div className="waitingRoom-glass-effect waitingRoom-main-container rounded-xl p-4">
+        <div className="bg-white shadow-md rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold ">{roomName}</h2>
             <div className="flex items-center space-x-3">
               {isCurrentUserHost && (
                 <button
-                  className="px-4 py-2 rounded-lg flex items-center transition bg-blue-600 hover:bg-blue-700 "
+                  className="px-4 py-2 rounded-lg flex items-center transition bg-blue-600 hover:bg-blue-700"
                   onClick={() => setShowRoomSettingsModal(true)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -333,18 +326,7 @@ function WaitingRoom() {
                   설정
                 </button>
               )}
-              <div className="flex items-center">
-                <span className="text-sm waitingRoom-text mr-2">입장 코드:</span>
-                <div className="waitingRoom-glass-effect rounded-lg px-3 py-1 flex items-center">
-                  <span className=" font-medium mr-2">{entranceCode}</span>
-                  <button className="waitingRoom-text hover:waitingRoom-text transition" onClick={handleCopyCode}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z" />
-                      <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-4.586l1.293-1.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L10.414 13H15v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5zM15 11h2a1 1 0 110 2h-2v-2z" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
+            
               <button
                 id="readyBtn"
                 className={`px-4 py-2 rounded-lg flex items-center transition ${
@@ -376,7 +358,7 @@ function WaitingRoom() {
           </div>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:grid-rows-[auto_1fr]">
             <div className="lg:col-span-3">
-              <div className="waitingRoom-glass-effect rounded-lg px-4 py-2">
+              <div className="bg-gray-100 shadow-md rounded-lg px-4 py-2">
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
                   <div className="flex items-center">
                     <span className="waitingRoom-text">난이도:</span>
@@ -403,7 +385,7 @@ function WaitingRoom() {
               <ChatWindow messages={messages} onSendMessage={handleSendMessage} currentUser={currentUser} playerData={playerData} />
             </div>
             <div className="lg:col-span-2">
-              <div className="waitingRoom-glass-effect rounded-xl p-4 flex flex-col h-full">
+              <div className="bg-white shadow-md rounded-xl p-4 flex flex-col h-full">
                 <h2 className="text-xl font-bold  mb-4 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
@@ -428,7 +410,7 @@ function WaitingRoom() {
       {showContextMenu && selectedPlayer && (
         <div
           ref={contextMenuRef}
-          className="waitingRoom-glass-effect custom-context-menu absolute rounded-lg shadow-lg py-2 z-50"
+          className="bg-white shadow-md custom-context-menu absolute rounded-lg shadow-lg py-2 z-50"
           style={{ top: contextMenuPos.y, left: contextMenuPos.x }}
         >
           <ul className=" text-sm">

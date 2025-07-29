@@ -7,7 +7,7 @@ import '../WaitingRoom.css';
 function PlayerCard({ player, handlePlayerCardClick }) {
   if (player.isEmpty) {
     return (
-      <div className="waitingRoom-glass-effect rounded-xl p-4 flex flex-col items-center opacity-50 m-2">
+      <div className="bg-white shadow-md rounded-xl p-4 flex flex-col items-center opacity-50 m-2">
         <div className="mb-2">
           <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
@@ -23,7 +23,7 @@ function PlayerCard({ player, handlePlayerCardClick }) {
   // Existing PlayerCard rendering logic for active players
   return (
     <div
-      className={`waitingRoom-player-card waitingRoom-glass-effect rounded-xl p-4 flex flex-col items-center relative m-2
+      className={`waitingRoom-player-card bg-white shadow-md rounded-xl p-4 flex flex-col items-center relative m-2
                   ${player.isHost ? 'host' : ''}
                   `}
       data-player={player.name}

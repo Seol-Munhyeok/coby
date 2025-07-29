@@ -3,8 +3,7 @@
 @tailwind utilities;
 .WaitingRoom {
     font-family: 'Noto Sans KR', sans-serif;
-    background-color: #0f172a;
-    color: #e2e8f0;
+    background-color: #f3f4f6;
     min-height: 100vh;
 
 }
@@ -260,7 +259,7 @@
 /* WaitingRoom.css additions */
 .custom-context-menu {
   position: fixed; /* Ensures it's positioned relative to the viewport */
-  background-color: rgba(17, 24, 39, 1); /* Example: dark blue with transparency */
+  background-color: rgb(186, 237, 255); /* Example: dark blue with transparency */
   border: 1px solid rgba(59, 130, 246, 0.3); /* Blue border with transparency */
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
