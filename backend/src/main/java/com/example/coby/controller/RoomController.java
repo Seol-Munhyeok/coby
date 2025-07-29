@@ -1,8 +1,6 @@
 package com.example.coby.controller;
 
-import com.example.coby.dto.CreateRoomRequest;
-import com.example.coby.dto.RoomResponse;
-import com.example.coby.dto.VerifyPasswordRequest;
+import com.example.coby.dto.*;
 import com.example.coby.entity.Room;
 import com.example.coby.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -43,12 +41,28 @@ public class RoomController {
     }
 
     @PostMapping("/{id}/join")
-    public ResponseEntity<RoomResponse> joinRoom(@PathVariable Long id) {
-        Room room = roomService.joinRoom(id);
+    public ResponseEntity<RoomResponse> joinRoom(@PathVariable Long id,
+                                                 @RequestBody JoinRoomRequest request) {
+        Room room = roomService.joinRoom(id, request.userId());
         if (room == null) {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(RoomResponse.from(room));
+    }
+
+    @PostMapping("/{id}/leave")
+    public ResponseEntity<RoomResponse> leaveRoom(@PathVariable Long id,
+                                                  @RequestBody LeaveRoomRequest request) {
+        Room room = roomService.leaveRoom(id, request.userId());
+        if (room == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(RoomResponse.from(room));
+    }
+
+    @GetMapping("/{id}/users")
+    public List<RoomUserResponse> getRoomUsers(@PathVariable Long id) {
+        return roomService.getRoomUsers(id);
     }
 
     @PostMapping("/{id}/verify-password")
