@@ -16,7 +16,7 @@ function MainPage() {
     const [rooms, setRooms] = useState([]);
     const userIconButtonRef = useRef(null);
     const [isUserMenuOpen, setUserMenuOpen] = useState(false);
-    const setNickname = useUserStore((state) => state.setNickname); // MyCard로 이동
+    const { setNickname, setId, id: userId } = useUserStore(); // setId와 userId를 함께 가져옴
     const userMenuRef = useRef(null);
     const navigate = useNavigate();
 
@@ -31,8 +31,31 @@ function MainPage() {
     });
 
     useEffect(() => {
-        fetchRooms();
-    }, []); // 닉네임 로직은 MyCard로 이동했으므로 의존성 배열에서 제거
+        const fetchUserDataAndRooms = async () => {
+            try {
+                // 사용자 정보 가져오기
+                const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                });
+
+                setId(userResponse.data.id); // userStore에 userId 저장
+                setNickname(userResponse.data.nickname); // userStore에 nickname 저장 (MyCard에서 사용)
+
+                // 방 목록 가져오기
+                await fetchRooms();
+            } catch (error) {
+                console.error('Error fetching user data or rooms:', error);
+                alert('사용자 정보 또는 방 목록을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
+                navigate('/'); // 실패 시 로그인 페이지로 이동 또는 적절한 에러 처리
+            }
+        };
+
+        fetchUserDataAndRooms();
+    }, [setId, setNickname, navigate]); // 의존성 배열에 setId, setNickname, navigate 추가
 
     const fetchRooms = async () => {
         try {
@@ -40,7 +63,7 @@ function MainPage() {
             setRooms(response.data);
         } catch (error) {
             console.error('Error fetching rooms:', error);
-            alert('방 목록을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
+            // 에러 메시지는 fetchUserDataAndRooms에서 이미 처리하므로 여기서는 생략
         }
     };
 
@@ -65,10 +88,15 @@ function MainPage() {
     };
 
 
-    const enterRoomBtn = () => {
+    const enterRoomBtn = (id) => {
+        if (!userId) {
+            alert('사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+            return;
+        }
         alert('방에 입장합니다!');
-        navigate('/waitingRoom');
+        navigate(`/waitingRoom/${id}?userId=${userId}`); // roomId와 userId를 쿼리 파라미터로 전달
     };
+
 
     const enterMypageBtn = () => {
         navigate('/myPage');
@@ -263,49 +291,7 @@ function MainPage() {
                             <h2 className="logo-text text-2xl mb-4">COBY</h2>
                             <p className="text-gray-400 text-sm">Coding Online Battle With You</p>
                         </div>
-{/* 
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-                            <div>
-                                <h3 className="text-lg font-semibold mb-3">서비스</h3>
-                                <ul className="space-y-2 text-gray-400">
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">대결하기</button></li>
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">랭킹</button></li>
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">문제 풀기</button></li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h3 className="text-lg font-semibold mb-3">정보</h3>
-                                <ul className="space-y-2 text-gray-400">
-                                    <li><button type="button" onClick={enterloginBtn} className="hover:text-white">이용약관</button></li>
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">개인정보처리방침</button></li>
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">FAQ</button></li>
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">공지사항</button></li>
-                                </ul>
-                            </div>
-
-                            <div>
-                                <h3 className="text-lg font-semibold mb-3">문의</h3>
-                                <ul className="space-y-2 text-gray-400">
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">고객센터</button></li>
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">버그신고</button></li>
-                                    <li><button type="button" onClick={enterMainBtn} className="hover:text-white">제휴 문의</button></li>
-                                </ul>
-                            </div>
-                        </div> */}
                     </div>
-
-                    {/* <div className="border-t border-gray-700 mt-8 pt-6 flex flex-col md:flex-row justify-between items-center">
-                        <p className="text-gray-400 text-sm">©2025 COBY. All rights reserved.</p>
-                        <div className="flex space-x-4 mt-4 md:mt-0">
-                            <button type="button" onClick={enterMainBtn} className="text-gray-400 hover:text-white">
-                                <i className="fab fa-github"></i>
-                            </button>
-                            <button type="button" onClick={enterMainBtn} className="text-gray-400 hover:text-white">
-                                <i className="fab fa-discord"></i>
-                            </button>
-                        </div>
-                    </div> */}
                 </div>
             </footer>
         </div>

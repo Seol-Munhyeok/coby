@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ResultRoom.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import ChatWindow from '../../Common/components/ChatWindow'; // ChatWindow 컴포넌트 임포트
 import useContextMenu from '../../Common/hooks/useContextMenu'; // useContextMenu 훅 임포트
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal'; // PlayerInfoModal 컴포넌트 임포트
@@ -14,6 +14,7 @@ function ResultRoom() {
   const navigate = useNavigate();
   const { messages, sendMessage, isConnected, error } = useWebSocket();
   const [notification, setNotification] = useState(null);
+  const { roomId } = useParams();
 
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
@@ -163,7 +164,7 @@ const nickname = useUserStore((state) => state.nickname)
 
   const regameBtn = () => {
     alert('재대결을 준비하세요');
-    navigate('/waitingRoom');
+    navigate(`/waitingRoom/${roomId}`);
   };
 
 

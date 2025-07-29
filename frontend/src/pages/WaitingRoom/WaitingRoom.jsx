@@ -3,7 +3,7 @@
  * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import './WaitingRoom.css';
 import useContextMenu from '../../Common/hooks/useContextMenu';
 import PlayerCard from './components/PlayerCard';
@@ -18,6 +18,7 @@ import Cookies from 'js-cookie'
 
 function WaitingRoom() {
   const navigate = useNavigate();
+  const { roomId } = useParams();
 
   const nickname = useUserStore((state) => state.nickname)
   const setNickname = useUserStore((state) => state.setNickname)
@@ -177,7 +178,7 @@ function WaitingRoom() {
     }
 
     alert('방에 입장합니다!');
-    navigate('/gamepage');
+    navigate(`/gamepage/${roomId}`);
   };
 
   const quickbtn = () => {

@@ -56,10 +56,7 @@ function RoomList({ rooms, enterRoomBtn, fetchRooms }) {
                                         </span>
                                     )}
                                 </div>
-                                <button
-                                    onClick={() => enterRoomBtn(room)}
-                                    className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors"
-                                >
+                                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition" onClick={() => enterRoomBtn(room.id)}>
                                     입장하기
                                 </button>
                             </div>

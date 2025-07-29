@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState ,useCallback } from "react";
 import Editor from "@monaco-editor/react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import * as monaco from "monaco-editor";
 import './BattleRoom.css';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -13,6 +13,7 @@ import Cookies from 'js-cookie'
 
 
 export default function CodingBattle() {
+    const { roomId } = useParams();
     const editorRef = useRef(null);
     //const opponentRefs = [useRef(null), useRef(null), useRef(null)];
 
@@ -188,11 +189,11 @@ for num in range(len(n)):
         }
     };
 
-    const handleGiveUp = async () => {
+        const handleGiveUp = async () => {
         showModal("포기", '수고하셨습니다!', "info");
         // Add a slight delay before navigating to allow user to see the modal
         setTimeout(() => {
-            navigate("/resultpage");
+            navigate(`/resultpage/${roomId}`);
         }, 1500);
     };
 
@@ -370,12 +371,12 @@ for num in range(len(n)):
                 destination: '/app/join_room',
                 body: JSON.stringify({
                     type: "join_room",
-                    roomId: "local_battle_room_alpha",
+                    roomId: roomId,
                     userId: generatedUserId // <-- 생성된 ID 사용
                 })
             });
 
-            client.subscribe('/topic/room/local_battle_room_alpha', (message) => {
+            client.subscribe(`/topic/room/${roomId}`, (message) => {
                 const receivedMessage = JSON.parse(message.body);
                 console.log('서버로부터 메시지 수신:', receivedMessage);
 
@@ -493,7 +494,7 @@ for num in range(len(n)):
                     headers: {},
                     body: JSON.stringify({
                         type: "code_update",
-                        roomId: "local_battle_room_alpha",
+                        roomId: {roomId},
                         userId: myUserId,
                         lineCount: currentLineCount,
                         code: value, // 다른 클라이언트에 코드 내용을 보내 동기화할 수 있도록 포함
