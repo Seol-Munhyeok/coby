@@ -37,7 +37,3 @@ jobs:
 
       - name: Upload to S3
         run: aws s3 cp source.zip s3://coby-ci-cd-s3/source.zip
-
-      # ✅ 코드파이프라인은 마지막에 1번만 실행
-      - name: Start CodePipeline
-        run: aws codepipeline start-pipeline-execution --name coby-pipeline
