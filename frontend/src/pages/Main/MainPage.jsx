@@ -42,7 +42,7 @@ function MainPage() {
                     credentials: 'include',
                 });
 
-                const data = await response.json()
+                const data = await userResponse.json()
 
                 console.log("가져오기 시도");
                 setId(parseInt(data.id)); // userStore에 userId 저장
