@@ -15,7 +15,10 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
     const { name, value, type, checked } = e.target;
     setSettings(prevSettings => ({
       ...prevSettings,
-      [name]: type === 'checkbox' ? checked : (name === 'maxParticipants' ? parseInt(value, 10) : value)
+      [name]: type === 'checkbox' ? checked : (
+          name === 'maxParticipants' ? parseInt(value, 10) :
+              name === 'itemMode' ? value === 'true' : value
+      )
     }));
   };
 
