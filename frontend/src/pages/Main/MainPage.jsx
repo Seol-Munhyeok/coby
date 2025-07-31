@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './MainPage.css';
 import { useNavigate } from 'react-router-dom';
-import { useUserStore } from '../../store/userStore';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import axios from 'axios';
-import { useAuth } from '../AuthContext/AuthContext'; // AuthContext의 useAuth 훅 임포트
+import { useAuth } from '../AuthContext/AuthContext'; 
 
 // 분리된 컴포넌트들 임포트
 import MyCard from './MyCard';
@@ -17,11 +16,10 @@ function MainPage() {
     const [rooms, setRooms] = useState([]);
     const userIconButtonRef = useRef(null);
     const [isUserMenuOpen, setUserMenuOpen] = useState(false);
-    const { setNickname, setId, id: userIdInStore } = useUserStore(); // setId와 userIdInStore를 함께 가져옴
     const userMenuRef = useRef(null);
     const navigate = useNavigate();
-
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
+
 
     const [newRoomSettings, setNewRoomSettings] = useState({
         roomName: '',
@@ -34,23 +32,8 @@ function MainPage() {
     });
 
     useEffect(() => {
-        const initializeUserDataAndRooms = async () => {
-            if (user) { // user 데이터가 AuthContext에 존재할 경우
-                console.log("AuthContext에서 가져온 사용자 정보:", user);
-                setId(user.id); // userStore에 userId 저장
-                setNickname(user.nickname); // userStore에 nickname 저장
-                console.log("userStore에 사용자 정보 저장 완료");
-
-                // 방 목록 가져오기
-                await fetchRooms();
-            } else {
-                console.log("AuthContext에 사용자 정보가 없습니다. (로딩 중이거나 로그인 필요)");
-                // user가 null인 경우, AuthProvider에서 리디렉션 처리하므로 여기서는 특별한 조치 불필요
-            }
-        };
-
-        initializeUserDataAndRooms();
-    }, [user, setId, setNickname, navigate]); // 의존성 배열에 user, setId, setNickname, navigate 추가
+        fetchRooms(); 
+    }, []);
 
     const fetchRooms = async () => {
         try {
