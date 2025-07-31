@@ -5,19 +5,20 @@ import './MainPage.css';
 function MyCard() {
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
 
+
+    const userId = user?.id || 0;               //유저 id
     const nickname = user?.nickname || '게스트';    //닉네임
-    const userId = user?.userId || 0;               //유저 id
     const email = user?.email || '';                //이메일
     const ssoProvider = user?.ssoProvider || '';    //sso 제공사
     const providerId = user?.providerId || '';      //제공사 id
-    const createTime = user?.createAt || null;      //계정 생성 시간
-    const lastLoginTime = user?.lastLoginAt || null;        //마지막 접속
     const preferredLanguage = user?.preferredLanguage || 'Python';  //선호 언어
     const reportCount = user?.reportCount || 0;     //누적 신고 수
-    const tier = user?.tierId || '0';               //티어 아이디
-    const tierPoints = user?.tierPoint || 0;        //티어 포인트
     const totalGame = user?.totalGame || 0;         //총 게임 수
     const winGame = user?.winGame || 0;             //승리 게임 수
+    const tierPoints = user?.tierPoint || 0;        //티어 포인트
+    const tierName = user?.tierName || '골드';               //티어 아이디
+    const tierImageUrl = user?.tierImageUrl || '';  //티어 이미지 경로
+    
     const loseGame = totalGame - winGame            //패배 게임 수 
 
     // 승률 계산 (totalGame이 0이 아닐 경우에만 계산) | 소수점 둘째 자리까지 표시
