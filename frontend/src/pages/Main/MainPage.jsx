@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../../store/userStore';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import axios from 'axios';
+import { useAuth } from '../AuthContext/AuthContext'; // AuthContext의 useAuth 훅 임포트
 
 // 분리된 컴포넌트들 임포트
 import MyCard from './MyCard';
@@ -16,9 +17,11 @@ function MainPage() {
     const [rooms, setRooms] = useState([]);
     const userIconButtonRef = useRef(null);
     const [isUserMenuOpen, setUserMenuOpen] = useState(false);
-    const { setNickname, setId, id: userId } = useUserStore(); // setId와 userId를 함께 가져옴
+    const { setNickname, setId, id: userIdInStore } = useUserStore(); // setId와 userIdInStore를 함께 가져옴
     const userMenuRef = useRef(null);
     const navigate = useNavigate();
+
+    const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
 
     const [newRoomSettings, setNewRoomSettings] = useState({
         roomName: '',
@@ -31,38 +34,23 @@ function MainPage() {
     });
 
     useEffect(() => {
-        const fetchUserDataAndRooms = async () => {
-            try {
-                // 사용자 정보 가져오기
-                const userResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                });
-
-                const rdata = await userResponse.json()
-                console.log(rdata)
-                
-
-                console.log("가져오기 시도");
-                setId(rdata.id); // userStore에 userId 저장
-                console.log("userid정상");
-                setNickname(rdata.nickname); // userStore에 nickname 저장 (MyCard에서 사용)
-                console.log("user닉네임정상");
+        const initializeUserDataAndRooms = async () => {
+            if (user) { // user 데이터가 AuthContext에 존재할 경우
+                console.log("AuthContext에서 가져온 사용자 정보:", user);
+                setId(user.id); // userStore에 userId 저장
+                setNickname(user.nickname); // userStore에 nickname 저장
+                console.log("userStore에 사용자 정보 저장 완료");
 
                 // 방 목록 가져오기
                 await fetchRooms();
-            } catch (error) {
-                console.error('Error fetching user data or rooms:', error);
-                alert('사용자 정보 또는 방 목록을 불러오는데 실패했습니다. 잠시 후 다시 시도해주세요.');
-                // navigate('/'); // 실패 시 로그인 페이지로 이동 또는 적절한 에러 처리
+            } else {
+                console.log("AuthContext에 사용자 정보가 없습니다. (로딩 중이거나 로그인 필요)");
+                // user가 null인 경우, AuthProvider에서 리디렉션 처리하므로 여기서는 특별한 조치 불필요
             }
         };
 
-        fetchUserDataAndRooms();
-    }, [setId, setNickname, navigate]); // 의존성 배열에 setId, setNickname, navigate 추가
+        initializeUserDataAndRooms();
+    }, [user, setId, setNickname, navigate]); // 의존성 배열에 user, setId, setNickname, navigate 추가
 
     const fetchRooms = async () => {
         try {
@@ -70,7 +58,6 @@ function MainPage() {
             setRooms(response.data);
         } catch (error) {
             console.error('Error fetching rooms:', error);
-            // 에러 메시지는 fetchUserDataAndRooms에서 이미 처리하므로 여기서는 생략
         }
     };
 
@@ -96,12 +83,12 @@ function MainPage() {
 
 
     const enterRoomBtn = (id) => {
-        if (!userId) {
+        if (!user || !user.id) { // AuthContext의 user.id를 사용
             alert('사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
             return;
         }
         alert('방에 입장합니다!');
-        navigate(`/waitingRoom/${id}?userId=${userId}`); // roomId와 userId를 쿼리 파라미터로 전달
+        navigate(`/waitingRoom/${id}?userId=${user.id}`); // roomId와 user.id를 쿼리 파라미터로 전달
     };
 
 
