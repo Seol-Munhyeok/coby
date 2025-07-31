@@ -43,9 +43,16 @@ public class UserController {
         return new UserProfileResponse(
                 user.getId(),
                 user.getNickname(),
-                user.getPreferredLanguage(),
+                user.getEmail(),
+                user.getSsoProvider(),
                 user.getProviderId(),
-                user.getSsoProvider()
+                user.getPreferredLanguage(),
+                user.getReportCount(),
+                user.getTotalGame(),
+                user.getWinGame(),
+                user.getTierPoint(),
+                user.getTier() != null ? user.getTier().getName() : null,
+                user.getTier() != null ? user.getTier().getImageUrl() : null
         );
     }
 }
