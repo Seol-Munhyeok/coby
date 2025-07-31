@@ -1,5 +1,6 @@
 // src/contexts/WebSocketContext.jsx
 import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
+import { useParams } from 'react-router-dom';
 
 export const WebSocketContext = createContext(null);
 
@@ -7,8 +8,52 @@ export const WebSocketProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
+  const [roomInfo, setRoomInfo] = useState(null);
   const ws = useRef(null);
 
+  // URL 파라미터에서 roomid를 가져옵니다.
+  const { roomId } = useParams();
+
+  // ContextAPI useEffect - 방 정보를 가져오는 로직 추가
+  useEffect(() => {
+    const fetchRoomInfo = async () => {
+      // useParams()로 가져온 roomid를 사용합니다.
+      if (!roomId) {
+        console.error("Room ID not found in URL.");
+        setError("URL에서 방 ID를 찾을 수 없습니다.");
+        return;
+      }
+
+      const url = `${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setRoomInfo({
+          id: data.id,
+          title: data.title,
+          max_capacity: data.max_capacity,
+          status: data.status,
+          timeLimit: data.timeLimit,
+          difficulty: data.difficulty,
+          isPrivate: data.isPrivate,
+          password: data.password,
+          itemMode: data.itemMode
+        });
+      } catch (e) {
+        console.error("Failed to fetch room information:", e);
+        setError("방 정보를 불러오는 데 실패했습니다.");
+      }
+    };
+
+    fetchRoomInfo();
+  }, []); // 이펙트가 컴포넌트 마운트 시 한 번만 실행되도록 빈 배열을 의존성 배열로 설정
+
+
+  //웹소켓 useEffect
   useEffect(() => {
     if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
       console.log('Attempting to connect WebSocket...');
@@ -70,6 +115,7 @@ export const WebSocketProvider = ({ children }) => {
     sendMessage,
     isConnected,
     error,
+    roomInfo,
     wsInstance: ws.current // Expose the raw instance if needed (use with caution)
   };
 

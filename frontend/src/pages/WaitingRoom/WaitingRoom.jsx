@@ -32,15 +32,26 @@ function WaitingRoom() {
       }
   }, [nickname, setNickname])
 
-  // 현재 사용자 닉네임을 가져옵니다.
   const currentUser = nickname || '게스트';
 
+  // useWebSocket 훅을 사용하여 Context에서 값을 가져옵니다.
+  const { messages, sendMessage, isConnected, error, roomInfo } = useWebSocket();
+
+  // 방 정보를 ContextAPI에서 가져와 상태 초기값으로 사용합니다.
+  const [roomName, setRoomName] = useState(roomInfo?.title || "방 이름 기본값");
+  const [difficulty, setDifficulty] = useState(roomInfo?.difficulty || "보통");
+  const [timeLimit, setTimeLimit] = useState(roomInfo?.timeLimit || "30분");
+  const [maxParticipants, setMaxParticipants] = useState(roomInfo?.max_capacity || 4);
+  const [itemMode, setItemMode] = useState(roomInfo?.itemMode || false);
+  const [isPrivate, setIsPrivate] = useState(roomInfo?.isPrivate || false);
+  const [password, setPassword] = useState(roomInfo?.password || "");
+
   const playerData = {
-    [currentUser]: { // 코드마스터 대신 currentUser 닉네임을 키로 사용
-        avatar: currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase(), // 닉네임 앞 두 글자
-        avatarColor: 'bg-blue-700', // 기본 색상 (원한다면 동적으로 변경 가능)
-        tier: '다이아', // 기본 티어
-        level: 28, // 기본 레벨
+    [currentUser]: {
+        avatar: currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase(),
+        avatarColor: 'bg-blue-700',
+        tier: '다이아',
+        level: 28,
         winRate: '78%',
         wins: 45,
         losses: 13,
@@ -120,7 +131,7 @@ function WaitingRoom() {
 
 
   const basePlayersData = [
-    { name: currentUser, avatarInitials: currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase(), tier: "다이아", level: "Lv.28", isReady: false, avatarColor: 'bg-blue-700' }, // 코드마스터 대신 currentUser 사용
+    { name: currentUser, avatarInitials: currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase(), tier: "다이아", level: "Lv.28", isReady: false, avatarColor: 'bg-blue-700' },
     { name: "사용자1", avatarInitials: "KM", tier: "마스터", level: "Lv.42", isReady: true, avatarColor: 'bg-blue-700' },
     { name: "사용자2", avatarInitials: "JH", tier: "마스터", level: "Lv.39", isReady: true, avatarColor: 'bg-purple-700' },
     { name: "사용자4", avatarInitials: "SJ", tier: "다이아", level: "Lv.31", isReady: true, avatarColor: 'bg-yellow-700' },
@@ -128,25 +139,16 @@ function WaitingRoom() {
 
 
   const [isReady, setIsReady] = useState(false);
-  const [roomHost, setRoomHost] = useState(currentUser); // 방장도 currentUser로 초기화
+  const [roomHost, setRoomHost] = useState(currentUser);
   const isCurrentUserHost = currentUser === roomHost;
   const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
   const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
   const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);
   const [notification, setNotification] = useState(null);
-  const [entranceCode, setEntranceCode] = useState("BATTLE-58392");
 
   const initialActivePlayerNames = basePlayersData.map(player => player.name);
   const [activePlayerNames, setActivePlayerNames] = useState(initialActivePlayerNames);
-
-  const [roomName, setRoomName] = useState("알고리즘 배틀 #129");
-  const [difficulty, setDifficulty] = useState("보통");
-  const [timeLimit, setTimeLimit] = useState("30분");
-  const [maxParticipants, setMaxParticipants] = useState(4);
-  const [itemMode, setItemMode] = useState(false);
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [password, setPassword] = useState("");
-
+  
   const {
     showContextMenu,
     contextMenuPos,
@@ -156,6 +158,33 @@ function WaitingRoom() {
     setShowContextMenu,
     setSelectedPlayer,
   } = useContextMenu();
+
+
+  // WebSocket connection 상태에 따른 알림을 useEffect로 처리합니다.
+  useEffect(() => {
+    if (isConnected) {
+      setNotification({ message: "채팅 서버에 연결되었습니다.", type: "success" });
+    } else if (error) {
+      setNotification({ message: error, type: "error" });
+    } else {
+      setNotification({ message: "채팅 서버와 연결이 끊어졌습니다.", type: "error" });
+    }
+    const timer = setTimeout(() => setNotification(null), 3000);
+    return () => clearTimeout(timer);
+  }, [isConnected, error]);
+
+  // ContextAPI에서 가져온 roomInfo가 변경될 때마다 상태를 업데이트합니다.
+  useEffect(() => {
+      if (roomInfo) {
+          setRoomName(roomInfo.title);
+          setDifficulty(roomInfo.difficulty);
+          setTimeLimit(roomInfo.timeLimit);
+          setMaxParticipants(roomInfo.max_capacity);
+          setItemMode(roomInfo.itemMode);
+          setIsPrivate(roomInfo.isPrivate);
+          setPassword(roomInfo.password);
+      }
+  }, [roomInfo]);
 
 
   const enterRoomBtn1 = () => {
@@ -215,32 +244,13 @@ function WaitingRoom() {
     }
   };
 
-  
-  const { messages, sendMessage, isConnected, error } = useWebSocket();
-  // Use useEffect to show notifications based on WebSocket connection status
-  useEffect(() => {
-    if (isConnected) {
-      setNotification({ message: "채팅 서버에 연결되었습니다.", type: "success" });
-    } else if (error) {
-      setNotification({ message: error, type: "error" });
-    } else {
-      setNotification({ message: "채팅 서버와 연결이 끊어졌습니다.", type: "error" });
-    }
-    const timer = setTimeout(() => setNotification(null), 3000);
-    return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
-  }, [isConnected, error]);
-  
-  // Use the sendMessage function from the context
   const handleSendMessage = (newMessage) => {
     const messageData = {
-      // UID : 1,
       sender: currentUser,
-      // avatarInitials: playerData[currentUser]?.avatar,
-      // avatarColor: playerData[currentUser]?.avatarColor,
       profileUrl: 'https://example.com/avatars/user1.jpg',
       text: newMessage,
     };
-    sendMessage(messageData); // Call the context's sendMessage
+    sendMessage(messageData);
   };
 
   const handleSaveRoomSettings = (settings) => {
@@ -308,7 +318,7 @@ function WaitingRoom() {
                 </div>
           </div>
       </header>
-        
+
       <main className="container mx-auto px-4 pt-4 transform scale-95 origin-top">
         <div className="bg-white shadow-md rounded-xl p-4">
           <div className="flex justify-between items-center mb-4">
@@ -326,7 +336,7 @@ function WaitingRoom() {
                   설정
                 </button>
               )}
-            
+
               <button
                 id="readyBtn"
                 className={`px-4 py-2 rounded-lg flex items-center transition ${

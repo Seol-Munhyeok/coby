@@ -10,6 +10,7 @@ import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useUserStore } from '../../store/userStore'
 import Cookies from 'js-cookie'
+import { useWebSocket } from '../WebSocket/WebSocketContext';
 
 
 export default function CodingBattle() {
@@ -28,6 +29,8 @@ export default function CodingBattle() {
     const languageRef = useRef(null);
     const [myUserId, setMyUserId] = useState('');
     
+    const { roomInfo } = useWebSocket(); // ContextAPI에서 roomInfo를 가져옵니다.
+
     const [currentLanguage, setCurrentLanguage] = useState('python');
     // 서버에서 받아오는 로딩창 변수
     const connectTimeRef = useRef(null);
@@ -36,8 +39,8 @@ export default function CodingBattle() {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [isFeverTime, setIsFeverTime] = useState(false);
     // State for the main battle timer
-    const TOTAL_TIME_SECONDS = 15 * 60; // 15 minutes in seconds (your current setup)
-    const DISPLAY_TOTAL_TIME_SECONDS = 60 * 60; // 1 hour for the display in the progress bar
+    const totalTimeFromContext = roomInfo?.timeLimit ? parseInt(roomInfo.timeLimit, 10) * 60 : 10 * 60;
+    const TOTAL_TIME_SECONDS = totalTimeFromContext;
     const [remainingTime, setRemainingTime] = useState(TOTAL_TIME_SECONDS);
     const [progressBarWidth, setProgressBarWidth] = useState(100);
 
@@ -539,7 +542,7 @@ for num in range(len(n)):
                     <div className="flex justify-between w-64 text-sm mt-1">
                         {/* domTimerRef를 span 요소에 연결 */}
                         <span ref={domTimerRef} className="BR-countdown-time text-orange-400 font-bold">{formatTime(remainingTime)}</span>
-                        <span className="BR-total-time text-slate-400">제한시간: {formatTime(DISPLAY_TOTAL_TIME_SECONDS)}</span>
+                        <span className="BR-total-time text-slate-400">제한시간: {formatTime(TOTAL_TIME_SECONDS)}</span>
                     </div>
                 </div>
 
