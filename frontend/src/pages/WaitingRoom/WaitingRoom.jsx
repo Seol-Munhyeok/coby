@@ -244,11 +244,14 @@ function WaitingRoom() {
     }
   };
 
+  
   const handleSendMessage = (newMessage) => {
     const messageData = {
-      sender: currentUser,
-      profileUrl: 'https://example.com/avatars/user1.jpg',
-      text: newMessage,
+      type: "CHAT",
+      payload: {
+        roomId: roomId,      // 현재 방 ID
+        text: newMessage,     // 입력한 채팅 메시지
+      },
     };
     sendMessage(messageData);
   };

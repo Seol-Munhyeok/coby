@@ -29,17 +29,15 @@ function ResultRoom() {
     return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
   }, [isConnected, error]);
   
-  // Use the sendMessage function from the context
   const handleSendMessage = (newMessage) => {
     const messageData = {
-      // UID : 1,
-      sender: currentUser,
-      // avatarInitials: playerData[currentUser]?.avatar,
-      // avatarColor: playerData[currentUser]?.avatarColor,
-      profileUrl: 'https://example.com/avatars/user1.jpg',
-      text: newMessage,
+      type: "CHAT",
+      payload: {
+        roomId: roomId,      // 현재 방 ID
+        text: newMessage,     // 입력한 채팅 메시지
+      },
     };
-    sendMessage(messageData); // Call the context's sendMessage
+    sendMessage(messageData);
   };
 
 
