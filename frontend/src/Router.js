@@ -9,7 +9,7 @@ import MyPage from "./pages/MyPage/MyPage";
 import BattleRoom from "./pages/BattleRoom/BattleRoom";
 import ResultRoom from "./pages/ResultRoom/ResultRoom";
 import WebSocketLayout from "./pages/WebSocket/WebSocketLayout";
-import AuthProvider from "./pages/AuthContext/AuthContext"; // AuthProvider 임포트
+import AuthLayout from "./pages/AuthContext/AuthLayout"; // AuthProvider 임포트
 
 const Router = () => {
   return (
@@ -18,7 +18,7 @@ const Router = () => {
       <Route path="/" element={<Login />} />
 
       {/* 로그인 화면을 제외한 모든 경로를 AuthProvider로 감쌉니다. */}
-      <Route element={<AuthProvider />}>
+      <Route element={<AuthLayout />}>
         <Route path="/nickname" element={<NicknamePopup />} />
         <Route path="/mainpage" element={<MainPage />} />
         <Route path="/myPage" element={<MyPage />} />

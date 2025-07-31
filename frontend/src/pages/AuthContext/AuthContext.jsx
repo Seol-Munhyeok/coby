@@ -40,7 +40,7 @@ const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error("사용자 정보를 가져오는 데 실패했습니다:", error);
         // API 요청 실패 시 (예: 인증되지 않은 사용자), 로그인 페이지로 리디렉션
-        navigate("/");
+        // navigate("/"); 개발중 주석처리
       } finally {
         setLoading(false);
       }
@@ -49,10 +49,11 @@ const AuthProvider = ({ children }) => {
     // 새로고침 시 context의 데이터가 없어지는 것을 이용하여,
     // /nickname 페이지가 아님에도 context 정보가 없다면 그냥 /로 이동시킴
     // 단, 처음 로드 시에는 API 요청을 통해 사용자 정보를 가져와야 하므로 이 조건은 나중에 처리합니다.
-    if (!user && location.pathname !== "/nickname" && !loading) {
-        navigate("/");
-        return;
-    }
+    //개발중 주석처리
+    // if (!user && location.pathname !== "/nickname" && !loading) {
+    //     navigate("/");
+    //     return;
+    // }
 
     // `user` 상태가 비어있고, 로딩 중이 아닐 때만 사용자 정보를 가져옵니다.
     // 이는 불필요한 API 호출을 방지하고, 초기 로드 시에만 실행되도록 합니다.
