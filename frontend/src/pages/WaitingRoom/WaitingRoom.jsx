@@ -22,6 +22,7 @@ function WaitingRoom() {
 
   const nickname = useUserStore((state) => state.nickname)
   const setNickname = useUserStore((state) => state.setNickname)
+  const userId = useUserStore((state) => state.id)
 
   useEffect(() => {
       if (!nickname) {
@@ -183,6 +184,7 @@ function WaitingRoom() {
 
   const quickbtn = () => {
     alert('방에서 나갑니다');
+    leaveRoom(roomId, userId);
     navigate('/mainpage');
   };
 
@@ -216,7 +218,7 @@ function WaitingRoom() {
   };
 
   
-  const { messages, sendMessage, isConnected, error } = useWebSocket();
+  const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error } = useWebSocket();
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
     if (isConnected) {
@@ -229,19 +231,30 @@ function WaitingRoom() {
     const timer = setTimeout(() => setNotification(null), 3000);
     return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
   }, [isConnected, error]);
+
+    useEffect(() => {
+        if (isConnected) {
+            joinRoom(roomId, { userId, nickname: currentUser, profileUrl: '' });
+        }
+    }, [isConnected, roomId, currentUser, userId, joinRoom]);
+
+    useEffect(() => {
+        return () => {
+            leaveRoom(roomId, userId);
+        };
+    }, [roomId, userId, leaveRoom]);
   
   // Use the sendMessage function from the context
-  const handleSendMessage = (newMessage) => {
-    const messageData = {
-      // UID : 1,
-      sender: currentUser,
-      // avatarInitials: playerData[currentUser]?.avatar,
-      // avatarColor: playerData[currentUser]?.avatarColor,
-      profileUrl: 'https://example.com/avatars/user1.jpg',
-      text: newMessage,
+    const handleSendMessage = (newMessage) => {
+        const messageData = {
+            roomId,
+            userId,
+            nickname: currentUser,
+            profileUrl: '',
+            content: newMessage,
+        };
+        sendMessage(roomId, messageData); // Call the context's sendMessage
     };
-    sendMessage(messageData); // Call the context's sendMessage
-  };
 
   const handleSaveRoomSettings = (settings) => {
     setRoomName(settings.roomName);

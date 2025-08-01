@@ -12,7 +12,7 @@ import Cookies from 'js-cookie'
 
 function ResultRoom() {
   const navigate = useNavigate();
-  const { messages, sendMessage, isConnected, error } = useWebSocket();
+  const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error } = useWebSocket();
   const [notification, setNotification] = useState(null);
   const { roomId } = useParams();
 
@@ -28,23 +28,35 @@ function ResultRoom() {
     const timer = setTimeout(() => setNotification(null), 3000);
     return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
   }, [isConnected, error]);
-  
+
+  useEffect(() => {
+    if (isConnected) {
+      joinRoom(roomId, { userId, nickname: currentUser, profileUrl: '' });
+    }
+  }, [isConnected, roomId, currentUser, userId, joinRoom]);
+
+  useEffect(() => {
+    return () => {
+      leaveRoom(roomId, userId);
+    };
+  }, [roomId, userId, leaveRoom]);
+
   // Use the sendMessage function from the context
   const handleSendMessage = (newMessage) => {
     const messageData = {
-      // UID : 1,
-      sender: currentUser,
-      // avatarInitials: playerData[currentUser]?.avatar,
-      // avatarColor: playerData[currentUser]?.avatarColor,
-      profileUrl: 'https://example.com/avatars/user1.jpg',
-      text: newMessage,
+      roomId,
+      userId,
+      nickname: currentUser,
+      profileUrl: '',
+      content: newMessage,
     };
-    sendMessage(messageData); // Call the context's sendMessage
+    sendMessage(roomId, messageData);
   };
 
 
-const nickname = useUserStore((state) => state.nickname)
+  const nickname = useUserStore((state) => state.nickname)
   const setNickname = useUserStore((state) => state.setNickname)
+  const userId = useUserStore((state) => state.id)
 
   useEffect(() => {
       if (!nickname) {
@@ -159,6 +171,7 @@ const nickname = useUserStore((state) => state.nickname)
 
   const quickRoomBtn = () => {
     alert('방에서 나갑니다!');
+    leaveRoom(roomId, userId);
     navigate('/mainpage');
   };
 
