@@ -75,19 +75,15 @@ public class WebSocketController {
 
         messagingTemplate.convertAndSend("/topic/room/" + roomId, joinNotice);
 
-        if (headerAccessor.getUser() != null) {
-            List<RoomUserResponse> users = roomService.getRoomUsers(Long.parseLong(roomId));
-            WsMessageDto currentUsers = WsMessageDto.builder()
-                    .type("CurrentUsers")
-                    .roomId(roomId)
-                    .users(users)
-                    .build();
+        List<RoomUserResponse> users = roomService.getRoomUsers(Long.parseLong(roomId));
+        WsMessageDto currentUsers = WsMessageDto.builder()
+                .type("CurrentUsers")
+                .roomId(roomId)
+                .users(users)
+                .build();
 
-            messagingTemplate.convertAndSendToUser(headerAccessor.getUser().getName(),
-                    "/queue/room/" + roomId + "/users", currentUsers);
-
-            log.info("유저 {} 에게 방 [{}] 현재 유저 목록 전송", headerAccessor.getUser().getName(), roomId);
-        }
+        messagingTemplate.convertAndSend("/topic/room/" + roomId + "/users", currentUsers);
+        log.info("방 [{}] 현재 유저 목록 전체 전송", roomId);
     }
 
     @MessageMapping("/room/{roomId}/leave")
@@ -105,6 +101,16 @@ public class WebSocketController {
                 .build();
 
         messagingTemplate.convertAndSend("/topic/room/" + roomId, leaveNotice);
+
+        List<RoomUserResponse> users = roomService.getRoomUsers(Long.parseLong(roomId));
+        WsMessageDto currentUsers = WsMessageDto.builder()
+                .type("CurrentUsers")
+                .roomId(roomId)
+                .users(users)
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/room/" + roomId + "/users", currentUsers);
+        log.info("방 [{}] 현재 유저 목록 전체 전송", roomId);
     }
 
     @EventListener
