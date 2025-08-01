@@ -59,7 +59,7 @@ export const WebSocketProvider = ({ children }) => {
           setUsers((prev) => prev.filter(u => u.userId !== body.userId));
         }
       });
-      const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
+      const userSub = clientRef.current.subscribe(`/topic/room/${roomId}/users`, (msg) => {
         const body = JSON.parse(msg.body);
         if (body.type === 'CurrentUsers') {
           setUsers(body.users || []);
@@ -70,7 +70,7 @@ export const WebSocketProvider = ({ children }) => {
     clientRef.current.publish({
       destination: `/app/room/${roomId}/join`,
       body: JSON.stringify({
-        type: 'CurrentUsers',
+        type: 'Join',
         userId: userInfo.userId,
         nickname: userInfo.nickname,
         profileUrl: userInfo.profileUrl,
