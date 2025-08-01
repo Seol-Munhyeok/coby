@@ -66,7 +66,7 @@ function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
               <p className="text-xs waitingRoom-text mb-1">
                 {msg.sender === currentUser ? `${currentUser} (나)` : msg.sender}
               </p>
-              <p className="text-sm ">{msg.text}</p>
+              <p className="text-sm waitingRoom-text">{msg.text}</p>
             </div>
             {/* msg.sender === currentUser 조건으로 아바타 표시를 제어 */}
             {msg.sender === currentUser && (

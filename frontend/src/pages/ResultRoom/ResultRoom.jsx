@@ -12,9 +12,25 @@ import Cookies from 'js-cookie'
 
 function ResultRoom() {
   const navigate = useNavigate();
-  const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error } = useWebSocket();
+  const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
   const [notification, setNotification] = useState(null);
   const { roomId } = useParams();
+
+  const nickname = useUserStore((state) => state.nickname)
+  const setNickname = useUserStore((state) => state.setNickname)
+  const userId = useUserStore((state) => state.id)
+
+  useEffect(() => {
+    if (!nickname) {
+      const cookieNick = Cookies.get('nickname')
+      if (cookieNick) {
+        setNickname(cookieNick)
+      }
+    }
+  }, [nickname, setNickname])
+
+  // 현재 사용자 닉네임을 가져옵니다.
+  const currentUser = nickname || '게스트';
 
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
@@ -30,10 +46,10 @@ function ResultRoom() {
   }, [isConnected, error]);
 
   useEffect(() => {
-    if (isConnected) {
+    if (isConnected && joinedRoomId !== roomId) {
       joinRoom(roomId, { userId, nickname: currentUser, profileUrl: '' });
     }
-  }, [isConnected, roomId, currentUser, userId, joinRoom]);
+  }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId]);
 
   useEffect(() => {
     return () => {
@@ -53,22 +69,6 @@ function ResultRoom() {
     sendMessage(roomId, messageData);
   };
 
-
-  const nickname = useUserStore((state) => state.nickname)
-  const setNickname = useUserStore((state) => state.setNickname)
-  const userId = useUserStore((state) => state.id)
-
-  useEffect(() => {
-      if (!nickname) {
-      const cookieNick = Cookies.get('nickname')
-      if (cookieNick) {
-          setNickname(cookieNick)
-      }
-      }
-  }, [nickname, setNickname])
-
-  // 현재 사용자 닉네임을 가져옵니다.
-  const currentUser = nickname || '게스트';
 
   // 플레이어 정보 데이터 (대기방과 동일)
   const playerData = {

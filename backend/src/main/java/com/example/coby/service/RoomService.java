@@ -54,6 +54,11 @@ public class RoomService {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
 
+        RoomUserId id = new RoomUserId(roomId, userId);
+        if (roomUserRepository.existsById(id)) {
+            return room; // 이미 참여한 경우 중복 삽입 방지
+        }
+
         if (room.getCurrentPart() < room.getMaxParticipants()) {
             room.setCurrentPart(room.getCurrentPart() + 1);
             roomRepository.save(room);

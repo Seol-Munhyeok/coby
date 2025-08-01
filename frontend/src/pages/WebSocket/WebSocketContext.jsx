@@ -12,6 +12,7 @@ export const WebSocketProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const clientRef = useRef(null);
   const subscriptionsRef = useRef({});
+  const [joinedRoomId, setJoinedRoomId] = useState(null);
 
   useEffect(() => {
     const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
@@ -42,7 +43,12 @@ export const WebSocketProvider = ({ children }) => {
   }, []);
 
   const joinRoom = (roomId, userInfo) => {
-    if (clientRef.current && clientRef.current.connected && !subscriptionsRef.current[roomId]) {
+    if (!(clientRef.current && clientRef.current.connected)) return;
+
+    // 이미 해당 방에 참여 중이면 재참여를 건너뜀
+    if (joinedRoomId === roomId) return;
+
+    if (!subscriptionsRef.current[roomId]) {
       const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (msg) => {
         const body = JSON.parse(msg.body);
         if (body.type === 'Chat') {
@@ -60,16 +66,17 @@ export const WebSocketProvider = ({ children }) => {
         }
       });
       subscriptionsRef.current[roomId] = [roomSub, userSub];
-      clientRef.current.publish({
-        destination: `/app/room/${roomId}/join`,
-        body: JSON.stringify({
-          type: 'CurrentUsers',
-          userId: userInfo.userId,
-          nickname: userInfo.nickname,
-          profileUrl: userInfo.profileUrl,
-        }),
-      });
     }
+    clientRef.current.publish({
+      destination: `/app/room/${roomId}/join`,
+      body: JSON.stringify({
+        type: 'CurrentUsers',
+        userId: userInfo.userId,
+        nickname: userInfo.nickname,
+        profileUrl: userInfo.profileUrl,
+      }),
+    });
+    setJoinedRoomId(roomId);
   };
 
   const sendMessage = (roomId, messageData) => {
@@ -99,6 +106,9 @@ export const WebSocketProvider = ({ children }) => {
         delete subscriptionsRef.current[roomId];
       }
     }
+    if (joinedRoomId === roomId) {
+      setJoinedRoomId(null);
+    }
   };
 
   // joinRoom and sendMessage functions are defined above
@@ -111,7 +121,8 @@ export const WebSocketProvider = ({ children }) => {
     users,
     isConnected,
     error,
-    client: clientRef.current
+    client: clientRef.current,
+    joinedRoomId
   };
 
   return (

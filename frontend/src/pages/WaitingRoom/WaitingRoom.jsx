@@ -218,7 +218,7 @@ function WaitingRoom() {
   };
 
   
-  const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error } = useWebSocket();
+  const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
     if (isConnected) {
@@ -233,10 +233,10 @@ function WaitingRoom() {
   }, [isConnected, error]);
 
     useEffect(() => {
-        if (isConnected) {
+        if (isConnected && joinedRoomId !== roomId) {
             joinRoom(roomId, { userId, nickname: currentUser, profileUrl: '' });
         }
-    }, [isConnected, roomId, currentUser, userId, joinRoom]);
+    }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId]);
 
     useEffect(() => {
         return () => {
