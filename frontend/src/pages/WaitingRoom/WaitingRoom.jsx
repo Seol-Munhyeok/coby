@@ -210,10 +210,13 @@ function WaitingRoom() {
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
     if (isConnected) {
+      console.log('WaitingRoom: WebSocket is connected.'); // 로그 추가
       setNotification({ message: "채팅 서버에 연결되었습니다.", type: "success" });
     } else if (error) {
+      console.error('WaitingRoom: WebSocket connection error.', error); // 로그 추가
       setNotification({ message: error, type: "error" });
     } else {
+      console.warn('WaitingRoom: WebSocket is disconnected.'); // 로그 추가
       setNotification({ message: "채팅 서버와 연결이 끊어졌습니다.", type: "error" });
     }
     const timer = setTimeout(() => setNotification(null), 3000);
@@ -222,12 +225,14 @@ function WaitingRoom() {
 
     useEffect(() => {
         if (isConnected && joinedRoomId !== roomId) {
+            console.log(`WaitingRoom: Joining room ${roomId} with user ${currentUser}.`); // 로그 추가
             joinRoom(roomId, { userId, nickname: currentUser, profileUrl: '' });
         }
     }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId]);
 
     useEffect(() => {
         return () => {
+            console.log(`WaitingRoom: Leaving room ${roomId}.`); // 로그 추가
             leaveRoom(roomId, userId);
         };
     }, [roomId, userId, leaveRoom]);
@@ -245,8 +250,10 @@ function WaitingRoom() {
     setShowRoomSettingsModal(false);
   };
   
-  // 채팅 메시지 전송 핸들러 추가
+  // 채팅 메시지 전송 핸들러 수정
   const handleSendMessage = (message) => {
+    if (!message.trim()) return;
+
     const messageData = {
       userId,
       nickname: currentUser,
@@ -254,6 +261,8 @@ function WaitingRoom() {
       profileUrl: playerData[currentUser].avatar, // 임시 프로필 URL
       roomId: roomId
     };
+
+    console.log('WaitingRoom: Sending message to server.', messageData); // 로그 추가
     sendMessage(roomId, messageData);
   };
 
@@ -383,7 +392,6 @@ function WaitingRoom() {
               </div>
             </div>
             <div className="lg:col-span-1">
-              {/* ChatWindow에 onSendMessage prop을 추가하고 handleSendMessage 함수를 연결 */}
               <ChatWindow playerData={playerData} onSendMessage={handleSendMessage} />
             </div>
             <div className="lg:col-span-2">
