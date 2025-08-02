@@ -27,7 +27,8 @@ export const WebSocketProvider = ({ children }) => {
       setError(null);
     };
 
-    client.onStompError = () => {
+    client.onStompError = (frame) => {
+      console.error('STOMP Error:', frame);
       setError('WebSocket connection error.');
       setIsConnected(false);
     };
@@ -43,34 +44,59 @@ export const WebSocketProvider = ({ children }) => {
   }, []);
 
   const joinRoom = (roomId, userInfo) => {
-    if (!(clientRef.current && clientRef.current.connected)) return;
+    if (!(clientRef.current && clientRef.current.connected)) {
+      console.warn('WebSocket is not connected. Cannot join room.');
+      return;
+    }
 
     // 이미 해당 방에 참여 중이면 재참여를 건너뜀
-    if (joinedRoomId === roomId) return;
-
-    if (!subscriptionsRef.current[roomId]) {
-      const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (msg) => {
-        const body = JSON.parse(msg.body);
-        if (body.type === 'Chat') {
-          setMessages((prev) => [...prev, { sender: body.nickname, text: body.content, profileUrl: body.profileUrl }]);
-        } else if (body.type === 'Join') {
-          setUsers((prev) => [...prev, { userId: body.userId, nickname: body.nickname, profileUrl: body.profileUrl }]);
-        } else if (body.type === 'Leave') {
-          setUsers((prev) => prev.filter(u => u.userId !== body.userId));
-        }
-      });
-      const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
-        const body = JSON.parse(msg.body);
-        if (body.type === 'CurrentUsers') {
-          setUsers(body.users || []);
-        }
-      });
-      subscriptionsRef.current[roomId] = [roomSub, userSub];
+    if (joinedRoomId === roomId) {
+        console.log(`Already in room ${roomId}. Skipping join.`);
+        return;
     }
+    
+    // 이전에 구독했던 방이 있으면 구독을 해제하고 초기화
+    if (joinedRoomId && subscriptionsRef.current[joinedRoomId]) {
+      subscriptionsRef.current[joinedRoomId].forEach(sub => sub.unsubscribe());
+      delete subscriptionsRef.current[joinedRoomId];
+      setMessages([]);
+      setUsers([]);
+      setJoinedRoomId(null);
+    }
+    
+    // 새로운 방 구독
+    const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (msg) => {
+      const body = JSON.parse(msg.body);
+      console.log('Received message from topic:', body);
+      if (body.type === 'Chat') {
+        setMessages((prev) => [...prev, { sender: body.nickname, text: body.content, profileUrl: body.profileUrl }]);
+      } else if (body.type === 'Join') {
+        setUsers((prev) => {
+            if (prev.some(u => u.userId === body.userId)) return prev;
+            return [...prev, { userId: body.userId, nickname: body.nickname, profileUrl: body.profileUrl }];
+        });
+      } else if (body.type === 'Leave') {
+        setUsers((prev) => prev.filter(u => u.userId !== body.userId));
+      } else if (body.type === 'CurrentUsers') {
+        setUsers(body.users || []);
+      }
+    });
+    
+    const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
+      const body = JSON.parse(msg.body);
+      console.log('Received users from queue:', body);
+      if (body.type === 'CurrentUsers') {
+        setUsers(body.users || []);
+      }
+    });
+
+    subscriptionsRef.current[roomId] = [roomSub, userSub];
+    
+    // 백엔드로 Join 메시지 전송
     clientRef.current.publish({
       destination: `/app/room/${roomId}/join`,
       body: JSON.stringify({
-        type: 'CurrentUsers',
+        type: 'Join', // 'CurrentUsers' -> 'Join'으로 변경
         userId: userInfo.userId,
         nickname: userInfo.nickname,
         profileUrl: userInfo.profileUrl,
@@ -110,8 +136,6 @@ export const WebSocketProvider = ({ children }) => {
       setJoinedRoomId(null);
     }
   };
-
-  // joinRoom and sendMessage functions are defined above
 
   const contextValue = {
     messages,

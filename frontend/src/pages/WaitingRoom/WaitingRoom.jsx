@@ -206,7 +206,7 @@ function WaitingRoom() {
   };
 
   
-  const { joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
+  const { joinRoom, leaveRoom, isConnected, error, joinedRoomId, sendMessage } = useWebSocket();
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
     if (isConnected) {
@@ -243,6 +243,18 @@ function WaitingRoom() {
     setNotification({ message: "방 설정이 저장되었습니다.", type: "success" });
     setTimeout(() => setNotification(null), 3000);
     setShowRoomSettingsModal(false);
+  };
+  
+  // 채팅 메시지 전송 핸들러 추가
+  const handleSendMessage = (message) => {
+    const messageData = {
+      userId,
+      nickname: currentUser,
+      content: message,
+      profileUrl: playerData[currentUser].avatar, // 임시 프로필 URL
+      roomId: roomId
+    };
+    sendMessage(roomId, messageData);
   };
 
 
@@ -371,7 +383,8 @@ function WaitingRoom() {
               </div>
             </div>
             <div className="lg:col-span-1">
-              <ChatWindow playerData={playerData} />
+              {/* ChatWindow에 onSendMessage prop을 추가하고 handleSendMessage 함수를 연결 */}
+              <ChatWindow playerData={playerData} onSendMessage={handleSendMessage} />
             </div>
             <div className="lg:col-span-2">
               <div className="bg-white shadow-md rounded-xl p-4 flex flex-col h-full">
