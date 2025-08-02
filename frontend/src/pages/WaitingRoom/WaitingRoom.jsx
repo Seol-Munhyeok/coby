@@ -17,9 +17,9 @@ import { useAuth } from '../AuthContext/AuthContext';
 function WaitingRoom() {
   const navigate = useNavigate();
   const { roomId } = useParams();
-  const { user } = useAuth()
-  const nickname = user.nickname
-  const userId = user.id
+  const { user } = useAuth();
+  const nickname = user.nickname;
+  const userId = user.id;
 
   // 현재 사용자 닉네임을 가져옵니다.
   const currentUser = nickname || '게스트';

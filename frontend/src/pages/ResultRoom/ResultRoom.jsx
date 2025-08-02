@@ -6,8 +6,7 @@ import useContextMenu from '../../Common/hooks/useContextMenu'; // useContextMen
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal'; // PlayerInfoModal 컴포넌트 임포트
 import { useWebSocket } from '../WebSocket/WebSocketContext';
 import ToastNotification from '../../Common/components/ToastNotification';
-import { useUserStore } from '../../store/userStore'
-import Cookies from 'js-cookie'
+import { useAuth } from '../AuthContext/AuthContext';
 
 
 function ResultRoom() {
@@ -15,19 +14,10 @@ function ResultRoom() {
   const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
   const [notification, setNotification] = useState(null);
   const { roomId } = useParams();
+  const { user } = useAuth();
 
-  const nickname = useUserStore((state) => state.nickname)
-  const setNickname = useUserStore((state) => state.setNickname)
-  const userId = useUserStore((state) => state.id)
-
-  useEffect(() => {
-    if (!nickname) {
-      const cookieNick = Cookies.get('nickname')
-      if (cookieNick) {
-        setNickname(cookieNick)
-      }
-    }
-  }, [nickname, setNickname])
+  const nickname = user.nickname
+  const userId = user.id
 
   // 현재 사용자 닉네임을 가져옵니다.
   const currentUser = nickname || '게스트';
