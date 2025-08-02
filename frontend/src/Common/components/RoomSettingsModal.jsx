@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // useNavigate 임포트
+import { useAuth } from '../../pages/AuthContext/AuthContext'; // useAuth 임포트
 
 function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, currentParticipantsCount }) {
   const [settings, setSettings] = useState(initialSettings);
+  const navigate = useNavigate(); // useNavigate 훅 사용
+  const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
 
   // 모달이 열릴 때마다 초기 설정을 다시 로드
   useEffect(() => {
@@ -54,15 +58,23 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
     };
 
     try {
-      // 서버에 방 설정 변경 요청 (POST 대신 PUT 또는 PATCH를 사용할 수도 있습니다. API 디자인에 따라 다름)
-      // 이 예시에서는 생성과 동일한 엔드포인트를 사용합니다. (만약 방 생성 API와 다르게 동작해야 한다면 변경 필요)
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms`, roomData, {
         withCredentials: true // 필요한 경우 쿠키 포함
       });
 
       if (response.status === 201) { // 성공적인 생성 또는 변경 (HTTP 201 Created)
         alert('방 설정이 성공적으로 저장되었습니다!');
-        onSave(roomData); // 상위 컴포넌트로 저장된 설정 전달
+        onSave(roomData); // 상위 컴포넌트로 저장된 설정 전달 (현재는 이 데이터가 사용되지 않음)
+
+        // 새롭게 생성된 방의 ID를 가져와 대기실로 이동
+        const newRoomId = response.data.id;
+        if (newRoomId && user && user.id) {
+            navigate(`/waitingRoom/${newRoomId}?userId=${user.id}`); // 새 방의 ID와 사용자 ID로 이동
+        } else {
+            console.error("방 ID 또는 사용자 ID를 찾을 수 없어 대기실로 이동할 수 없습니다.");
+            // 오류 발생 시 다른 적절한 처리 (예: 메인 페이지로 돌아가기)
+            onClose(); // 모달 닫기
+        }
       } else {
         alert('방 설정 저장에 실패했습니다. 다시 시도해주세요.');
       }

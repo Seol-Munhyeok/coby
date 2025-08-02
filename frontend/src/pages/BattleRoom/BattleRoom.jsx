@@ -8,9 +8,7 @@ import WarningModal from './WarningModal';
 import FullscreenPromptModal from './FullscreenPromptModal';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-import { useUserStore } from '../../store/userStore'
-import Cookies from 'js-cookie'
-
+import { useAuth } from '../AuthContext/AuthContext';
 
 export default function CodingBattle() {
     const { roomId } = useParams();
@@ -64,18 +62,9 @@ export default function CodingBattle() {
     // WebSocket 연결을 위한 ref
     //const wsRef = useRef(null);
     const stompClientRef = useRef(null);
-
-    const nickname = useUserStore((state) => state.nickname)
-    const setNickname = useUserStore((state) => state.setNickname)
-
-    useEffect(() => {
-        if (!nickname) {
-            const cookieNick = Cookies.get('nickname')
-            if (cookieNick) {
-                setNickname(cookieNick)
-            }
-        }
-    }, [nickname, setNickname])
+    
+    const { user } = useAuth()
+    const nickname = user.nickname
 
     // 현재 사용자 닉네임을 가져옵니다.
     const currentUser = nickname || '게스트';
