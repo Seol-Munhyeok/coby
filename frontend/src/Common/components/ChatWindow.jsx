@@ -5,10 +5,18 @@
  * 채팅창 크기의 경우 결과창/대기창에 따라서 달라질 수 있음. 그 경우에는 파일을 다시 분리하거나, 매개변수로 크기를 입력받도록 수정
  */
 import React, { useState, useRef, useEffect } from 'react';
+import { useWebSocket } from '../../pages/WebSocket/WebSocketContext';
+import { useAuth } from '../../pages/AuthContext/AuthContext';
 
-function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
+// ChatWindow는 웹소켓 컨텍스트와 사용자 정보를 직접 사용하여
+// 별도의 props 없이도 채팅 메시지를 주고받을 수 있습니다.
+function ChatWindow({ playerData }) {
   const [inputMessage, setInputMessage] = useState('');
   const chatMessagesRef = useRef(null);
+  const { messages, sendMessage, joinedRoomId } = useWebSocket();
+  const { user } = useAuth();
+  const currentUser = user?.nickname || '게스트';
+  const userId = user?.id;
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -21,10 +29,18 @@ function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
   };
 
   const handleSendClick = () => {
-    if (inputMessage.trim() !== '') {
-      onSendMessage(inputMessage);
-      setInputMessage('');
-    }
+    if (inputMessage.trim() === '' || !joinedRoomId) return;
+
+    const messageData = {
+      roomId: joinedRoomId,
+      userId,
+      nickname: currentUser,
+      profileUrl: user?.profileUrl || '',
+      content: inputMessage,
+    };
+
+    sendMessage(joinedRoomId, messageData);
+    setInputMessage('');
   };
 
   const handleKeyPress = (e) => {
@@ -49,10 +65,10 @@ function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
             {msg.sender !== currentUser && (
               <div className="avatar-wrapper w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
                 {playerData?.[msg.sender]?.profileUrl ? (
-                    <img 
-                        src={playerData[msg.sender].profileUrl} 
-                        alt={`${msg.sender} 아바타`} 
-                        className="w-full h-full object-cover" 
+                    <img
+                        src={playerData?.[msg.sender]?.profileUrl}
+                        alt={`${msg.sender} 아바타`}
+                        className="w-full h-full object-cover"
                     />
                 ) : (
                     // 이미지 없을 경우 기존 이니셜/색상 폴백 (선택 사항)
@@ -70,8 +86,8 @@ function ChatWindow({ messages, onSendMessage, currentUser, playerData }) {
             </div>
             {/* msg.sender === currentUser 조건으로 아바타 표시를 제어 */}
             {msg.sender === currentUser && (
-              <div className={`w-8 h-8 rounded-full ${playerData[msg.sender]?.avatarColor || 'bg-gray-500'} flex items-center justify-center text-xs font-medium ml-2 flex-shrink-0`}>
-                {playerData[msg.sender]?.avatar || msg.sender.charAt(0)}
+              <div className={`w-8 h-8 rounded-full ${playerData?.[msg.sender]?.avatarColor || 'bg-gray-500'} flex items-center justify-center text-xs font-medium ml-2 flex-shrink-0`}>
+                {playerData?.[msg.sender]?.avatar || msg.sender.charAt(0)}
               </div>
             )}
           </div>

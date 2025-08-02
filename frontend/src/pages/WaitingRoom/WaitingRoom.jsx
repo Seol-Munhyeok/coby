@@ -18,8 +18,8 @@ function WaitingRoom() {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const { user } = useAuth();
-  const nickname = user.nickname;
-  const userId = user.id;
+  const nickname = user?.nickname;
+  const userId = user?.id;
 
   // 현재 사용자 닉네임을 가져옵니다.
   const currentUser = nickname || '게스트';
@@ -206,7 +206,7 @@ function WaitingRoom() {
   };
 
   
-  const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
+  const { joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
     if (isConnected) {
@@ -231,18 +231,6 @@ function WaitingRoom() {
             leaveRoom(roomId, userId);
         };
     }, [roomId, userId, leaveRoom]);
-  
-  // Use the sendMessage function from the context
-    const handleSendMessage = (newMessage) => {
-        const messageData = {
-            roomId,
-            userId,
-            nickname: currentUser,
-            profileUrl: '',
-            content: newMessage,
-        };
-        sendMessage(roomId, messageData); // Call the context's sendMessage
-    };
 
   const handleSaveRoomSettings = (settings) => {
     setRoomName(settings.roomName);
@@ -383,7 +371,7 @@ function WaitingRoom() {
               </div>
             </div>
             <div className="lg:col-span-1">
-              <ChatWindow messages={messages} onSendMessage={handleSendMessage} currentUser={currentUser} playerData={playerData} />
+              <ChatWindow playerData={playerData} />
             </div>
             <div className="lg:col-span-2">
               <div className="bg-white shadow-md rounded-xl p-4 flex flex-col h-full">
