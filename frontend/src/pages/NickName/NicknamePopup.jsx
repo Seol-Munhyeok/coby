@@ -3,7 +3,6 @@ import './NicknamePopup.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext/AuthContext'; // AuthContext 임포트
 // import Cookies from 'js-cookie'; // 사용하지 않으므로 주석 처리 또는 제거
-import { useUserStore } from '../../store/userStore';
 import { PythonCard, JavaCard, CppCard } from '../../Common/components/LanguageCards';
 
 

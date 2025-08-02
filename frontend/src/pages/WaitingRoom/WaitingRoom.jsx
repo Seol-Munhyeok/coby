@@ -12,26 +12,14 @@ import ChatWindow from '../../Common/components/ChatWindow';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import ToastNotification from '../../Common/components/ToastNotification';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
-import { useUserStore } from '../../store/userStore'
-import Cookies from 'js-cookie'
+import { useAuth } from '../AuthContext/AuthContext';
 
 
 function WaitingRoom() {
   const navigate = useNavigate();
   const { roomId } = useParams();
-
-  const nickname = useUserStore((state) => state.nickname)
-  const setNickname = useUserStore((state) => state.setNickname)
-
-  useEffect(() => {
-      if (!nickname) {
-      const cookieNick = Cookies.get('nickname')
-      if (cookieNick) {
-          setNickname(cookieNick)
-      }
-      }
-  }, [nickname, setNickname])
-
+  const { user } = useAuth()
+  const nickname = user.nickname
   // 현재 사용자 닉네임을 가져옵니다.
   const currentUser = nickname || '게스트';
 
