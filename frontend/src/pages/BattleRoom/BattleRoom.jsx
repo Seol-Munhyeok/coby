@@ -8,8 +8,7 @@ import WarningModal from './WarningModal';
 import FullscreenPromptModal from './FullscreenPromptModal';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-import { useUserStore } from '../../store/userStore'
-import Cookies from 'js-cookie'
+import { useAuth } from '../AuthContext/AuthContext'; 
 
 
 export default function CodingBattle() {
@@ -65,19 +64,10 @@ export default function CodingBattle() {
     //const wsRef = useRef(null);
     const stompClientRef = useRef(null);
 
-    const nickname = useUserStore((state) => state.nickname)
-    const setNickname = useUserStore((state) => state.setNickname)
-    const storedUserId = useUserStore((state) => state.id)
-    console.log("id =" + storedUserId)
-    
-    useEffect(() => {
-        if (!nickname) {
-            const cookieNick = Cookies.get('nickname')
-            if (cookieNick) {
-                setNickname(cookieNick)
-            }
-        }
-    }, [nickname, setNickname])
+    const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
+    const nickname = user?.nickname || '게스트';
+    const userId = user.id
+    console.log("id =" + userId)
 
     // 현재 사용자 닉네임을 가져옵니다.
     const currentUser = nickname || '게스트';
@@ -354,7 +344,7 @@ for num in range(len(n)):
 
         // **로그인한 사용자 ID 사용 (없으면 타임스탬프 기반 ID 생성)**
         // 서버는 숫자 형태의 userId만 허용하므로 문자열로 변환
-        const generatedUserId = storedUserId ? String(storedUserId) : Date.now().toString();
+        const generatedUserId = userId ? String(userId) : Date.now().toString();
         setMyUserId(generatedUserId); // ID를 상태에 저장
         
         const client = new Client({
@@ -481,7 +471,7 @@ for num in range(len(n)):
                 console.log("STOMP 연결 해제됨");
             }
         };
-    }, [storedUserId]);
+    }, [userId]);
 
     // Monaco Editor 내용 변경 시 서버로 업데이트 전송 (timerIdRef 사용으로 수정)
     const handleEditorChange = useCallback((value) => {
