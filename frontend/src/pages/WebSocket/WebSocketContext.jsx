@@ -25,11 +25,11 @@ export const WebSocketProvider = ({ children }) => {
     client.onConnect = () => {
       setIsConnected(true);
       setError(null);
-      console.log('WebSocketContext: Connected to STOMP server.'); // 로그 추가
+      console.log('WebSocketContext: Connected to STOMP server.');
     };
 
     client.onStompError = (frame) => {
-      console.error('WebSocketContext: STOMP Error:', frame); // 로그 추가
+      console.error('WebSocketContext: STOMP Error:', frame);
       setError('WebSocket connection error.');
       setIsConnected(false);
     };
@@ -40,14 +40,14 @@ export const WebSocketProvider = ({ children }) => {
     return () => {
       if (clientRef.current && clientRef.current.connected) {
         clientRef.current.deactivate();
-        console.log('WebSocketContext: Deactivated STOMP client.'); // 로그 추가
+        console.log('WebSocketContext: Deactivated STOMP client.');
       }
     };
   }, []);
 
   const joinRoom = (roomId, userInfo) => {
     if (!(clientRef.current && clientRef.current.connected)) {
-      console.warn('WebSocketContext: Client not connected. Cannot join room.'); // 로그 추가
+      console.warn('WebSocketContext: Client not connected. Cannot join room.');
       return;
     }
 
@@ -57,7 +57,7 @@ export const WebSocketProvider = ({ children }) => {
     }
     
     if (joinedRoomId && subscriptionsRef.current[joinedRoomId]) {
-      console.log(`WebSocketContext: Unsubscribing from old room ${joinedRoomId}.`); // 로그 추가
+      console.log(`WebSocketContext: Unsubscribing from old room ${joinedRoomId}.`);
       subscriptionsRef.current[joinedRoomId].forEach(sub => sub.unsubscribe());
       delete subscriptionsRef.current[joinedRoomId];
       setMessages([]);
@@ -65,35 +65,43 @@ export const WebSocketProvider = ({ children }) => {
       setJoinedRoomId(null);
     }
     
-    console.log(`WebSocketContext: Subscribing to room topics for ${roomId}.`); // 로그 추가
+    console.log(`WebSocketContext: Subscribing to room topics for ${roomId}.`);
     const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (msg) => {
-      const body = JSON.parse(msg.body);
-      console.log('WebSocketContext: Received message from /topic:', body); // 로그 추가
-      if (body.type === 'Chat') {
-        setMessages((prev) => [...prev, { sender: body.nickname, text: body.content, profileUrl: body.profileUrl }]);
-      } else if (body.type === 'Join') {
-        setUsers((prev) => {
-            if (prev.some(u => u.userId === body.userId)) return prev;
-            return [...prev, { userId: body.userId, nickname: body.nickname, profileUrl: body.profileUrl }];
-        });
-      } else if (body.type === 'Leave') {
-        setUsers((prev) => prev.filter(u => u.userId !== body.userId));
-      } else if (body.type === 'CurrentUsers') {
-        setUsers(body.users || []);
+      try {
+        const body = JSON.parse(msg.body);
+        console.log('WebSocketContext: Received message from /topic:', body);
+        if (body && body.type === 'Chat') {
+          setMessages((prev) => [...prev, { sender: body.nickname, text: body.content, profileUrl: body.profileUrl }]);
+        } else if (body && body.type === 'Join') {
+          setUsers((prev) => {
+              if (prev.some(u => u.userId === body.userId)) return prev;
+              return [...prev, { userId: body.userId, nickname: body.nickname, profileUrl: body.profileUrl }];
+          });
+        } else if (body && body.type === 'Leave') {
+          setUsers((prev) => prev.filter(u => u.userId !== body.userId));
+        } else if (body && body.type === 'CurrentUsers') {
+          setUsers(body.users || []);
+        }
+      } catch (e) {
+        console.error("WebSocketContext: Failed to parse message body:", msg.body, e);
       }
     });
     
     const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
-      const body = JSON.parse(msg.body);
-      console.log('WebSocketContext: Received message from /user/queue:', body); // 로그 추가
-      if (body.type === 'CurrentUsers') {
-        setUsers(body.users || []);
+      try {
+        const body = JSON.parse(msg.body);
+        console.log('WebSocketContext: Received message from /user/queue:', body);
+        if (body && body.type === 'CurrentUsers') {
+          setUsers(body.users || []);
+        }
+      } catch (e) {
+        console.error("WebSocketContext: Failed to parse user queue message body:", msg.body, e);
       }
     });
 
     subscriptionsRef.current[roomId] = [roomSub, userSub];
     
-    console.log(`WebSocketContext: Publishing Join message to /app/room/${roomId}/join.`); // 로그 추가
+    console.log(`WebSocketContext: Publishing Join message to /app/room/${roomId}/join.`);
     clientRef.current.publish({
       destination: `/app/room/${roomId}/join`,
       body: JSON.stringify({
@@ -108,7 +116,7 @@ export const WebSocketProvider = ({ children }) => {
 
   const sendMessage = (roomId, messageData) => {
     if (clientRef.current && clientRef.current.connected) {
-      console.log(`WebSocketContext: Publishing Chat message to /app/room/${roomId}/chat:`, messageData); // 로그 추가
+      console.log(`WebSocketContext: Publishing Chat message to /app/room/${roomId}/chat:`, messageData);
       clientRef.current.publish({
         destination: `/app/room/${roomId}/chat`,
         body: JSON.stringify({
@@ -124,14 +132,14 @@ export const WebSocketProvider = ({ children }) => {
 
   const leaveRoom = (roomId, userId) => {
     if (clientRef.current && clientRef.current.connected) {
-      console.log(`WebSocketContext: Publishing Leave message to /app/room/${roomId}/leave.`); // 로그 추가
+      console.log(`WebSocketContext: Publishing Leave message to /app/room/${roomId}/leave.`);
       clientRef.current.publish({
         destination: `/app/room/${roomId}/leave`,
         body: JSON.stringify({ type: 'Leave', userId }),
       });
       const subs = subscriptionsRef.current[roomId];
       if (subs) {
-        console.log(`WebSocketContext: Unsubscribing from room ${roomId}.`); // 로그 추가
+        console.log(`WebSocketContext: Unsubscribing from room ${roomId}.`);
         subs.forEach(s => s.unsubscribe());
         delete subscriptionsRef.current[roomId];
       }
@@ -143,6 +151,7 @@ export const WebSocketProvider = ({ children }) => {
 
   const contextValue = {
     messages,
+    setMessages, // setMessages를 context에 추가하여 외부에서 사용 가능하게 함
     sendMessage,
     joinRoom,
     leaveRoom,
