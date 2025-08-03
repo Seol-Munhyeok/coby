@@ -65,13 +65,21 @@ function MainPage() {
     };
 
 
-    const enterRoomBtn = (id) => {
+    const enterRoomBtn = async (id) => {
         if (!user || !user.id) { // AuthContext의 user.id를 사용
             alert('사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
             return;
         }
-        alert('방에 입장합니다!');
-        navigate(`/waitingRoom/${id}?userId=${user.id}`); // roomId와 user.id를 쿼리 파라미터로 전달
+        try {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${id}/join`, {
+                userId: user.id,
+            });
+            alert('방에 입장합니다!');
+            navigate(`/waitingRoom/${id}?userId=${user.id}`); // roomId와 user.id를 쿼리 파라미터로 전달
+        } catch (error) {
+            console.error('Error joining room:', error);
+            alert('방 입장 중 오류가 발생했습니다.');
+        }
     };
 
 

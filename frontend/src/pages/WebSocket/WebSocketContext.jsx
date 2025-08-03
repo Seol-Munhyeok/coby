@@ -48,15 +48,31 @@ export const WebSocketProvider = ({ children }) => {
     // 이미 해당 방에 참여 중이면 재참여를 건너뜀
     if (joinedRoomId === roomId) return;
 
+    // 새로운 방에 참여할 때 기존 메시지와 유저 목록을 초기화합니다.
+    setMessages([]);
+    setUsers([]);
+
     if (!subscriptionsRef.current[roomId]) {
-      const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (msg) => {
-        const body = JSON.parse(msg.body);
-        if (body.type === 'Chat') {
-          setMessages((prev) => [...prev, { sender: body.nickname, text: body.content, profileUrl: body.profileUrl }]);
-        } else if (body.type === 'Join') {
-          setUsers((prev) => [...prev, { userId: body.userId, nickname: body.nickname, profileUrl: body.profileUrl }]);
-        } else if (body.type === 'Leave') {
-          setUsers((prev) => prev.filter(u => u.userId !== body.userId));
+      const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (message) => {
+        const data = JSON.parse(message.body);
+        switch (data.type) {
+          case 'Chat':
+            setMessages((prev) => [
+              ...prev,
+              { sender: data.nickname, text: data.content, profileUrl: data.profileUrl }
+            ]);
+            break;
+          case 'Join':
+            setUsers((prev) => [
+              ...prev,
+              { userId: data.userId, nickname: data.nickname, profileUrl: data.profileUrl }
+            ]);
+            break;
+          case 'Leave':
+            setUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+            break;
+          default:
+            break;
         }
       });
       const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
@@ -109,7 +125,11 @@ export const WebSocketProvider = ({ children }) => {
     if (joinedRoomId === roomId) {
       setJoinedRoomId(null);
     }
+    // 방을 나가면 상태를 초기화하여 이전 메시지가 남지 않도록 합니다.
+    setMessages([]);
+    setUsers([]);
   };
+
 
   // joinRoom and sendMessage functions are defined above
 

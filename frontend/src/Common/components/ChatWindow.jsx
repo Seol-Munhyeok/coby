@@ -4,7 +4,7 @@
  * 웹소켓 연동을 고려하여 메시지 목록과 전송 기능을 분리합니다.
  * 채팅창 크기의 경우 결과창/대기창에 따라서 달라질 수 있음. 그 경우에는 파일을 다시 분리하거나, 매개변수로 크기를 입력받도록 수정
  */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useWebSocket } from '../../pages/WebSocket/WebSocketContext';
 import { useAuth } from '../../pages/AuthContext/AuthContext';
 
@@ -13,10 +13,19 @@ import { useAuth } from '../../pages/AuthContext/AuthContext';
 function ChatWindow({ playerData }) {
   const [inputMessage, setInputMessage] = useState('');
   const chatMessagesRef = useRef(null);
-  const { messages, sendMessage, joinedRoomId } = useWebSocket();
+  const { messages, sendMessage, joinedRoomId, users } = useWebSocket();
   const { user } = useAuth();
   const currentUser = user?.nickname || '게스트';
   const userId = user?.id;
+
+  const userMap = useMemo(() => {
+    const map = {};
+    users.forEach(u => {
+      map[u.nickname] = u;
+    });
+    return map;
+  }, [users]);
+
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -59,39 +68,51 @@ function ChatWindow({ playerData }) {
         채팅
       </h3>
       <div id="chatMessages" className="overflow-y-auto waitingRoom-custom-scrollbar space-y-3 mb-3 h-[300px]" ref={chatMessagesRef}>
-        {messages.map((msg, index) => (
-          <div key={index} className={`flex items-start ${msg.sender === currentUser ? 'justify-end' : ''}`}>
-            {/* msg.sender !== currentUser 조건으로 아바타 표시를 제어 */}
-            {msg.sender !== currentUser && (
-              <div className="avatar-wrapper w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
-                {playerData?.[msg.sender]?.profileUrl ? (
-                    <img
-                        src={playerData?.[msg.sender]?.profileUrl}
-                        alt={`${msg.sender} 아바타`}
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    // 이미지 없을 경우 기존 이니셜/색상 폴백 (선택 사항)
-                    <div className={`w-full h-full flex items-center justify-center text-xs font-medium ${playerData?.[msg.sender]?.avatarColor || 'bg-gray-500'}`}>
-                        {playerData?.[msg.sender]?.avatar || msg.sender.charAt(0)}
+        {messages.map((msg, index) => {
+          const avatarUrl = msg.profileUrl || userMap[msg.sender]?.profileUrl || '';
+          const avatarColor = playerData?.[msg.sender]?.avatarColor || 'bg-gray-500';
+          const avatarInitial = playerData?.[msg.sender]?.avatar || msg.sender.charAt(0);
+          return (
+              <div key={index} className={`flex items-start ${msg.sender === currentUser ? 'justify-end' : ''}`}>
+                {msg.sender !== currentUser && (
+                    <div className="avatar-wrapper w-8 h-8 rounded-full overflow-hidden mr-2 flex-shrink-0">
+                      {avatarUrl ? (
+                          <img
+                              src={avatarUrl}
+                              alt={`${msg.sender} 아바타`}
+                              className="w-full h-full object-cover"
+                          />
+                      ) : (
+                          <div className={`w-full h-full flex items-center justify-center text-xs font-medium ${avatarColor}`}>
+                            {avatarInitial}
+                          </div>
+                      )}
                     </div>
                 )}
-            </div>
-            )}
             <div className={`waitingRoom-chat-bubble rounded-lg p-2 max-w-[80%] ${msg.sender === currentUser ? 'waitingRoom-chat-bubble-right bg-blue-600/50' : 'waitingRoom-chat-bubble-left bg-blue-900/50'}`}>
               <p className="text-xs waitingRoom-text mb-1">
                 {msg.sender === currentUser ? `${currentUser} (나)` : msg.sender}
               </p>
               <p className="text-sm waitingRoom-text">{msg.text}</p>
             </div>
-            {/* msg.sender === currentUser 조건으로 아바타 표시를 제어 */}
-            {msg.sender === currentUser && (
-              <div className={`w-8 h-8 rounded-full ${playerData?.[msg.sender]?.avatarColor || 'bg-gray-500'} flex items-center justify-center text-xs font-medium ml-2 flex-shrink-0`}>
-                {playerData?.[msg.sender]?.avatar || msg.sender.charAt(0)}
+                {msg.sender === currentUser && (
+                    <div className="avatar-wrapper w-8 h-8 rounded-full overflow-hidden ml-2 flex-shrink-0">
+                      {avatarUrl ? (
+                          <img
+                              src={avatarUrl}
+                              alt={`${msg.sender} 아바타`}
+                              className="w-full h-full object-cover"
+                          />
+                      ) : (
+                          <div className={`w-full h-full flex items-center justify-center text-xs font-medium ${avatarColor}`}>
+                            {avatarInitial}
+                          </div>
+                      )}
+                    </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="flex items-center mt-3">
         <input

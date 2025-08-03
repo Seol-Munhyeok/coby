@@ -12,7 +12,8 @@ import ChatWindow from '../../Common/components/ChatWindow';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import ToastNotification from '../../Common/components/ToastNotification';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
-import { useAuth } from '../AuthContext/AuthContext'; 
+import { useAuth } from '../AuthContext/AuthContext';
+import axios from 'axios';
 
 function WaitingRoom() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ function WaitingRoom() {
   const { user } = useAuth();
   const nickname = user?.nickname;
   const userId = user?.id;
+
 
   // 현재 사용자 닉네임을 가져옵니다.
   const currentUser = nickname || '게스트';
@@ -170,8 +172,15 @@ function WaitingRoom() {
     navigate(`/gamepage/${roomId}`);
   };
 
-  const quickbtn = () => {
-    alert('방에서 나갑니다');
+    const quickbtn = async () => {
+        alert('방에서 나갑니다');
+        try {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/leave`, {
+                userId: userId,
+            });
+        } catch (error) {
+            console.error('Error leaving room:', error);
+        }
     leaveRoom(roomId, userId);
     navigate('/mainpage');
   };
@@ -222,9 +231,9 @@ function WaitingRoom() {
 
     useEffect(() => {
         if (isConnected && joinedRoomId !== roomId) {
-            joinRoom(roomId, { userId, nickname: currentUser, profileUrl: '' });
+            joinRoom(roomId, { userId, nickname: currentUser, profileUrl: user?.profileUrl || '' });
         }
-    }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId]);
+    }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl]);
 
     useEffect(() => {
         return () => {
