@@ -487,7 +487,7 @@ for num in range(len(n)):
                     headers: {},
                     body: JSON.stringify({
                         type: "code_update",
-                        roomId: {roomId},
+                        roomId: roomId,
                         userId: myUserId,
                         lineCount: currentLineCount,
                         code: value, // 다른 클라이언트에 코드 내용을 보내 동기화할 수 있도록 포함

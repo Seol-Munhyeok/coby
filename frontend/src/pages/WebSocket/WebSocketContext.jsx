@@ -1,5 +1,5 @@
 // src/contexts/WebSocketContext.jsx
-import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
+import React, { createContext, useState, useEffect, useRef, useContext, useCallback } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
@@ -42,7 +42,7 @@ export const WebSocketProvider = ({ children }) => {
     };
   }, []);
 
-  const joinRoom = (roomId, userInfo) => {
+  const joinRoom = useCallback((roomId, userInfo) => {
     if (!(clientRef.current && clientRef.current.connected)) return;
 
     // 이미 해당 방에 참여 중이면 재참여를 건너뜀
@@ -93,9 +93,9 @@ export const WebSocketProvider = ({ children }) => {
       }),
     });
     setJoinedRoomId(roomId);
-  };
+  }, [joinedRoomId]);
 
-  const sendMessage = (roomId, messageData) => {
+  const sendMessage = useCallback((roomId, messageData) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
         destination: `/app/room/${roomId}/chat`,
@@ -108,9 +108,9 @@ export const WebSocketProvider = ({ children }) => {
       console.warn('WebSocket not connected. Message not sent:', messageData);
       setError('채팅 서버에 연결되어 있지 않습니다. 메시지를 보낼 수 없습니다.');
     }
-  };
+  }, []);
 
-  const leaveRoom = (roomId, userId) => {
+  const leaveRoom = useCallback((roomId, userId) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
         destination: `/app/room/${roomId}/leave`,
@@ -122,13 +122,13 @@ export const WebSocketProvider = ({ children }) => {
         delete subscriptionsRef.current[roomId];
       }
     }
-    if (joinedRoomId === roomId) {
-      setJoinedRoomId(null);
-    }
+    setJoinedRoomId(prev => (prev === roomId ? null : prev));
     // 방을 나가면 상태를 초기화하여 이전 메시지가 남지 않도록 합니다.
     setMessages([]);
     setUsers([]);
-  };
+  }, []);
+
+
 
 
   // joinRoom and sendMessage functions are defined above
