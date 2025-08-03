@@ -1,6 +1,7 @@
 import React, { use, useEffect } from 'react';
-import { useAuth } from '../AuthContext/AuthContext'; 
-import './MainPage.css'; 
+import { useAuth } from '../AuthContext/AuthContext';
+import './MainPage.css';
+import { PythonLogo, JavaLogo, CppLogo } from '../../Common/components/LanguageCards';
 
 function MyCard() {
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
@@ -11,7 +12,7 @@ function MyCard() {
     const email = user?.email || '';                //이메일
     const ssoProvider = user?.ssoProvider || '';    //sso 제공사
     const providerId = user?.providerId || '';      //제공사 id
-    const preferredLanguage = user?.preferredLanguage || 'Python';  //선호 언어
+    const preferredLanguage = user?.preferredLanguage || 'python';  //선호 언어
     const reportCount = user?.reportCount || 0;     //누적 신고 수
     const totalGame = user?.totalGame || 0;         //총 게임 수
     const winGame = user?.winGame || 0;             //승리 게임 수
@@ -63,6 +64,35 @@ function MyCard() {
         return () => window.removeEventListener('resize', createStars);
     }, []);
 
+    // preferredLanguage에 따라 로고를 렌더링하는 함수
+    const renderLogo = () => {
+        switch (preferredLanguage) {
+            case 'python':
+                return <PythonLogo />;
+            case 'java':
+                return <JavaLogo />;
+            case 'cpp':
+                return <CppLogo />;
+            default:
+                return <PythonLogo />; // 기본값
+        }
+    };
+
+    // preferredLanguage에 따라 카드 배경색 클래스를 반환하는 함수
+    const getCardPatternClass = () => {
+        switch (preferredLanguage) {
+            case 'python':
+                return 'bg-blue-100';
+            case 'java':
+                return 'bg-red-100';
+            case 'cpp':
+                return 'bg-blue-200';
+            default:
+                return 'bg-blue-100'; // 기본값
+        }
+    };
+
+
     return (
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="p-4 bg-gray-50 border-b">
@@ -75,7 +105,7 @@ function MyCard() {
                     <div className="card1-inner">
                         {/* Card Front */}
                         <div className="card1-front bg-white rounded-xl border-8 border-white overflow-hidden">
-                            <div className="h-full card1-pattern bg-blue-100 flex flex-col">
+                            <div className={`h-full card1-pattern ${getCardPatternClass()} flex flex-col`}>
                                 <div className="p-4 flex justify-between items-center">
                                     <div className="text-xl font-bold text-blue-800">{preferredLanguage}</div>
                                     <div className="main-tier-badge main-tier-gold">
@@ -85,22 +115,7 @@ function MyCard() {
                                         골드
                                     </div>
                                 </div>
-                                <div className="logo-container">
-                                    <svg className="language-logo" viewBox="0 0 256 255" xmlns="http://www.w3.org/2000/svg">
-                                        <defs>
-                                            <linearGradient x1="12.959%" y1="12.039%" x2="79.639%" y2="78.201%" id="a">
-                                                <stop stopColor="#387EB8" offset="0%" />
-                                                <stop stopColor="#366994" offset="100%" />
-                                            </linearGradient>
-                                            <linearGradient x1="19.128%" y1="20.579%" x2="90.742%" y2="88.429%" id="b">
-                                                <stop stopColor="#FFE052" offset="0%" />
-                                                <stop stopColor="#FFC331" offset="100%" />
-                                            </linearGradient>
-                                        </defs>
-                                        <path d="M126.916.072c-64.832 0-60.784 28.115-60.784 28.115l.072 29.128h61.868v8.745H41.631S.145 61.355.145 126.77c0 65.417 36.21 63.097 36.21 63.097h21.61v-30.356s-1.165-36.21 35.632-36.21h61.362s34.475.557 34.475-33.319V33.97S194.67.072 126.916.072zM92.802 19.66a11.12 11.12 0 0 1 11.13 11.13 11.12 11.12 0 0 1-11.13 11.13 11.12 11.12 0 0 1-11.13-11.13 11.12 11.12 0 0 1 11.13-11.13z" fill="url(#a)" />
-                                        <path d="M128.757 254.126c64.832 0 60.784-28.115 60.784-28.115l-.072-29.127H127.6v-8.745h86.441s41.486 4.705 41.486-60.712c0-65.416-36.21-63.096-36.21-63.096h-21.61v30.355s1.165 36.21-35.632 36.21h-61.362s-34.475-.557-34.475 33.32v56.013s-5.235 33.897 62.518 33.897zM162.91 234.54a11.12 11.12 0 0 1-11.13-11.13 11.12 11.12 0 0 1 11.13-11.131 11.12 11.12 0 0 1 11.13 11.13 11.12 11.12 0 0 1-11.13 11.13z" fill="url(#b)" />
-                                    </svg>
-                                </div>
+                                {renderLogo()}
                                 <div className="p-4 mt-auto">
                                     <div className="text-center">
                                         <h3 className="text-2xl font-bold text-gray-800">{nickname}</h3>
