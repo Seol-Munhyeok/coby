@@ -12,25 +12,16 @@ import ChatWindow from '../../Common/components/ChatWindow';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import ToastNotification from '../../Common/components/ToastNotification';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
-import { useUserStore } from '../../store/userStore'
-import Cookies from 'js-cookie'
-
+import { useAuth } from '../AuthContext/AuthContext';
+import axios from 'axios';
 
 function WaitingRoom() {
   const navigate = useNavigate();
   const { roomId } = useParams();
+  const { user } = useAuth();
+  const nickname = user?.nickname;
+  const userId = user?.id;
 
-  const nickname = useUserStore((state) => state.nickname)
-  const setNickname = useUserStore((state) => state.setNickname)
-
-  useEffect(() => {
-      if (!nickname) {
-      const cookieNick = Cookies.get('nickname')
-      if (cookieNick) {
-          setNickname(cookieNick)
-      }
-      }
-  }, [nickname, setNickname])
 
   // 현재 사용자 닉네임을 가져옵니다.
   const currentUser = nickname || '게스트';
@@ -181,8 +172,16 @@ function WaitingRoom() {
     navigate(`/gamepage/${roomId}`);
   };
 
-  const quickbtn = () => {
-    alert('방에서 나갑니다');
+    const quickbtn = async () => {
+        alert('방에서 나갑니다');
+        try {
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/leave`, {
+                userId: userId,
+            });
+        } catch (error) {
+            console.error('Error leaving room:', error);
+        }
+    leaveRoom(roomId, userId);
     navigate('/mainpage');
   };
 
@@ -216,7 +215,7 @@ function WaitingRoom() {
   };
 
   
-  const { messages, sendMessage, isConnected, error } = useWebSocket();
+  const { joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
     if (isConnected) {
@@ -229,19 +228,18 @@ function WaitingRoom() {
     const timer = setTimeout(() => setNotification(null), 3000);
     return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
   }, [isConnected, error]);
-  
-  // Use the sendMessage function from the context
-  const handleSendMessage = (newMessage) => {
-    const messageData = {
-      // UID : 1,
-      sender: currentUser,
-      // avatarInitials: playerData[currentUser]?.avatar,
-      // avatarColor: playerData[currentUser]?.avatarColor,
-      profileUrl: 'https://example.com/avatars/user1.jpg',
-      text: newMessage,
-    };
-    sendMessage(messageData); // Call the context's sendMessage
-  };
+
+    useEffect(() => {
+        if (isConnected && joinedRoomId !== roomId) {
+            joinRoom(roomId, { userId, nickname: currentUser, profileUrl: user?.profileUrl || '' });
+        }
+    }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl]);
+
+    useEffect(() => {
+        return () => {
+            leaveRoom(roomId, userId);
+        };
+    }, [roomId, userId, leaveRoom]);
 
   const handleSaveRoomSettings = (settings) => {
     setRoomName(settings.roomName);
@@ -382,7 +380,7 @@ function WaitingRoom() {
               </div>
             </div>
             <div className="lg:col-span-1">
-              <ChatWindow messages={messages} onSendMessage={handleSendMessage} currentUser={currentUser} playerData={playerData} />
+              <ChatWindow playerData={playerData} />
             </div>
             <div className="lg:col-span-2">
               <div className="bg-white shadow-md rounded-xl p-4 flex flex-col h-full">

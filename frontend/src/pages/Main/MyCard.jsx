@@ -1,26 +1,33 @@
-import React, { useEffect } from 'react';
-import { useUserStore } from '../../store/userStore';
-import Cookies from 'js-cookie';
-import './MainPage.css'; // MainPage.css 파일의 스타일이 필요하므로 import 합니다.
+import React, { use, useEffect } from 'react';
+import { useAuth } from '../AuthContext/AuthContext'; 
+import './MainPage.css'; 
 
 function MyCard() {
-    const nickname = useUserStore((state) => state.nickname);
-    const setNickname = useUserStore((state) => state.setNickname);
+    const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
 
-    useEffect(() => {
-        if (!nickname) {
-            const cookieNick = Cookies.get('nickname');
-            if (cookieNick) {
-                setNickname(cookieNick);
-            }
-        }
-    }, [nickname, setNickname]);
 
-    const currentUser = nickname || '게스트';
+    const userId = user?.id || 0;               //유저 id
+    const nickname = user?.nickname || '게스트';    //닉네임
+    const email = user?.email || '';                //이메일
+    const ssoProvider = user?.ssoProvider || '';    //sso 제공사
+    const providerId = user?.providerId || '';      //제공사 id
+    const preferredLanguage = user?.preferredLanguage || 'Python';  //선호 언어
+    const reportCount = user?.reportCount || 0;     //누적 신고 수
+    const totalGame = user?.totalGame || 0;         //총 게임 수
+    const winGame = user?.winGame || 0;             //승리 게임 수
+    const tierPoints = user?.tierPoint || 0;        //티어 포인트
+    const tierName = user?.tierName || '골드';               //티어 아이디
+    const tierImageUrl = user?.tierImageUrl || '';  //티어 이미지 경로
+    
+    const loseGame = totalGame - winGame            //패배 게임 수 
 
+    // 승률 계산 (totalGame이 0이 아닐 경우에만 계산) | 소수점 둘째 자리까지 표시
+    const winRate = totalGame > 0 ? ((winGame / totalGame) * 100).toFixed(2) : 0;
+    
     // 별 생성 함수
     const createStars = () => {
-        const cardBacks = document.querySelectorAll('.night-sky'); // .main-night-sky 클래스를 .night-sky로 변경
+        const cardBacks = document.querySelectorAll('.night-sky');
+        if (!cardBacks.length) return; // 요소가 없으면 함수 종료
 
         cardBacks.forEach(nightSky => {
             nightSky.innerHTML = ''; // 기존 별 제거
@@ -70,7 +77,7 @@ function MyCard() {
                         <div className="card1-front bg-white rounded-xl border-8 border-white overflow-hidden">
                             <div className="h-full card1-pattern bg-blue-100 flex flex-col">
                                 <div className="p-4 flex justify-between items-center">
-                                    <div className="text-xl font-bold text-blue-800">Python</div>
+                                    <div className="text-xl font-bold text-blue-800">{preferredLanguage}</div>
                                     <div className="main-tier-badge main-tier-gold">
                                         <svg className="main-tier-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
@@ -96,7 +103,7 @@ function MyCard() {
                                 </div>
                                 <div className="p-4 mt-auto">
                                     <div className="text-center">
-                                        <h3 className="text-2xl font-bold text-gray-800">{currentUser}</h3>
+                                        <h3 className="text-2xl font-bold text-gray-800">{nickname}</h3>
                                         <p className="text-sm text-gray-600">카드를 뒤집어 전적을 확인하세요</p>
                                     </div>
                                 </div>
@@ -122,7 +129,7 @@ function MyCard() {
                                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-white">승률</span>
-                                        <span className="text-white font-bold">0%</span>
+                                        <span className="text-white font-bold">{winRate}%</span>
                                     </div>
                                     <div className="w-full bg-gray-300 rounded-full h-2.5">
                                         <div className="bg-blue-500 h-2.5 rounded-full" style={{ width: '68%' }}></div>
@@ -132,15 +139,15 @@ function MyCard() {
                                 {/* 승리, 패배, 총 게임 정보 박스들 */}
                                 <div className="grid grid-cols-3 gap-2 mb-4">
                                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
-                                        <div className="text-2xl font-bold text-white">0</div>
+                                        <div className="text-2xl font-bold text-white">{winGame}</div>
                                         <div className="text-xs text-blue-300">승리</div>
                                     </div>
                                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
-                                        <div className="text-2xl font-bold text-white">0</div>
+                                        <div className="text-2xl font-bold text-white">{loseGame}</div>
                                         <div className="text-xs text-red-300">패배</div>
                                     </div>
                                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-center">
-                                        <div className="text-2xl font-bold text-white">0</div>
+                                        <div className="text-2xl font-bold text-white">{totalGame}</div>
                                         <div className="text-xs text-gray-300">총 게임</div>
                                     </div>
                                 </div>
@@ -149,7 +156,7 @@ function MyCard() {
                                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-4">
                                     <div className="flex justify-between items-center mb-1">
                                         <span className="text-white text-sm">점수</span>
-                                        <span className="text-white font-bold">0</span>
+                                        <span className="text-white font-bold">{tierPoints}</span>
                                     </div>
                                     <div className="flex justify-between items-center">
                                         <span className="text-white text-sm">랭킹</span>

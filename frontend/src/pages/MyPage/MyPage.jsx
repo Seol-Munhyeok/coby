@@ -1,25 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './MyPage.css';
-import { useUserStore } from '../../store/userStore';
-import Cookies from 'js-cookie';
-
+import { useAuth } from '../AuthContext/AuthContext';
 
 function MyPage() {
-  const nickname = useUserStore((state) => state.nickname);
-  const setNickname = useUserStore((state) => state.setNickname);
+  const { user } = useAuth();
+  const nickname = user.nickname;
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
   const [tempNickname, setTempNickname] = useState(''); // State to hold the nickname in the modal
   const nicknameInputRef = useRef(null); // Ref for the nickname input field
-
-  useEffect(() => {
-    if (!nickname) {
-      const cookieNick = Cookies.get('nickname');
-      if (cookieNick) {
-        setNickname(cookieNick);
-      }
-    }
-  }, [nickname, setNickname]);
-
+  
    // 현재 사용자 닉네임을 가져옵니다.
   const currentUser = nickname || '게스트';
 
@@ -40,17 +29,6 @@ function MyPage() {
     setIsModalOpen(false);
   };
 
-  // Handler for saving the new nickname
-  const handleSaveNickname = () => {
-    // In a real application, you would send this to your backend
-    if (tempNickname.length >= 2 && tempNickname.length <= 12) {
-      setNickname(tempNickname);
-      Cookies.set('nickname', tempNickname, { expires: 7 }); // Save to cookie
-      setIsModalOpen(false);
-    } else {
-      alert('닉네임은 2~12자 이내로 설정해주세요.');
-    }
-  };
 
   return (
     <div>
@@ -407,7 +385,7 @@ function MyPage() {
           </div>
           <div className="flex justify-end space-x-3">
             <button className="btn-secondary py-2 px-4 rounded-lg text-sm font-medium" onClick={handleCloseModal}>취소</button> {/* Add onClick handler */}
-            <button className="btn-primary py-2 px-4 rounded-lg text-sm font-medium" onClick={handleSaveNickname}>저장</button> {/* Add onClick handler */}
+            {/* <button className="btn-primary py-2 px-4 rounded-lg text-sm font-medium" onClick={handleSaveNickname}>저장</button> Add onClick handler */}
           </div>
         </div>
       </div>

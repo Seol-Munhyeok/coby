@@ -1,59 +1,60 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './NicknamePopup.css';
 import { useNavigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
-import { useUserStore } from '../../store/userStore';
+import { useAuth } from '../AuthContext/AuthContext'; // AuthContext 임포트
 import { PythonCard, JavaCard, CppCard } from '../../Common/components/LanguageCards';
 
 
 const NicknameSetup = () => {
     const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
+    const { user, setUser } = useAuth(); // AuthContext에서 user와 setUser 가져오기
+    // const [isLoading, setIsLoading] = useState(false);
     const nightSkyRef = useRef(null);
     const [nickname, setNickname] = useState('');
     const [nicknameStatus, setNicknameStatus] = useState({ message: '', type: '', isChecked: false });
     const [nicknameError, setNicknameError] = useState('');
     const [selectedLanguage, setSelectedLanguage] = useState(null);
     const [startBtnDisable, setStartBtnDisable] = useState(false);
-    const setCookieNickname = useUserStore((state) => state.setNickname);
+    // const setCookieNickname = useUserStore((state) => state.setNickname); // 사용하지 않으므로 주석 처리 또는 제거
 
 
-    useEffect(() => {
-        const checkUserNickname = async () => {
-            setIsLoading(true);
-            try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                });
+    // useEffect 부분을 AuthContext로 옮겼으므로 주석 처리
+    // useEffect(() => {
+    //     const checkUserNickname = async () => {
+    //         setIsLoading(true);
+    //         try {
+    //             const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
+    //                 method: 'GET',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //                 credentials: 'include',
+    //             });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+    //             if (!response.ok) {
+    //                 throw new Error(`HTTP error! status: ${response.status}`);
+    //             }
 
-                const data = await response.json();
-                console.log("사용자 데이터:", data);
+    //             const data = await response.json();
+    //             console.log("사용자 데이터:", data);
 
-                if (data.nickname !== null && data.nickname !== undefined && data.nickname !== '') {
-                    console.log("닉네임이 존재합니다. 메인 페이지로 이동합니다.");
-                    Cookies.set('nickname', data.nickname, { expires: 1 });
-                    setCookieNickname(data.nickname);
-                    navigate('/mainpage');
-                } else {
-                    console.log("닉네임이 null이거나 비어있습니다. 현재 페이지를 유지합니다.");
-                }
-            } catch (error) {
-                console.error('사용자 정보 가져오기 중 에러 발생:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    //             if (data.nickname !== null && data.nickname !== undefined && data.nickname !== '') {
+    //                 console.log("닉네임이 존재합니다. 메인 페이지로 이동합니다.");
+    //                 Cookies.set('nickname', data.nickname, { expires: 1 });
+    //                 setCookieNickname(data.nickname);
+    //                 navigate('/mainpage');
+    //             } else {
+    //                 console.log("닉네임이 null이거나 비어있습니다. 현재 페이지를 유지합니다.");
+    //             }
+    //         } catch (error) {
+    //             console.error('사용자 정보 가져오기 중 에러 발생:', error);
+    //         } finally {
+    //             setIsLoading(false);
+    //         }
+    //     };
 
-        checkUserNickname();
-    }, [navigate]);
+    //     checkUserNickname();
+    // }, [navigate]);
 
 
     const createStars = () => {
@@ -188,12 +189,32 @@ const NicknameSetup = () => {
 
             if (response.ok) {
                 console.log('닉네임이 성공적으로 저장되었습니다.');
-                Cookies.set('nickname', nickname, { expires: 1 });
-                setCookieNickname(nickname);
+                 // 2. 업데이트된 사용자 정보 다시 가져오기
+                const meResponse = await fetch(`${process.env.REACT_APP_API_URL}/api/users/me`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                });
 
-                setTimeout(() => {
-                    navigate('/mainpage');
-                }, 1500);
+                if (meResponse.ok) { // 사용자 정보 가져오기 성공 시
+                    const updatedUserData = await meResponse.json();
+                    console.log("업데이트된 사용자 데이터:", updatedUserData);
+                    setUser(updatedUserData); // AuthContext에 업데이트된 사용자 정보 저장
+
+                    setTimeout(() => {
+                        navigate('/mainpage');
+                    }, 1500);
+                } else { // 사용자 정보 가져오기 실패 시
+                    const userMeErrorData = await meResponse.json();
+                    console.error('/api/users/me 호출 실패:', userMeErrorData.message || '알 수 없는 오류');
+                    // 닉네임 업데이트는 성공했으나, 사용자 정보 가져오기 실패 시 처리
+                    // 사용자에게 다시 시도하라고 알리거나, 로그인 페이지로 리디렉션할 수 있습니다.
+                    setNicknameError('사용자 정보를 가져오는 데 실패했습니다. 다시 시도해주세요.');
+                    setStartBtnDisable(false);
+                }
+
 
             } else {
                 const errorData = await response.json();
@@ -310,13 +331,6 @@ const NicknameSetup = () => {
 
     return (
         <div className="main-container">
-            {isLoading && (
-                <div className="nick-loading-overlay-centered">
-                    <div className="nick-loading-spinner"></div>
-                    <p className="nick-loading-text">사용자 정보를 확인 중입니다...</p>
-                </div>
-            )}
-
             <div className="nickname-section w-full md:w-1/3">
                 <div className="mb-8">
                     <h1 className="logo-text text-4xl font-black text-gray-800 mb-2">COBY</h1>

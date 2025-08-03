@@ -41,8 +41,13 @@ public class User {
     private String preferredLanguage;
 
 
-    private int reportCount;
+    private Integer reportCount;  // 누적 신고 수
 
+    @Column(nullable = false)
+    private Integer totalGame = 0;
+
+    @Column(nullable = false)
+    private Integer winGame = 0;
 
     @ManyToOne
     @Setter
@@ -50,7 +55,7 @@ public class User {
     private Tier tier;
 
 
-    private int tierPoint;
+    private Integer tierPoint;
 
     public static User createSocialUser(String nickname, String email, String provider, String providerId, Tier tier) {
         User user = new User();
@@ -62,6 +67,10 @@ public class User {
         user.reportCount = 0;
         user.tierPoint = 0;
         user.tier = tier;
+
+        user.totalGame = 0;
+        user.winGame = 0;
+
         return user;
     }
 

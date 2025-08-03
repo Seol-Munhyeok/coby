@@ -8,8 +8,7 @@ import WarningModal from './WarningModal';
 import FullscreenPromptModal from './FullscreenPromptModal';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-import { useUserStore } from '../../store/userStore'
-import Cookies from 'js-cookie'
+import { useAuth } from '../AuthContext/AuthContext'; 
 
 
 export default function CodingBattle() {
@@ -65,17 +64,10 @@ export default function CodingBattle() {
     //const wsRef = useRef(null);
     const stompClientRef = useRef(null);
 
-    const nickname = useUserStore((state) => state.nickname)
-    const setNickname = useUserStore((state) => state.setNickname)
-
-    useEffect(() => {
-        if (!nickname) {
-            const cookieNick = Cookies.get('nickname')
-            if (cookieNick) {
-                setNickname(cookieNick)
-            }
-        }
-    }, [nickname, setNickname])
+    const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
+    const nickname = user?.nickname || '게스트';
+    const userId = user.id
+    console.log("id =" + userId)
 
     // 현재 사용자 닉네임을 가져옵니다.
     const currentUser = nickname || '게스트';
@@ -350,10 +342,11 @@ for num in range(len(n)):
     useEffect(() => {
         const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws/vs`);
 
-        // **고유한 사용자 ID 생성 및 상태 저장**
-        const generatedUserId = `my_local_user_id_${Math.floor(Math.random() * 1000000)}`;
-        setMyUserId(generatedUserId); // <-- 생성된 ID를 상태에 저장
-
+        // **로그인한 사용자 ID 사용 (없으면 타임스탬프 기반 ID 생성)**
+        // 서버는 숫자 형태의 userId만 허용하므로 문자열로 변환
+        const generatedUserId = userId ? String(userId) : Date.now().toString();
+        setMyUserId(generatedUserId); // ID를 상태에 저장
+        
         const client = new Client({
             webSocketFactory: socketFactory,
             debug: (str) => {
@@ -478,7 +471,7 @@ for num in range(len(n)):
                 console.log("STOMP 연결 해제됨");
             }
         };
-    }, []);
+    }, [userId]);
 
     // Monaco Editor 내용 변경 시 서버로 업데이트 전송 (timerIdRef 사용으로 수정)
     const handleEditorChange = useCallback((value) => {
@@ -494,7 +487,7 @@ for num in range(len(n)):
                     headers: {},
                     body: JSON.stringify({
                         type: "code_update",
-                        roomId: {roomId},
+                        roomId: roomId,
                         userId: myUserId,
                         lineCount: currentLineCount,
                         code: value, // 다른 클라이언트에 코드 내용을 보내 동기화할 수 있도록 포함

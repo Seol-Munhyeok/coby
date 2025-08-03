@@ -6,15 +6,21 @@ import useContextMenu from '../../Common/hooks/useContextMenu'; // useContextMen
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal'; // PlayerInfoModal 컴포넌트 임포트
 import { useWebSocket } from '../WebSocket/WebSocketContext';
 import ToastNotification from '../../Common/components/ToastNotification';
-import { useUserStore } from '../../store/userStore'
-import Cookies from 'js-cookie'
+import { useAuth } from '../AuthContext/AuthContext';
 
 
 function ResultRoom() {
   const navigate = useNavigate();
-  const { messages, sendMessage, isConnected, error } = useWebSocket();
+  const { messages, sendMessage, joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
   const [notification, setNotification] = useState(null);
   const { roomId } = useParams();
+  const { user } = useAuth();
+
+  const nickname = user.nickname
+  const userId = user.id
+
+  // 현재 사용자 닉네임을 가져옵니다.
+  const currentUser = nickname || '게스트';
 
   // Use useEffect to show notifications based on WebSocket connection status
   useEffect(() => {
@@ -28,35 +34,31 @@ function ResultRoom() {
     const timer = setTimeout(() => setNotification(null), 3000);
     return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
   }, [isConnected, error]);
-  
+
+  useEffect(() => {
+    if (isConnected && joinedRoomId !== roomId) {
+      joinRoom(roomId, { userId, nickname: currentUser, profileUrl: '' });
+    }
+  }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId]);
+
+  useEffect(() => {
+    return () => {
+      leaveRoom(roomId, userId);
+    };
+  }, [roomId, userId, leaveRoom]);
+
   // Use the sendMessage function from the context
   const handleSendMessage = (newMessage) => {
     const messageData = {
-      // UID : 1,
-      sender: currentUser,
-      // avatarInitials: playerData[currentUser]?.avatar,
-      // avatarColor: playerData[currentUser]?.avatarColor,
-      profileUrl: 'https://example.com/avatars/user1.jpg',
-      text: newMessage,
+      roomId,
+      userId,
+      nickname: currentUser,
+      profileUrl: '',
+      content: newMessage,
     };
-    sendMessage(messageData); // Call the context's sendMessage
+    sendMessage(roomId, messageData);
   };
 
-
-const nickname = useUserStore((state) => state.nickname)
-  const setNickname = useUserStore((state) => state.setNickname)
-
-  useEffect(() => {
-      if (!nickname) {
-      const cookieNick = Cookies.get('nickname')
-      if (cookieNick) {
-          setNickname(cookieNick)
-      }
-      }
-  }, [nickname, setNickname])
-
-  // 현재 사용자 닉네임을 가져옵니다.
-  const currentUser = nickname || '게스트';
 
   // 플레이어 정보 데이터 (대기방과 동일)
   const playerData = {
@@ -159,6 +161,7 @@ const nickname = useUserStore((state) => state.nickname)
 
   const quickRoomBtn = () => {
     alert('방에서 나갑니다!');
+    leaveRoom(roomId, userId);
     navigate('/mainpage');
   };
 

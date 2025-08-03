@@ -43,7 +43,7 @@ function RoomList({ rooms, enterRoomBtn, fetchRooms }) {
                                     <span className="text-sm text-blue-700">시간 제한: <span className="text-black">{room.timeLimit}</span></span>
                                 </div>
                                 <div className="flex justify-between mb-3">
-                                    <span className="text-sm text-blue-700">인원: <span className="text-black">{room.currentParticipants}/{room.maxParticipants}</span></span>
+                                    <span className="text-sm text-blue-700">인원: <span className="text-black">{room.currentPart}/{room.maxParticipants}</span></span>
                                     <span className="text-sm text-blue-700">
                                         아이템 모드: <span className="text-black">{room.itemMode ? '적용' : '미적용'}</span>
                                     </span>

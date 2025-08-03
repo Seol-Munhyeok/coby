@@ -1,56 +1,126 @@
 package com.example.coby.controller;
 
+import com.example.coby.dto.RoomUserResponse;
+import com.example.coby.dto.WsMessageDto;
 import com.example.coby.service.ChatService;
+import com.example.coby.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.websocket.WsPongMessage;
+import org.springframework.context.event.EventListener;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.fasterxml.jackson.databind.ObjectMapper; // ObjectMapper 임포트
 import com.fasterxml.jackson.core.JsonProcessingException; // JsonProcessingException 임포트
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
-@Component
+@Controller
 @RequiredArgsConstructor
-public class WebSocketController extends TextWebSocketHandler {
+public class WebSocketController {
 
     private final ChatService chatService;
-    private final ObjectMapper objectMapper = new ObjectMapper(); // ObjectMapper 인스턴스 생성
+    private final SimpMessagingTemplate messagingTemplate;
+    private final RoomService roomService;
 
-    private final CopyOnWriteArrayList<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
+    private final Map<String, String> sessionToRoom = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
-        sessions.add(session);
-        log.info("새로운 연결: {}", session.getId());
+    @MessageMapping("/room/{roomId}/chat")
+    public void handleChatMessage(@DestinationVariable String roomId,
+                             WsMessageDto message,
+                             SimpMessageHeaderAccessor headerAccessor) {
+        if (!"Chat".equalsIgnoreCase(message.type())) {
+            return;
+        }
+
+        if (!roomService.isUserInRoom(roomId, message.userId())) {
+            log.warn("사용자 {} 는 방 {} 에 속해있지 않습니다.", message.userId(), roomId);
+            return;
+        }
+
+        chatService.processMessage(roomId, message);
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, message);
+        log.info("방 [{}] 에 채팅 메시지 전송: {}", roomId, message.content());
     }
 
-    @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) {
-        String receivedPayload = message.getPayload(); //
-        log.info("수신 메시지: {}", receivedPayload); //
+    @MessageMapping("/room/{roomId}/join")
+    public void handleUserJoin(@DestinationVariable String roomId,
+                          WsMessageDto message,
+                          SimpMessageHeaderAccessor headerAccessor) {
+        sessionToRoom.put(headerAccessor.getSessionId(), roomId);
+        sessionToUser.put(headerAccessor.getSessionId(), message.userId());
 
-        // 메시지 처리 서비스 호출 (여기서는 간단히 로깅)
-        chatService.processMessage(session, receivedPayload); //
+        roomService.addUserToRoom(message.userId(), roomId);
+        log.info("방 [{}] 에 유저 {} 입장", roomId, message.userId());
 
-        // 모든 클라이언트에게 메시지 전송
-        for (WebSocketSession s : sessions) { //
-            if (s.isOpen()) { //
-                try {
-                    // 수신된 JSON 메시지를 그대로 모든 클라이언트에게 브로드캐스트
-                    s.sendMessage(new TextMessage(receivedPayload)); //
-                } catch (Exception e) {
-                    log.error("메시지 전송 실패: {}", e.getMessage()); //
-                }
-            }
+        WsMessageDto joinNotice = WsMessageDto.builder()
+                .type("Join")
+                .roomId(roomId)
+                .userId(message.userId())
+                .nickname(message.nickname())
+                .profileUrl(message.profileUrl())
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, joinNotice);
+
+        if (headerAccessor.getUser() != null) {
+            List<RoomUserResponse> users = roomService.getRoomUsers(Long.parseLong(roomId));
+            WsMessageDto currentUsers = WsMessageDto.builder()
+                    .type("CurrentUsers")
+                    .roomId(roomId)
+                    .users(users)
+                    .build();
+
+            messagingTemplate.convertAndSendToUser(headerAccessor.getUser().getName(),
+                    "/queue/room/" + roomId + "/users", currentUsers);
+
+            log.info("유저 {} 에게 방 [{}] 현재 유저 목록 전송", headerAccessor.getUser().getName(), roomId);
         }
     }
 
-    @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-        sessions.remove(session);
-        log.info("연결 종료: {}", session.getId());
+    @MessageMapping("/room/{roomId}/leave")
+    public void handleLeave(@DestinationVariable String roomId,
+                          WsMessageDto message,
+                          SimpMessageHeaderAccessor headerAccessor) {
+        roomService.removeUserFromRoom(message.userId(), roomId);
+        sessionToRoom.remove(headerAccessor.getSessionId());
+        sessionToUser.remove(headerAccessor.getSessionId());
+
+        WsMessageDto leaveNotice = WsMessageDto.builder()
+                .type("Leave")
+                .roomId(roomId)
+                .userId(message.userId())
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, leaveNotice);
+    }
+
+    @EventListener
+    public void handleDisconnect(SessionDisconnectEvent event) {
+        String sessionId = event.getSessionId();
+        String roomId = sessionToRoom.remove(sessionId);
+        String userId = sessionToUser.remove(sessionId);
+
+        if (roomId != null && userId != null) {
+            roomService.removeUserFromRoom(userId, roomId);
+            WsMessageDto leaveNotice = WsMessageDto.builder()
+                    .type("Leave")
+                    .roomId(roomId)
+                    .userId(userId)
+                    .build();
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, leaveNotice);
+        }
     }
 }

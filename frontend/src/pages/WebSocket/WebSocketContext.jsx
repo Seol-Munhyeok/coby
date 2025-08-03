@@ -1,82 +1,154 @@
 // src/contexts/WebSocketContext.jsx
-import React, { createContext, useState, useEffect, useRef, useContext } from 'react';
+import React, { createContext, useState, useEffect, useRef, useContext, useCallback } from 'react';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
 
 export const WebSocketContext = createContext(null);
 
 export const WebSocketProvider = ({ children }) => {
   const [messages, setMessages] = useState([]);
+  const [users, setUsers] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
-  const ws = useRef(null);
+  const clientRef = useRef(null);
+  const subscriptionsRef = useRef({});
+  const [joinedRoomId, setJoinedRoomId] = useState(null);
 
   useEffect(() => {
-    if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
-      console.log('Attempting to connect WebSocket...');
-      const wsUrl = process.env.REACT_APP_API_URL.replace(/^http/, 'ws');
-      ws.current = new WebSocket(`${wsUrl}/ws/chat`);
+    const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
+    const client = new Client({
+      webSocketFactory: socketFactory,
+      debug: (str) => console.log(str),
+      reconnectDelay: 5000,
+    });
 
-      ws.current.onopen = () => {
-        console.log('WebSocket connected');
-        setIsConnected(true);
-        setError(null);
-      };
+    client.onConnect = () => {
+      setIsConnected(true);
+      setError(null);
+    };
 
-      ws.current.onmessage = (event) => {
-        console.log('Message received:', event.data);
-        try {
-          const receivedMessage = JSON.parse(event.data);
-          setMessages((prevMessages) => [...prevMessages, receivedMessage]);
-        } catch (e) {
-          console.error("Failed to parse message:", e, event.data);
-          setMessages((prevMessages) => [...prevMessages, { sender: "System", text: event.data, type: "raw" }]);
-        }
-      };
+    client.onStompError = () => {
+      setError('WebSocket connection error.');
+      setIsConnected(false);
+    };
 
-      ws.current.onclose = () => {
-        console.log('WebSocket disconnected');
-        setIsConnected(false);
-        // Attempt to reconnect after a delay, or handle permanent disconnection
-        // For simplicity, we won't add auto-reconnect here, but it's a common pattern.
-      };
+    client.activate();
+    clientRef.current = client;
 
-      ws.current.onerror = (err) => {
-        console.error('WebSocket error:', err);
-        setError('WebSocket connection error.');
-        setIsConnected(false);
-        ws.current.close(); // Ensure clean close on error
-      };
-    }
-
-    // Cleanup on component unmount (or when this effect re-runs)
     return () => {
-      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-        console.log('Closing WebSocket due to unmount/re-run');
-        ws.current.close();
+      if (clientRef.current && clientRef.current.connected) {
+        clientRef.current.deactivate();
       }
     };
-  }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
+  }, []);
 
-  const sendMessage = (messageData) => {
-    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify(messageData));
+  const joinRoom = useCallback((roomId, userInfo) => {
+    if (!(clientRef.current && clientRef.current.connected)) return;
+
+    // 이미 해당 방에 참여 중이면 재참여를 건너뜀
+    if (joinedRoomId === roomId) return;
+
+    // 새로운 방에 참여할 때 기존 메시지와 유저 목록을 초기화합니다.
+    setMessages([]);
+    setUsers([]);
+
+    if (!subscriptionsRef.current[roomId]) {
+      const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (message) => {
+        const data = JSON.parse(message.body);
+        switch (data.type) {
+          case 'Chat':
+            setMessages((prev) => [
+              ...prev,
+              { sender: data.nickname, text: data.content, profileUrl: data.profileUrl }
+            ]);
+            break;
+          case 'Join':
+            setUsers((prev) => [
+              ...prev,
+              { userId: data.userId, nickname: data.nickname, profileUrl: data.profileUrl }
+            ]);
+            break;
+          case 'Leave':
+            setUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+            break;
+          default:
+            break;
+        }
+      });
+      const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
+        const body = JSON.parse(msg.body);
+        if (body.type === 'CurrentUsers') {
+          setUsers(body.users || []);
+        }
+      });
+      subscriptionsRef.current[roomId] = [roomSub, userSub];
+    }
+    clientRef.current.publish({
+      destination: `/app/room/${roomId}/join`,
+      body: JSON.stringify({
+        type: 'CurrentUsers',
+        userId: userInfo.userId,
+        nickname: userInfo.nickname,
+        profileUrl: userInfo.profileUrl,
+      }),
+    });
+    setJoinedRoomId(roomId);
+  }, [joinedRoomId]);
+
+  const sendMessage = useCallback((roomId, messageData) => {
+    if (clientRef.current && clientRef.current.connected) {
+      clientRef.current.publish({
+        destination: `/app/room/${roomId}/chat`,
+        body: JSON.stringify({
+          type: 'Chat',
+          ...messageData,
+        }),
+      });
     } else {
       console.warn('WebSocket not connected. Message not sent:', messageData);
       setError('채팅 서버에 연결되어 있지 않습니다. 메시지를 보낼 수 없습니다.');
     }
-  };
+  }, []);
+
+  const leaveRoom = useCallback((roomId, userId) => {
+    if (clientRef.current && clientRef.current.connected) {
+      clientRef.current.publish({
+        destination: `/app/room/${roomId}/leave`,
+        body: JSON.stringify({ type: 'Leave', userId }),
+      });
+      const subs = subscriptionsRef.current[roomId];
+      if (subs) {
+        subs.forEach(s => s.unsubscribe());
+        delete subscriptionsRef.current[roomId];
+      }
+    }
+    setJoinedRoomId(prev => (prev === roomId ? null : prev));
+    // 방을 나가면 상태를 초기화하여 이전 메시지가 남지 않도록 합니다.
+    setMessages([]);
+    setUsers([]);
+  }, []);
+
+
+
+
+  // joinRoom and sendMessage functions are defined above
 
   const contextValue = {
     messages,
     sendMessage,
+    joinRoom,
+    leaveRoom,
+    users,
     isConnected,
     error,
-    wsInstance: ws.current // Expose the raw instance if needed (use with caution)
+    client: clientRef.current,
+    joinedRoomId
   };
 
   return (
-    <WebSocketContext.Provider value={contextValue}>
-      {children}
-    </WebSocketContext.Provider>
+      <WebSocketContext.Provider value={contextValue}>
+        {children}
+      </WebSocketContext.Provider>
   );
 };
 
