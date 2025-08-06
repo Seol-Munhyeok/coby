@@ -90,10 +90,10 @@ function ChatWindow({ playerData }) {
                     </div>
                 )}
             <div className={`waitingRoom-chat-bubble rounded-lg p-2 max-w-[80%] ${msg.sender === currentUser ? 'waitingRoom-chat-bubble-right bg-blue-600/50' : 'waitingRoom-chat-bubble-left bg-blue-900/50'}`}>
-              <p className="text-xs waitingRoom-text mb-1">
+              <p className="text-xs text-black mb-1">
                 {msg.sender === currentUser ? `${currentUser} (나)` : msg.sender}
               </p>
-              <p className="text-sm waitingRoom-text">{msg.text}</p>
+              <p className="text-sm text-black">{msg.text}</p>
             </div>
                 {msg.sender === currentUser && (
                     <div className="avatar-wrapper w-8 h-8 rounded-full overflow-hidden ml-2 flex-shrink-0">
