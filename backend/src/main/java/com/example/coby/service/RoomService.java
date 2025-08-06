@@ -12,7 +12,7 @@ import com.example.coby.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -39,7 +39,7 @@ public class RoomService {
                 .difficulty(req.getDifficulty())
                 .timeLimit(req.getTimeLimit())
                 .maxParticipants(req.getMaxParticipants())
-                .currentPart(req.getCurrentPart())
+                .currentPart(0)
                 .status(req.getStatus())
                 .isPrivate(req.isPrivate())
                 .password(req.getPassword())
@@ -50,6 +50,7 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
+    @Transactional
     public Room joinRoom(Long roomId, Long userId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
@@ -60,32 +61,36 @@ public class RoomService {
         }
 
         if (room.getCurrentPart() < room.getMaxParticipants()) {
-            room.setCurrentPart(room.getCurrentPart() + 1);
-            roomRepository.save(room);
-
-            boolean isHost = roomUserRepository.findByRoomId(roomId).isEmpty();
+            // RoomUser를 먼저 저장하는 것이 더 안전한 순서입니다.
             RoomUser roomUser = RoomUser.builder()
                     .roomId(roomId)
                     .userId(userId)
-                    .isHost(isHost)
+                    .isHost(roomUserRepository.findByRoomId(roomId).isEmpty())
                     .build();
             roomUserRepository.save(roomUser);
+
+            room.setCurrentPart(room.getCurrentPart() + 1);
+            roomRepository.save(room);
         }
 
         return room;
     }
 
+    @Transactional
     public Room leaveRoom(Long roomId, Long userId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
 
-        if (room.getCurrentPart() > 0) {
-            room.setCurrentPart(room.getCurrentPart() - 1);
-            roomRepository.save(room);
+        RoomUserId id = new RoomUserId(roomId, userId);
+        if (roomUserRepository.existsById(id)) {
+            // RoomUser를 먼저 삭제하는 것이 더 안전한 순서입니다.
+            roomUserRepository.deleteById(id);
 
-            roomUserRepository.deleteById(new RoomUserId(roomId, userId));
+            if (room.getCurrentPart() > 0) {
+                room.setCurrentPart(room.getCurrentPart() - 1);
+                roomRepository.save(room);
+            }
         }
-
         return room;
     }
 
