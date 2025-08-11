@@ -214,31 +214,11 @@ function ResultRoom() {
             {/* 중간 열: 문제 설명 (너비 1/2) */}
             <div className="w-1/2">
               <div className="result-card p-6 h-full flex flex-col">
-                <h3 className="text-xl font-bold mb-4">문제: 두 수의 합</h3>
+                <h3 className="text-xl font-bold mb-4">문제: ###</h3>
                 <div className="text-gray-300 space-y-4">
-                  <p>
-                    정수 배열 `nums`와 정수 `target`이 주어집니다. `nums`의 두 원소를 더해 `target`을 만들 수 있는 인덱스를 찾아 반환하세요.
-                  </p>
-                  <p>
-                    각 입력에 정확히 하나의 정답이 있다고 가정하며, 동일한 원소를 두 번 사용할 수 없습니다. 답은 어떤 순서로든 반환할 수 있습니다.
-                  </p>
-                  <div>
-                    <h4 className="font-semibold text-white mb-2">예시:</h4>
-                    <div className="code-block p-3 text-sm">
-                      <p className='mb-2'><span className="font-bold">Input:</span> nums = [2, 7, 11, 15], target = 9</p>
-                      <p><span className="font-bold">Output:</span> [0, 1]</p>
-                      <p className='mt-2'><span className="text-gray-400">// nums[0] + nums[1] == 9 이므로 [0, 1]을 반환합니다.</span></p>
-                    </div>
-                  </div>
-                   <div>
-                    <h4 className="font-semibold text-white mb-2">제약 조건:</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-400">
-                        <li>`2 &lt;= nums.length &lt;= 10^4`</li>
-                        <li>`-10^9 &lt;= nums[i] &lt;= 10^9`</li>
-                        <li>`-10^9 &lt;= target &lt;= 10^9`</li>
-                        <li>유효한 정답은 하나만 존재합니다.</li>
-                    </ul>
-                  </div>
+                  <p> 테스트1 </p>
+                  <p> 테스트2 </p>
+                  
                 </div>
               </div>
             </div>
@@ -251,10 +231,10 @@ function ResultRoom() {
                   <div className="result-badge success">정답</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-center text-xs mb-4">
-                    <div className="bg-slate-700 p-2 rounded-lg"><div>실행 시간<br/>56ms</div></div>
-                    <div className="bg-slate-700 p-2 rounded-lg"><div>메모리<br/>42.5MB</div></div>
-                    <div className="bg-slate-700 p-2 rounded-lg"><div>테스트<br/>23/23</div></div>
-                    <div className="bg-slate-700 p-2 rounded-lg"><div>제출 시간<br/>12:24</div></div>
+                    <div className="bg-slate-700 p-2 rounded-lg"><div>실행 시간<br/>00ms</div></div>
+                    <div className="bg-slate-700 p-2 rounded-lg"><div>메모리<br/>00.0MB</div></div>
+                    <div className="bg-slate-700 p-2 rounded-lg"><div>테스트<br/>0/10</div></div>
+                    <div className="bg-slate-700 p-2 rounded-lg"><div>제출 시간<br/>00:00</div></div>
                 </div>
                 <div className="code-block p-4 text-sm flex-1"><pre><code>{`
                   1
