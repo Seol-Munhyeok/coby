@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface RoomUserRepository extends JpaRepository<RoomUser, RoomUserId> {
     List<RoomUser> findByRoomId(Long roomId);
+    long countByRoomId(Long roomId);
+
 }
