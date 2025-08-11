@@ -220,7 +220,13 @@ function WaitingRoom() {
     };
 
 
-    const currentPlayers = users.map(user => ({
+    const uniqueUsers = Array.from(new Set(users.map(user => user.userId)))
+        .map(userId => {
+            return users.find(user => user.userId === userId);
+        });
+
+
+    const currentPlayers = uniqueUsers.map(user => ({
         name: user.nickname,
         userId: user.userId,
         avatarInitials:
