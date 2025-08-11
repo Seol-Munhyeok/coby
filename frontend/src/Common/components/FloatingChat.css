@@ -1,0 +1,92 @@
+/* 플로팅 컨테이너의 기본 스타일 */
+.floating-chat-container {
+    position: fixed;
+    z-index: 1000;
+    transition: width 0.3s ease, height 0.3s ease;
+}
+
+/* 확장되지 않았을 때 (버튼만 보일 때) */
+.floating-chat-container:not(.open) {
+    cursor: grab;
+}
+
+.floating-chat-container:not(.open):active {
+    cursor: grabbing;
+}
+
+/* 플로팅 버튼 스타일 */
+.floating-toggle-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #3b82f6; /* Tailwind blue-500 */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.floating-toggle-button:hover {
+    background-color: #2563eb; /* Tailwind blue-600 */
+    transform: scale(1.1);
+}
+
+/* 확장된 채팅창 컨테이너 스타일 */
+.chat-window-wrapper {
+    width: 384px; /* w-96 in Tailwind */
+    height: auto;
+    background-color: #1e293b; /* Tailwind slate-800 */
+    border-radius: 0.75rem; /* rounded-xl */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: default;
+}
+
+/* 확장된 채팅창 헤더 (수정됨) */
+.chat-window-header {
+    display: flex;
+    /* justify-content를 space-between에서 flex-start로 변경하여 닫기 버튼을 왼쪽으로 정렬합니다. */
+    justify-content: flex-start; 
+    align-items: center;
+    /* padding 값을 줄여 높이를 낮춥니다. (0.75rem -> 0.25rem) */
+    padding: 0.25rem 0.5rem; 
+    background-color: #334155; /* Tailwind slate-700 */
+    /* 헤더 부분을 드래그 가능하도록 설정합니다. */
+    cursor: grab;
+}
+
+.chat-window-header:active {
+    cursor: grabbing;
+}
+
+/* 헤더의 빈 공간을 차지하여 드래그 영역을 확보하기 위한 스타일 */
+.header-spacer {
+    flex-grow: 1;
+    height: 100%;
+}
+
+
+.chat-window-header .close-btn {
+    background: none;
+    border: none;
+    color: #cbd5e1; /* slate-300 */
+    cursor: pointer;
+    padding: 0.25rem;
+    /* 드래그 커서가 적용되지 않도록 커서를 pointer로 유지 */
+    cursor: pointer; 
+}
+
+.chat-window-header .close-btn:hover {
+    color: white;
+}
+
+/* 기존 ChatWindow 컴포넌트에 적용될 스타일 */
+.chat-window-wrapper .chat-container {
+    height: 450px; 
+}
