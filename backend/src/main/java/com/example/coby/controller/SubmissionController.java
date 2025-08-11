@@ -1,34 +1,64 @@
 package com.example.coby.controller;
 
+import com.example.coby.dto.JudgeRequest;
 import com.example.coby.dto.SubmissionRequestDto;
 import com.example.coby.dto.SubmissionResponseDto;
+import com.example.coby.service.JudgeNotificationService;
 import com.example.coby.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
-@RequestMapping("/api/submissions")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class SubmissionController {
+
+    @Autowired
+    private JudgeNotificationService judgeNotificationService;
     private final SubmissionService submissionService;
 
-    @PostMapping
+
+    @PostMapping("/submissions")
     public ResponseEntity<?> createSubmission(@RequestBody SubmissionRequestDto requestDto){
         try{
+            //s3에 파일저장
+            String source_path = submissionService.processWrapping(
+                    requestDto.getSourceCode(),
+                    requestDto.getUserId(),
+                    requestDto.getProblemId()
+            );
+
+            //submission db에 저장
             Long submissionId = submissionService.processSubmission(
                     requestDto.getUserId(),
                     requestDto.getProblemId(),
                     requestDto.getRoomId(),
                     requestDto.getLanguage(),
-                    requestDto.getSourceCode()
+                    source_path
             );
-            return ResponseEntity.ok(new SubmissionResponseDto(submissionId));
+
+            JudgeRequest judgeRequest = new JudgeRequest(
+                    submissionId,
+                    requestDto.getProblemId(),
+                    requestDto.getLanguage(),
+                    source_path);
+            //sns전송
+            String messageId = judgeNotificationService.sendJudgeRequest(judgeRequest);
+            System.out.println("제출 처리 완료 - submissionId = " + submissionId +
+                    "Sns Message Id: " + messageId);
+
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("submissionId", submissionId));
         } catch (Exception e){
-            return ResponseEntity.internalServerError().body("Error processing submission: "+e.getMessage());
+            System.err.println("코드 제출 실패: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error","제출처리 실패: " + e.getMessage()));
         }
     }
 }

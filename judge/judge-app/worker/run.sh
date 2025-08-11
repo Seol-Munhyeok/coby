@@ -60,7 +60,7 @@ case "$LANGUAGE" in
         else
             # 정답 확인 로직 (user_output.txt와 result.txt 비교)
             # -q 옵션은 차이점을 출력하지 않고 종료 코드만 반환합니다.
-            diff -q "$OUTPUT_FILE" "$EXPECTED_RESULT_FILE" > /dev/null
+            diff -w -q "$OUTPUT_FILE" "$EXPECTED_RESULT_FILE" > /dev/null
             if [ $? -eq 0 ]; then
                 RESULT_STATUS="Accepted"
             else
@@ -94,7 +94,7 @@ case "$LANGUAGE" in
                 RESULT_STATUS="Runtime Error"
                 RUNTIME_OUTPUT=$(cat "$ERROR_FILE")
             else
-                diff -q "$OUTPUT_FILE" "$EXPECTED_RESULT_FILE" > /dev/null
+                diff -w -q "$OUTPUT_FILE" "$EXPECTED_RESULT_FILE" > /dev/null
                 if [ $? -eq 0 ]; then
                     RESULT_STATUS="Accepted"
                 else
@@ -128,7 +128,7 @@ case "$LANGUAGE" in
                 RESULT_STATUS="Runtime Error"
                 RUNTIME_OUTPUT=$(cat "$ERROR_FILE")
             else
-                diff -q "$OUTPUT_FILE" "$EXPECTED_RESULT_FILE" > /dev/null
+                diff -w -q "$OUTPUT_FILE" "$EXPECTED_RESULT_FILE" > /dev/null
                 if [ $? -eq 0 ]; then
                     RESULT_STATUS="Accepted"
                 else
