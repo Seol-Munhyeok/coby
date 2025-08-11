@@ -2,16 +2,15 @@ package com.example.coby.service;
 
 import com.example.coby.dto.CreateRoomRequest;
 import com.example.coby.dto.RoomUserResponse;
-import com.example.coby.entity.Room;
-import com.example.coby.entity.RoomUser;
-import com.example.coby.entity.RoomUserId;
-import com.example.coby.entity.User;
+import com.example.coby.entity.*;
+import com.example.coby.repository.ProblemRepository;
 import com.example.coby.repository.RoomRepository;
 import com.example.coby.repository.RoomUserRepository;
 import com.example.coby.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +23,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final RoomUserRepository roomUserRepository;
     private final UserRepository userRepository;
+    private final ProblemRepository problemRepository;
 
     public List<Room> getRooms() {
         return roomRepository.findAll();
@@ -50,6 +50,26 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
+    @Transactional
+    public Problem getRoomProblem(Long roomId) {
+        Room room = roomRepository.findById(roomId).orElse(null);
+        if (room == null) {
+            return null;
+        }
+        if (room.getProblem() != null) {
+            return room.getProblem();
+        }
+        List<Problem> problems = problemRepository.findAll();
+        if (problems.isEmpty()) {
+            return null;
+        }
+        Problem randomProblem = problems.get((int) (Math.random() * problems.size()));
+        room.setProblem(randomProblem);
+        roomRepository.save(room);
+        return randomProblem;
+    }
+
+    @Transactional
     public Room joinRoom(Long roomId, Long userId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
