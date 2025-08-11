@@ -56,9 +56,10 @@ public class RoomService {
         if (room == null) {
             return null;
         }
-        if (room.getProblem() != null) {
-            return room.getProblem();
-        }
+        // 방 마다 고정된 문제를 제공하려면 주석 해제하시오
+//        if (room.getProblem() != null) {
+//            return room.getProblem();
+//        }
         List<Problem> problems = problemRepository.findAll();
         if (problems.isEmpty()) {
             return null;
