@@ -1,0 +1,47 @@
+# AWS Lambda 채점 시스템 배포 진행 상황 요약
+
+## 1. 초기 목표
+- AWS SQS + Lambda 기반 서버리스 채점 시스템 배포.
+- Dockerfile을 사용하여 Lambda 함수에 Python, Java, C++ 런타임 및 채점 도구 포함.
+- `app.py` (Lambda 핸들러)와 `run.sh` (채점 스크립트) 사용.
+
+## 2. 진행된 단계 및 발생한 문제점
+
+### 2.1. ECR 리포지토리 생성 및 Docker 이미지 푸시 시도
+- `coby-judge-lambda` ECR 리포지토리 생성 및 Docker 로그인 성공.
+- **문제점 1: Docker Desktop 연결 오류.** (해결: Docker Desktop 실행 확인)
+- **문제점 2: `java-11-amazon-corretto-devel` 패키지 없음.** (해결: `Dockerfile` 수정하여 `java-11-openjdk-devel`로 변경 및 `RUN` 명령어 분리)
+- **문제점 3: `amazon-linux-extras` 명령어 인식 오류.** (해결: `Dockerfile` 수정하여 `RUN` 명령어 재결합)
+- **문제점 4: `InvalidParameterValueException` (이미지 매니페스트 오류).** (해결 시도: `docker buildx build --platform linux/amd64` 사용)
+- **문제점 5: `amazonlinux:2`에서 `python3.9` 토픽 없음.** (해결: `Dockerfile` 수정하여 `python3.8` 사용)
+- **문제점 6: `InvalidParameterValueException` (이미지 매니페스트 오류) 재발.** (로컬 Docker 환경과 AWS Lambda 간의 근본적인 호환성 문제로 판단)
+
+### 2.2. 아키텍처 변경 결정
+- 기존 "모든 것을 다 하는 하나의 큰 Lambda" 방식에서 "중재(Dispatcher) Lambda + 언어별 작업자(Worker) Lambda" 방식으로 전환 결정.
+- **장점:** Docker 빌드 및 호환성 문제 해결, 단순한 배포, AWS 표준 런타임 활용, 독립적인 관리 및 자원 최적화.
+
+## 3. 현재 진행 상황 (아키텍처 변경 후)
+
+### 3.1. 디렉토리 구조 변경
+- `dispatcher` 및 `worker` 디렉토리 생성.
+- `app.py` -> `dispatcher/app.py` 로 이동 (중재자 역할).
+- `dispatcher/app.py` -> `worker/app.py` 로 복사 (작업자 역할).
+- `run.sh` -> `worker/run.sh` 로 이동.
+- **문제점:** 파일 이동/복사 명령어(`git mv`, `cp`, `move`) 사용 시 윈도우 환경에서 오류 발생 및 파일 상태 혼란. (해결: `run.sh`를 `worker`로 이동, `dispatcher/app.py`를 `worker/app.py`로 복사 완료)
+
+### 3.2. 코드 수정
+- `dispatcher/app.py`: SQS 메시지를 받아 언어별 작업자 Lambda를 비동기적으로 호출하도록 수정 완료.
+- `worker/app.py`: Dispatcher Lambda로부터 직접 호출되는 이벤트를 처리하고, `run.sh` 경로를 `/var/task/run.sh`로 조정하도록 수정 완료.
+
+### 3.3. 다음 단계 (예정)
+- `dispatcher` Lambda 함수 패키징 (ZIP 파일).
+- `dispatcher` Lambda 함수 생성 및 설정 (IAM 역할, 환경 변수, SQS 트리거).
+- `worker` Lambda 함수 패키징 (ZIP 파일).
+- `worker` Lambda 함수 생성 및 설정 (언어별로, IAM 역할, 환경 변수).
+- 보안 그룹 설정 (Lambda <-> RDS, Lambda <-> 백엔드).
+- SQS 큐 생성 및 설정.
+
+---
+**참고:**
+- `Dockerfile`은 현재 `amazonlinux:2` 기반으로 `python3.8` 및 `java-openjdk11`을 설치하도록 최종 수정된 상태이나, 새로운 아키텍처에서는 `worker` Lambda에만 필요하며, `dispatcher` Lambda는 Python 런타임만 사용하므로 Docker 이미지가 필요 없습니다.
+- S3 VPC 엔드포인트는 이미 생성된 상태입니다.
