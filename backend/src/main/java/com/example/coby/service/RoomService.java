@@ -76,36 +76,41 @@ public class RoomService {
 
         RoomUserId id = new RoomUserId(roomId, userId);
         if (roomUserRepository.existsById(id)) {
-            return room; // 이미 참여한 경우 중복 삽입 방지
+            return room;
         }
 
         if (room.getCurrentPart() < room.getMaxParticipants()) {
-            room.setCurrentPart(room.getCurrentPart() + 1);
-            roomRepository.save(room);
-
-            boolean isHost = roomUserRepository.findByRoomId(roomId).isEmpty();
             RoomUser roomUser = RoomUser.builder()
                     .roomId(roomId)
                     .userId(userId)
-                    .isHost(isHost)
+                    .isHost(roomUserRepository.findByRoomId(roomId).isEmpty())
                     .build();
             roomUserRepository.save(roomUser);
+
+            // Room_user 테이블의 실제 레코드 수를 기반으로 current_part 업데이트
+            long newCount = roomUserRepository.countByRoomId(roomId);
+            room.setCurrentPart((int) newCount);
+            roomRepository.save(room);
         }
 
         return room;
     }
 
+
+    @Transactional
     public Room leaveRoom(Long roomId, Long userId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
 
-        if (room.getCurrentPart() > 0) {
-            room.setCurrentPart(room.getCurrentPart() - 1);
+        RoomUserId id = new RoomUserId(roomId, userId);
+        if (roomUserRepository.existsById(id)) {
+            roomUserRepository.deleteById(id);
+
+            // Room_user 테이블의 실제 레코드 수를 기반으로 current_part 업데이트
+            long newCount = roomUserRepository.countByRoomId(roomId);
+            room.setCurrentPart((int) newCount);
             roomRepository.save(room);
-
-            roomUserRepository.deleteById(new RoomUserId(roomId, userId));
         }
-
         return room;
     }
 
@@ -127,12 +132,17 @@ public class RoomService {
         return room.getPassword() != null && room.getPassword().equals(password);
     }
 
-    // --- STOMP 채팅 기능을 위한 유틸 메소드 ---
+
     public void addUserToRoom(String userId, String roomId) {
         try {
             Long uid = Long.parseLong(userId);
             Long rid = Long.parseLong(roomId);
-            joinRoom(rid, uid);
+            Room room = joinRoom(rid, uid);
+            if (room != null) {
+                long newCount = roomUserRepository.countByRoomId(rid);
+                room.setCurrentPart((int) newCount);
+                roomRepository.save(room);
+            }
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 사용자 ID 또는 방 ID: userId={}, roomId={}", userId, roomId);
         }
