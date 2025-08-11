@@ -23,6 +23,12 @@ public class Problem {
 
     private int memoryLimit;  // MB
 
+    @Column(name = "testcase_s3_path")
+    private String testcaseS3Path;
+
+    @Column(name = "result_s3_path")
+    private String resultS3Path;
+
     @ManyToOne
     @JoinColumn(name = "difficulty_id")
     private Difficulty difficulty;

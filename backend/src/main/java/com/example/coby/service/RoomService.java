@@ -2,10 +2,8 @@ package com.example.coby.service;
 
 import com.example.coby.dto.CreateRoomRequest;
 import com.example.coby.dto.RoomUserResponse;
-import com.example.coby.entity.Room;
-import com.example.coby.entity.RoomUser;
-import com.example.coby.entity.RoomUserId;
-import com.example.coby.entity.User;
+import com.example.coby.entity.*;
+import com.example.coby.repository.ProblemRepository;
 import com.example.coby.repository.RoomRepository;
 import com.example.coby.repository.RoomUserRepository;
 import com.example.coby.repository.UserRepository;
@@ -13,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +23,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final RoomUserRepository roomUserRepository;
     private final UserRepository userRepository;
+    private final ProblemRepository problemRepository;
 
     public List<Room> getRooms() {
         return roomRepository.findAll();
@@ -39,7 +39,7 @@ public class RoomService {
                 .difficulty(req.getDifficulty())
                 .timeLimit(req.getTimeLimit())
                 .maxParticipants(req.getMaxParticipants())
-                .currentPart(0)
+                .currentPart(req.getCurrentPart())
                 .status(req.getStatus())
                 .isPrivate(req.isPrivate())
                 .password(req.getPassword())
@@ -48,6 +48,25 @@ public class RoomService {
                 .maxCapacity(req.getMaxParticipants())
                 .build();
         return roomRepository.save(room);
+    }
+
+    @Transactional
+    public Problem getRoomProblem(Long roomId) {
+        Room room = roomRepository.findById(roomId).orElse(null);
+        if (room == null) {
+            return null;
+        }
+        if (room.getProblem() != null) {
+            return room.getProblem();
+        }
+        List<Problem> problems = problemRepository.findAll();
+        if (problems.isEmpty()) {
+            return null;
+        }
+        Problem randomProblem = problems.get((int) (Math.random() * problems.size()));
+        room.setProblem(randomProblem);
+        roomRepository.save(room);
+        return randomProblem;
     }
 
     @Transactional
@@ -61,36 +80,32 @@ public class RoomService {
         }
 
         if (room.getCurrentPart() < room.getMaxParticipants()) {
-            // RoomUser를 먼저 저장하는 것이 더 안전한 순서입니다.
+            room.setCurrentPart(room.getCurrentPart() + 1);
+            roomRepository.save(room);
+
+            boolean isHost = roomUserRepository.findByRoomId(roomId).isEmpty();
             RoomUser roomUser = RoomUser.builder()
                     .roomId(roomId)
                     .userId(userId)
-                    .isHost(roomUserRepository.findByRoomId(roomId).isEmpty())
+                    .isHost(isHost)
                     .build();
             roomUserRepository.save(roomUser);
-
-            room.setCurrentPart(room.getCurrentPart() + 1);
-            roomRepository.save(room);
         }
 
         return room;
     }
 
-    @Transactional
     public Room leaveRoom(Long roomId, Long userId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
 
-        RoomUserId id = new RoomUserId(roomId, userId);
-        if (roomUserRepository.existsById(id)) {
-            // RoomUser를 먼저 삭제하는 것이 더 안전한 순서입니다.
-            roomUserRepository.deleteById(id);
+        if (room.getCurrentPart() > 0) {
+            room.setCurrentPart(room.getCurrentPart() - 1);
+            roomRepository.save(room);
 
-            if (room.getCurrentPart() > 0) {
-                room.setCurrentPart(room.getCurrentPart() - 1);
-                roomRepository.save(room);
-            }
+            roomUserRepository.deleteById(new RoomUserId(roomId, userId));
         }
+
         return room;
     }
 

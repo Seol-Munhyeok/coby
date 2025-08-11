@@ -1,6 +1,7 @@
 package com.example.coby.controller;
 
 import com.example.coby.dto.*;
+import com.example.coby.entity.Problem;
 import com.example.coby.entity.Room;
 import com.example.coby.service.RoomService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,15 @@ public class RoomController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(RoomResponse.from(room));
+    }
+
+    @GetMapping("/{id}/problem")
+    public ResponseEntity<ProblemResponse> getRoomProblem(@PathVariable Long id) {
+        Problem problem = roomService.getRoomProblem(id);
+        if (problem == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(ProblemResponse.from(problem));
     }
 
     @PostMapping("/{id}/join")
