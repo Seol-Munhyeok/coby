@@ -2,6 +2,8 @@ package com.example.coby.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
@@ -11,8 +13,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "code")
-public class Code {
+@Table(name = "submission")
+public class submission {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,9 +22,6 @@ public class Code {
     @ManyToOne
     @JoinColumn(name = "room_id")
     private Room room;
-
-    @Lob
-    private String content;
 
     @Column(nullable = false)
     private String language;
@@ -34,9 +33,10 @@ public class Code {
     private String s3CodePath;
 
     @Column(updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    private boolean status;  // true: pass, false: fail
+    private String status;  // Pending / Timeout / Memory / etc... Error message
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -45,4 +45,7 @@ public class Code {
     @ManyToOne
     @JoinColumn(name = "problem_id", nullable = false)
     private Problem problem;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 }
