@@ -1,0 +1,18 @@
+[
+    {
+        "input_data" : "2143",
+        "expected_output" : "4321"
+    },
+    {
+        "input_data" : "999998999",
+        "expected_output" : "999999998"
+    },
+    {
+        "input_data" : "61423",
+        "expected_output" : "64321"
+    },
+    {
+        "input_data" : "500613009",
+        "expected_output" : "965310000"
+    }
+]

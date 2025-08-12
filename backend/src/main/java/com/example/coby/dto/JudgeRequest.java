@@ -10,6 +10,7 @@ public class JudgeRequest {
     private Long problem_id;
     private String language;
     private String source_path;
+    private String task;
     public JudgeRequest() {}
 
     public JudgeRequest(Long submissionId, Long problemId, String language, String sourcePath) {
@@ -17,5 +18,6 @@ public class JudgeRequest {
         this.problem_id = problemId;
         this.language = language;
         this.source_path = sourcePath;
+        this.task = "compile";
     }
 }
