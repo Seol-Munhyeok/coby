@@ -20,6 +20,40 @@ function ResultRoom() {
   const currentUser = user?.nickname || '게스트';
   const userId = user?.id || 0;
 
+  // 코드 전체 화면 모달 상태
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const openCodeModal = () => setIsCodeModalOpen(true);
+  const closeCodeModal = () => setIsCodeModalOpen(false);
+
+  // 제출된 코드를 상수로 관리
+  const codeContent = `
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+    10
+    11
+    12
+    13
+    14
+    15
+    16
+    17
+    18
+    19
+    20
+    21
+    22
+    23
+    24
+  `;
+
+
   useEffect(() => {
     if (isConnected) {
       setNotification({ message: "채팅 서버에 연결되었습니다.", type: "success" });
@@ -93,33 +127,16 @@ function ResultRoom() {
 
   return (
     <div className='resultroom1'>
-      <FloatingChat />
+      {/* --- FloatingChat 수정 --- */}
+      {/* z-index를 모달(1000)보다 높게 설정하여 항상 위에 오도록 함 */}
+      <div style={{ position: 'relative', zIndex: 1001 }}>
+        <FloatingChat />
+      </div>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>COBY - 결과</title>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
       <style dangerouslySetInnerHTML={{ __html: `
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-        }
-        .result-card {
-            background-color: #1e293b;
-            border-radius: 0.75rem;
-        }
-        .code-block {
-            background-color: #0f172a;
-            border-radius: 0.5rem;
-            font-family: monospace;
-            overflow-x: auto;
-        }
-        .result-badge {
-            padding: 0.25rem 0.75rem; border-radius: 9999px;
-            font-weight: 600; font-size: 0.875rem;
-        }
-        .result-badge.success { background-color: #10b981; color: white; }
-
         /* --- 버튼 애니메이션 스타일 시작 --- */
         .btn-animated {
             display: flex;
@@ -159,6 +176,53 @@ function ResultRoom() {
         }
         /* --- 버튼 애니메이션 스타일 끝 --- */
 
+        /* --- 코드 전체화면 모달 스타일 시작 --- */
+        .code-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5); /* 더 밝고 투명도 감소 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 2rem;
+        }
+        .code-modal-content {
+            background-color: #fff; /* 밝은 배경 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1.5rem 2.5rem 1.5rem 1.5rem; /* p-6 */
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* 그림자 추가 */
+        }
+        .code-modal-close-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            color: #4a5568; /* 어두운 회색 */
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .code-modal-code-block {
+            flex-grow: 1;
+            overflow-y: auto;
+            background-color: #E5E7EB; /* 연한 회색 배경 */
+            padding: 1rem; /* p-4 */
+            border-radius: 0.375rem; /* rounded-md */
+            color: #2d3748; /* 검정에 가까운 색 */
+            font-family: monospace;
+            border: 1px solid #e2e8f0; /* 연한 테두리 추가 */
+        }
+        /* --- 코드 전체화면 모달 스타일 끝 --- */
+
       ` }} />
       <div className="min-h-screen flex flex-col">
         {/* Header */}
@@ -195,7 +259,7 @@ function ResultRoom() {
         <main className="flex-1 p-6 flex justify-center">
           <div className="w-full flex flex-row gap-6">
 
-            {/* 왼쪽 열: 플레이어 카드 (너비 1/4) */}
+            {/* 왼쪽 열: 플레이어 카드 */}
             <div className="w-1/4 flex flex-col gap-4">
               {/* 플레이어 카드 */}
               <div className="grid grid-cols-1 gap-2">
@@ -211,9 +275,9 @@ function ResultRoom() {
               {/* 버튼들이 있던 자리는 비워짐 */}
             </div>
             
-            {/* 중간 열: 문제 설명 (너비 1/2) */}
+            {/* 중간 열: 문제 설명*/}
             <div className="w-1/2">
-              <div className="result-card p-6 h-full flex flex-col">
+              <div className="result-card p-6 flex flex-col" style={{ height: '600px', overflowY: 'auto' }}>
                 <h3 className="text-xl font-bold mb-4">문제: ###</h3>
                 <div className="text-gray-300 space-y-4">
                   <p> 테스트1 </p>
@@ -223,45 +287,25 @@ function ResultRoom() {
               </div>
             </div>
 
-            {/* 오른쪽 열: 유저가 작성한 코드 (너비 1/4) */}
+            {/* 오른쪽 열: 유저가 작성한 코드*/}
             <div className="w-1/2">
-              <div className="result-card p-6 h-full flex flex-col">
+              <div className="result-card p-6 flex flex-col" style={{ height: '600px', overflowY: 'auto' }}>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold">내 제출</h3>
-                  <div className="result-badge success">정답</div>
+                  <h3 className="text-xl font-bold">제출 코드</h3>
+                  {/* 크게 보기 버튼 추가 */}
+                  <button onClick={openCodeModal} className="text-gray-400 hover:text-white" title="크게 보기">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" />
+                    </svg>
+                  </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-center text-xs mb-4">
-                    <div className="bg-slate-700 p-2 rounded-lg"><div>실행 시간<br/>00ms</div></div>
-                    <div className="bg-slate-700 p-2 rounded-lg"><div>메모리<br/>00.0MB</div></div>
-                    <div className="bg-slate-700 p-2 rounded-lg"><div>테스트<br/>0/10</div></div>
-                    <div className="bg-slate-700 p-2 rounded-lg"><div>제출 시간<br/>00:00</div></div>
+                    <div className="bg-gray-100 p-2 rounded-lg"><div>실행 시간 : 00ms</div></div>
+                    <div className="bg-gray-100 p-2 rounded-lg"><div>메모리 : 00.0MB</div></div>
+                    <div className="bg-gray-100 p-2 rounded-lg"><div>테스트 : 0/10</div></div>
+                    <div className="bg-gray-100 p-2 rounded-lg"><div>제출 시간 : 00:00</div></div>
                 </div>
-                <div className="code-block p-4 text-sm flex-1"><pre><code>{`
-                  1
-                  2
-                  3
-                  4
-                  5
-                  6
-                  7
-                  8
-                  9
-                  10
-                  11
-                  12
-                  13
-                  14
-                  15
-                  16
-                  17
-                  18
-                  19
-                  20
-                  21
-                  22
-                  23
-                  24
-                `}</code></pre></div>
+                <div className="code-block p-4 text-sm flex-1"><pre><code>{codeContent}</code></pre></div>
               </div>
             </div>
 
@@ -306,6 +350,18 @@ function ResultRoom() {
                 정보 보기
               </li>
             </ul>
+          </div>
+        )}
+
+        {/* 코드 전체화면 모달 */}
+        {isCodeModalOpen && (
+          <div className="code-modal-backdrop" onClick={closeCodeModal}>
+            <div className="code-modal-content" onClick={(e) => e.stopPropagation()}>
+              <button onClick={closeCodeModal} className="code-modal-close-btn">&times;</button>
+              <div className="code-modal-code-block">
+                <pre><code>{codeContent}</code></pre>
+              </div>
+            </div>
           </div>
         )}
       </div>
