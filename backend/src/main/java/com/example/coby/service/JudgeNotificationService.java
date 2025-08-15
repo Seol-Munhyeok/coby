@@ -21,14 +21,12 @@ public class JudgeNotificationService {
 
     private final SnsClient snsClient;
     private final ObjectMapper objectMapper;
+    private final String judgeTopicArn;
 
-    @Value("${aws.sns.topic-arn}")
-    private String judgeTopicArn;
-
-    @Value("${spring.cloud.aws.region.static}")
-    private String awsRegion;
-
-    public JudgeNotificationService() {
+    public JudgeNotificationService(
+            @Value("${aws.sns.topic-arn}") String judgeTopicArn,
+            @Value("${spring.cloud.aws.region.static}") String awsRegion) {
+        this.judgeTopicArn = judgeTopicArn;
         this.snsClient = SnsClient.builder()
                 .region(Region.of(awsRegion))
                 .build();

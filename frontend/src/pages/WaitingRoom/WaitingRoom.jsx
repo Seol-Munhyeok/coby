@@ -118,9 +118,20 @@ function WaitingRoom() {
         navigate('/mainpage');
     };
 
+    const { users, joinRoom, leaveRoom, isConnected, error, joinedRoomId, toggleReady: toggleReadyWs } = useWebSocket();
+
     const toggleReady = () => {
-        setIsReady(prevIsReady => !prevIsReady);
+        const newReady = !isReady;
+        setIsReady(newReady)
+        toggleReadyWs(roomId, userId, newReady);
     };
+
+    useEffect(() => {
+        const me = users.find(u => u.userId === Number(userId));
+        if (me && typeof me.isReady == 'boolean') {
+            setIsReady(me.isReady);
+        }
+    }, [users, userId]);
 
     const handleDelegateHost = () => {
         if (selectedPlayer) {
@@ -148,7 +159,6 @@ function WaitingRoom() {
     };
 
 
-    const { users, joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
     // Use useEffect to show notifications based on WebSocket connection status
     useEffect(() => {
         if (roomId) {
@@ -233,7 +243,7 @@ function WaitingRoom() {
             user.nickname.charAt(0).toUpperCase() + (user.nickname.charAt(1) || '').toUpperCase(),
         tier: '다이아',
         level: 'Lv.1',
-        isReady: user.nickname === currentUser ? isReady : true,
+        isReady: user.isReady,
         avatarColor: 'bg-blue-700',
         isHost: user.nickname === roomHost,
     }));

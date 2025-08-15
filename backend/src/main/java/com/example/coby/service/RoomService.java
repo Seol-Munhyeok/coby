@@ -84,6 +84,7 @@ public class RoomService {
                     .roomId(roomId)
                     .userId(userId)
                     .isHost(roomUserRepository.findByRoomId(roomId).isEmpty())
+                    .isReady(false)
                     .build();
             roomUserRepository.save(roomUser);
 
@@ -119,7 +120,7 @@ public class RoomService {
                 .map(ru -> {
                     User user = userRepository.findById(ru.getUserId()).orElse(null);
                     String nickname = user != null ? user.getNickname() : "";
-                    return new RoomUserResponse(ru.getUserId(), nickname, ru.isHost());
+                    return new RoomUserResponse(ru.getUserId(), nickname, ru.isHost(), ru.isReady());
                 })
                 .toList();
     }
@@ -158,6 +159,15 @@ public class RoomService {
             log.warn("올바르지 않은 방 ID: {}", roomId);
             return List.of();
         }
+    }
+
+    @Transactional
+    public void updateReadyStatus(Long userId, Long roomId, boolean isReady) {
+        RoomUserId id = new RoomUserId(roomId, userId);
+        roomUserRepository.findById(id).ifPresent(ru -> {
+            ru.setReady(isReady);
+            roomUserRepository.save(ru);
+        });
     }
 
     public boolean isUserInRoom(String roomId, String userId) {

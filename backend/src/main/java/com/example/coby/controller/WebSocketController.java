@@ -71,6 +71,7 @@ public class WebSocketController {
                 .userId(message.userId())
                 .nickname(message.nickname())
                 .profileUrl(message.profileUrl())
+                .isReady(Boolean.FALSE)
                 .build();
 
         messagingTemplate.convertAndSend("/topic/room/" + roomId, joinNotice);
@@ -87,6 +88,33 @@ public class WebSocketController {
                     "/queue/room/" + roomId + "/users", currentUsers);
 
             log.info("유저 {} 에게 방 [{}] 현재 유저 목록 전송", headerAccessor.getUser().getName(), roomId);
+        }
+    }
+
+    @MessageMapping("/room/{roomId}/ready")
+    public void handleReady(@DestinationVariable String roomId,
+                            WsMessageDto message) {
+        log.info("레디 상태 변경 요청 수신: RoomId={}, UserId={}, IsReady={}",
+                roomId, message.userId(), message.isReady());
+        try {
+            Long uid = Long.parseLong(message.userId());
+            Long rid = Long.parseLong(roomId);
+            boolean isReady = Boolean.TRUE.equals(message.isReady());
+            roomService.updateReadyStatus(uid, rid, isReady);
+
+            WsMessageDto readyNotice = WsMessageDto.builder()
+                    .type("Ready")
+                    .roomId(roomId)
+                    .userId(message.userId())
+                    .isReady(isReady)
+                    .build();
+
+            log.info("레디 상태 변경 알림 전송: Topic=/topic/room/{}, Payload={}",
+                    roomId, readyNotice);
+
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, readyNotice);
+        } catch (NumberFormatException e) {
+            log.warn("올바르지 않은 ID: userId={}, roomId={}", message.userId(), roomId);
         }
     }
 
