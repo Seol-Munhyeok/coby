@@ -71,6 +71,7 @@ public class WebSocketController {
                 .userId(message.userId())
                 .nickname(message.nickname())
                 .profileUrl(message.profileUrl())
+                .isReady(Boolean.FALSE)
                 .build();
 
         messagingTemplate.convertAndSend("/topic/room/" + roomId, joinNotice);

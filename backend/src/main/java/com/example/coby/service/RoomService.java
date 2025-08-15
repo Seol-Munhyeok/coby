@@ -84,6 +84,7 @@ public class RoomService {
                     .roomId(roomId)
                     .userId(userId)
                     .isHost(roomUserRepository.findByRoomId(roomId).isEmpty())
+                    .isReady(false)
                     .build();
             roomUserRepository.save(roomUser);
 
@@ -119,7 +120,7 @@ public class RoomService {
                 .map(ru -> {
                     User user = userRepository.findById(ru.getUserId()).orElse(null);
                     String nickname = user != null ? user.getNickname() : "";
-                    return new RoomUserResponse(ru.getUserId(), nickname, ru.isHost());
+                    return new RoomUserResponse(ru.getUserId(), nickname, ru.isHost(), ru.isReady());
                 })
                 .toList();
     }

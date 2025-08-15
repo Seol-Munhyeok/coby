@@ -20,4 +20,6 @@ public class RoomUser {
     private Long userId;
 
     private boolean isHost;
+
+    private boolean isReady;
 }

@@ -13,6 +13,7 @@ public record WsMessageDto(
         String userId,
         String nickname,
         String profileUrl,
+        Boolean isReady,
         String content,
         List<RoomUserResponse> users
 ) {}
