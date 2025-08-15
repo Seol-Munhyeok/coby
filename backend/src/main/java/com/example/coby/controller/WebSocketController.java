@@ -91,6 +91,28 @@ public class WebSocketController {
         }
     }
 
+    @MessageMapping("/room/{roomId}/ready")
+    public void handleReady(@DestinationVariable String roomId,
+                            WsMessageDto message) {
+        try {
+            Long uid = Long.parseLong(message.userId());
+            Long rid = Long.parseLong(roomId);
+            boolean isReady = Boolean.TRUE.equals(message.isReady());
+            roomService.updateReadyStatus(uid, rid, isReady);
+
+            WsMessageDto readyNotice = WsMessageDto.builder()
+                    .type("Ready")
+                    .roomId(roomId)
+                    .userId(message.userId())
+                    .isReady(isReady)
+                    .build();
+
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, readyNotice);
+        } catch (NumberFormatException e) {
+            log.warn("올바르지 않은 ID: userId={}, roomId={}", message.userId(), roomId);
+        }
+    }
+
     @MessageMapping("/room/{roomId}/leave")
     public void handleLeave(@DestinationVariable String roomId,
                           WsMessageDto message,

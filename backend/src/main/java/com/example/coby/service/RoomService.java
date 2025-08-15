@@ -161,6 +161,15 @@ public class RoomService {
         }
     }
 
+    @Transactional
+    public void updateReadyStatus(Long userId, Long roomId, boolean isReady) {
+        RoomUserId id = new RoomUserId(roomId, userId);
+        roomUserRepository.findById(id).ifPresent(ru -> {
+            ru.setReady(isReady);
+            roomUserRepository.save(ru);
+        });
+    }
+
     public boolean isUserInRoom(String roomId, String userId) {
         try {
             Long rid = Long.parseLong(roomId);
