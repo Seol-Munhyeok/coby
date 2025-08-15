@@ -66,7 +66,7 @@ export const WebSocketProvider = ({ children }) => {
             setUsers((prev) => [
               ...prev,
               {
-                userId: data.userId,
+                userId: Number(data.userId),
                 nickname: data.nickname,
                 profileUrl: data.profileUrl,
                 isReady: data.isReady ?? false
@@ -76,7 +76,7 @@ export const WebSocketProvider = ({ children }) => {
           case 'Ready':
             setUsers((prev) =>
               prev.map((u) =>
-                u.userId === data.userId ? { ...u, isReady: data.isReady } : u)
+                u.userId === Number(data.userId) ? { ...u, isReady: data.isReady } : u)
             );
             break;
           case 'Leave':
@@ -89,7 +89,10 @@ export const WebSocketProvider = ({ children }) => {
       const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
         const body = JSON.parse(msg.body);
         if (body.type === 'CurrentUsers') {
-          setUsers(body.users || []);
+          setUsers((body.users || []).map((user) => ({
+            ...user,
+            userId: Number(user.userId),
+          })));
         }
       });
       subscriptionsRef.current[roomId] = [roomSub, userSub];

@@ -127,7 +127,7 @@ function WaitingRoom() {
     };
 
     useEffect(() => {
-        const me = users.find(u => u.userId === userId);
+        const me = users.find(u => u.userId === Number(userId));
         if (me && typeof me.isReady == 'boolean') {
             setIsReady(me.isReady);
         }

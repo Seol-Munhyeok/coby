@@ -94,6 +94,8 @@ public class WebSocketController {
     @MessageMapping("/room/{roomId}/ready")
     public void handleReady(@DestinationVariable String roomId,
                             WsMessageDto message) {
+        log.info("레디 상태 변경 요청 수신: RoomId={}, UserId={}, IsReady={}",
+                roomId, message.userId(), message.isReady());
         try {
             Long uid = Long.parseLong(message.userId());
             Long rid = Long.parseLong(roomId);
@@ -106,6 +108,9 @@ public class WebSocketController {
                     .userId(message.userId())
                     .isReady(isReady)
                     .build();
+
+            log.info("레디 상태 변경 알림 전송: Topic=/topic/room/{}, Payload={}",
+                    roomId, readyNotice);
 
             messagingTemplate.convertAndSend("/topic/room/" + roomId, readyNotice);
         } catch (NumberFormatException e) {
