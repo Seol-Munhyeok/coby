@@ -65,8 +65,19 @@ export const WebSocketProvider = ({ children }) => {
           case 'Join':
             setUsers((prev) => [
               ...prev,
-              { userId: data.userId, nickname: data.nickname, profileUrl: data.profileUrl }
+              {
+                userId: data.userId,
+                nickname: data.nickname,
+                profileUrl: data.profileUrl,
+                isReady: data.isReady ?? false
+              }
             ]);
+            break;
+          case 'Ready':
+            setUsers((prev) =>
+              prev.map((u) =>
+                u.userId === data.userId ? { ...u, isReady: data.isReady } : u)
+            );
             break;
           case 'Leave':
             setUsers((prev) => prev.filter((u) => u.userId !== data.userId));
@@ -110,6 +121,19 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, []);
 
+  const toggleReady = useCallback((roomId, userId, isReady) => {
+    if (clientRef.current && clientRef.current.connected) {
+      clientRef.current.publish({
+        destination: `/app/room/${roomId}/ready`,
+        body: JSON.stringify({
+          type: 'Ready',
+          userId,
+          isReady,
+        }),
+      });
+    }
+  }, []);
+
   const leaveRoom = useCallback((roomId, userId) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
@@ -138,6 +162,7 @@ export const WebSocketProvider = ({ children }) => {
     sendMessage,
     joinRoom,
     leaveRoom,
+    toggleReady,
     users,
     isConnected,
     error,
