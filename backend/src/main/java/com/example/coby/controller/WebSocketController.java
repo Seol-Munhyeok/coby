@@ -144,6 +144,27 @@ public class WebSocketController {
         }
     }
 
+    @MessageMapping("/room/{roomId}/start")
+    public void handleStartGame(@DestinationVariable String roomId,
+                                WsMessageDto message,
+                                SimpMessageHeaderAccessor headerAccessor) {
+        String requesterId = sessionToUser.get(headerAccessor.getSessionId());
+        try {
+            Long rid = Long.parseLong(roomId);
+            Long reqId = requesterId != null ? Long.parseLong(requesterId) : null;
+            if (reqId == null || !roomService.isUserHost(rid, reqId)) {
+                return;
+            }
+            WsMessageDto startNotice = WsMessageDto.builder()
+                    .type("StartGame")
+                    .roomId(roomId)
+                    .build();
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, startNotice);
+        } catch (NumberFormatException e) {
+            log.warn("올바르지 않은 ID: roomId={}, userId={}", roomId, requesterId);
+        }
+    }
+
     @MessageMapping("/room/{roomId}/leave")
     public void handleLeave(@DestinationVariable String roomId,
                           WsMessageDto message,
