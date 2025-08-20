@@ -22,6 +22,17 @@ function WaitingRoom() {
     const nickname = user?.nickname;
     const userId = user?.id;
 
+    /*
+     * WebSocketContext 로부터 제공되는 값과 함수를 가져옵니다.
+     *  - users: 현재 방에 접속해 있는 유저 목록
+     *  - joinRoom / leaveRoom: 방 참여 및 퇴장 처리
+     *  - isConnected / error: 소켓 연결 상태와 에러 메시지
+     *  - joinedRoomId: 현재 참여 중인 방 ID
+     *  - toggleReadyWs: 서버에 준비 상태를 전송하는 함수
+     *  - delegateHost / startGame: 방장 위임과 게임 시작 제어
+     *  - gameStart: 서버로부터 받은 게임 시작 신호
+     *  - sendMessage: 채팅 메시지 전송
+     */
     const {
         users,
         joinRoom,
@@ -36,7 +47,7 @@ function WaitingRoom() {
         sendMessage,
     } = useWebSocket();
 
-    // 현재 사용자 닉네임을 가져옵니다.
+    // 현재 사용자 닉네임을 가져오고, 없으면 기본값으로 '게스트' 를 사용합니다.
     const currentUser = nickname || '게스트';
 
     {/*const playerData = {
@@ -64,18 +75,18 @@ function WaitingRoom() {
     };
     */}
 
+    // UI 및 방 상태 관리를 위한 여러 가지 상태 변수
+    const [isReady, setIsReady] = useState(false);  // 현재 사용자 준비 상태
+    const [roomHost, setRoomHost] = useState(null); // 방장 닉네임
+    const isCurrentUserHost = users.some(u => u.userId === Number(userId) && u.isHost);  // 현재 사용자가 방장인지 여부
+    const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);  // 플레이어 정보 모달 표시 여부
+    const [playerInfoForModal, setPlayerInfoForModal] = useState(null);  // 모달에 표시할 플레이어 정보
+    const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);  // 방 설정 모달 표시 여부
+    const [notification, setNotification] = useState(null);  // 상단 토스트 알림
+    const [entranceCode, setEntranceCode] = useState("BATTLE-58392");  // 임시 입장 코드
 
-    const [isReady, setIsReady] = useState(false);
-    const [roomHost, setRoomHost] = useState(null); // 방장도 currentUser로 초기화
-    const isCurrentUserHost = users.some(u => u.userId === Number(userId) && u.isHost);
-    const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
-    const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
-    const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);
-    const [notification, setNotification] = useState(null);
-    const [entranceCode, setEntranceCode] = useState("BATTLE-58392");
 
-
-
+    // 방 설정 정보
     const [roomName, setRoomName] = useState("");
     const [difficulty, setDifficulty] = useState("");
     const [timeLimit, setTimeLimit] = useState("");
@@ -84,6 +95,8 @@ function WaitingRoom() {
     const [isPrivate, setIsPrivate] = useState(false);
     const [password, setPassword] = useState("");
 
+
+    // 플레이어 카드 우클릭 시 표시되는 커스텀 컨텍스트 메뉴 제어 훅
     const {
         showContextMenu,
         contextMenuPos,
@@ -95,6 +108,7 @@ function WaitingRoom() {
     } = useContextMenu();
 
 
+    // 방장이 게임 시작 버튼을 눌렀을 때 실행되는 함수
     const enterRoomBtn1 = () => {
         if (!isCurrentUserHost) {
             setNotification({message: "방장만 게임을 시작할 수 있습니다.", type: "error"});
@@ -117,6 +131,8 @@ function WaitingRoom() {
         startGame(roomId);
     };
 
+
+    // 사용자가 대기방을 떠나는 동작을 수행하는 함수
     const quickbtn = async () => {
         alert('방에서 나갑니다');
         try {
@@ -130,12 +146,15 @@ function WaitingRoom() {
         navigate('/mainpage');
     };
 
+
+    // 현재 사용자의 준비 상태를 토클하고 서버에 알립니다.
     const toggleReady = () => {
         const newReady = !isReady;
         setIsReady(newReady)
         toggleReadyWs(roomId, userId, newReady);
     };
 
+    // WebSocket에서 전달받은 자신의 준비 상태를 로컬 상태와 동기화
     useEffect(() => {
         const me = users.find(u => u.userId === Number(userId));
         if (me && typeof me.isReady == 'boolean') {
@@ -143,11 +162,13 @@ function WaitingRoom() {
         }
     }, [users, userId]);
 
+    // 유저 목록이 갱신될 때 방장 정보를 추출합니다.
     useEffect(() => {
         const hostUser = users.find(u => u.isHost);
         setRoomHost(hostUser ? hostUser.nickname : null);
     }, [users]);
 
+    // 게임 시작 신호가 오면 카운트다운 후 게임 페이지로 이동
     useEffect(() => {
         if (gameStart) {
             const countdownMessages = ['잠시 후, 게임이 시작됩니다...', '5', '4', '3', '2', '1'];
@@ -171,6 +192,8 @@ function WaitingRoom() {
         }
     }, [gameStart, isCurrentUserHost, sendMessage, roomId, userId, currentUser, user, navigate]);
 
+
+    // 선택한 플레이어에게 방장 권한을 위임
     const handleDelegateHost = () => {
         if (selectedPlayer) {
             delegateHost(roomId, selectedPlayer.userId);
@@ -181,6 +204,7 @@ function WaitingRoom() {
         }
     };
 
+    // 선택한 플레이어를 강퇴
     const handleKickPlayer = () => {
         if (selectedPlayer) {
             if (selectedPlayer.isHost) {
@@ -198,7 +222,7 @@ function WaitingRoom() {
     };
 
 
-    // Use useEffect to show notifications based on WebSocket connection status
+    // WebSocker 연결 상태에 따라 토스트 알림을 표시
     useEffect(() => {
         if (roomId) {
             const fetchRoomDetails = async () => {
@@ -231,6 +255,7 @@ function WaitingRoom() {
     }, [roomId, navigate, setNotification]);
 
 
+    // 연결 성공/실패 시 사용자에게 알려주기 위한 토스트 알림 처리
     useEffect(() => {
         if (isConnected) {
             setNotification({message: "채팅 서버에 연결되었습니다.", type: "success"});
@@ -243,18 +268,24 @@ function WaitingRoom() {
         return () => clearTimeout(timer); // Clear timeout if component unmounts or status changes
     }, [isConnected, error, setNotification]);
 
+
+    // 소켓 연결 후 아직 방에 참여하지 않았다면 joinRoom 호출
     useEffect(() => {
         if (isConnected && joinedRoomId !== roomId) {
             joinRoom(roomId, {userId, nickname: currentUser, profileUrl: user?.profileUrl || ''});
         }
     }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl]);
 
+
+    // 컴포넌트 언마운트 또는 방 변경 시 자동으로 방을 나감
     useEffect(() => {
         return () => {
             leaveRoom(roomId, userId);
         };
     }, [roomId, userId, leaveRoom]);
 
+
+    // 방 설정 모달에서 저장 버튼을 눌렀을 때 호출
     const handleSaveRoomSettings = (settings) => {
         setRoomName(settings.roomName);
         setDifficulty(settings.difficulty);
@@ -269,12 +300,14 @@ function WaitingRoom() {
     };
 
 
+    // 동일한 사용자 ID 가 중복해서 들어오는 것을 방지하기 위해 유저 목록을 필터링
     const uniqueUsers = Array.from(new Set(users.map(user => user.userId)))
         .map(userId => {
             return users.find(user => user.userId === userId);
         });
 
 
+    // 화면에 표시될 플레이어 정보 포맷
     const currentPlayers = uniqueUsers.map(user => ({
         name: user.nickname,
         userId: user.userId,
@@ -287,6 +320,8 @@ function WaitingRoom() {
         isHost: user.isHost,
     }));
 
+
+    // 방의 최대 인원 수에 맞춰 빈 슬롯을 생성
     const totalSlots = maxParticipants;
     const players = Array.from({length: totalSlots}, (_, index) => {
         if (currentPlayers[index]) {
@@ -296,8 +331,10 @@ function WaitingRoom() {
         }
     });
 
+    // 모든 플레이어가 준비되었는지 여부
     const allPlayersReady = currentPlayers.every(player => player.isReady);
 
+    // 방장이면서 모든 플레이어가 준비되고 슬롯이 꽉 찬 경우에만 게임 시작 가능
     const canStartGame = isCurrentUserHost && allPlayersReady && (currentPlayers.length === maxParticipants);
 
     return (
