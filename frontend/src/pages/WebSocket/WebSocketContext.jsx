@@ -1,4 +1,6 @@
 // src/contexts/WebSocketContext.jsx
+// WebSocketContext는 STOMP 기반의 WebSocket 연결을 관리하며
+// 대기방/배틀룸에서 사용하는 실시간 기능을 제공한다.
 import React, { createContext, useState, useEffect, useRef, useContext, useCallback } from 'react';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
@@ -6,28 +8,36 @@ import { Client } from '@stomp/stompjs';
 export const WebSocketContext = createContext(null);
 
 export const WebSocketProvider = ({ children }) => {
+  // 실시간 채팅 메시지 목록
   const [messages, setMessages] = useState([]);
+  // 현재 방의 참여자 정보
   const [users, setUsers] = useState([]);
+  // 소켓 연결 여부와 에러 메시지
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState(null);
+  // STOMP 클라이언트 인스턴스와 구독 목록을 저장
   const clientRef = useRef(null);
   const subscriptionsRef = useRef({});
+  // 현재 참여 중인 방 ID와 게임 시작 여부
   const [joinedRoomId, setJoinedRoomId] = useState(null);
   const [gameStart, setGameStart] = useState(false);
 
+  // 컴포넌트가 마운트될 때 서버와 WebSocket 연결을 설정
   useEffect(() => {
     const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
     const client = new Client({
       webSocketFactory: socketFactory,
       debug: (str) => console.log(str),
-      reconnectDelay: 5000,
+      reconnectDelay: 5000,  // 연결이 끊어지면 5초 뒤 재시도
     });
 
+    // 연결 성공 시 상태를 초기화
     client.onConnect = () => {
       setIsConnected(true);
       setError(null);
     };
 
+    // STOMP 프로토콜 오류 발생 시 호출
     client.onStompError = () => {
       setError('WebSocket connection error.');
       setIsConnected(false);
@@ -36,6 +46,7 @@ export const WebSocketProvider = ({ children }) => {
     client.activate();
     clientRef.current = client;
 
+    // 언마운트 시 연결 해제
     return () => {
       if (clientRef.current && clientRef.current.connected) {
         clientRef.current.deactivate();
@@ -43,6 +54,8 @@ export const WebSocketProvider = ({ children }) => {
     };
   }, []);
 
+
+  // 특정 방에 참여하고 서버로부터 오는 메시지를 구독
   const joinRoom = useCallback((roomId, userInfo) => {
     if (!(clientRef.current && clientRef.current.connected)) return;
 
@@ -54,6 +67,7 @@ export const WebSocketProvider = ({ children }) => {
     setUsers([]);
     setGameStart(false);
 
+    // 방 정보에 대한 구독이 아직 없다면 생성
     if (!subscriptionsRef.current[roomId]) {
       const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (message) => {
         const data = JSON.parse(message.body);
@@ -98,6 +112,8 @@ export const WebSocketProvider = ({ children }) => {
 
         }
       });
+
+      // 서버로부터 현재 방의 유저 목록을 받아오기 위한 구독
       const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
         const body = JSON.parse(msg.body);
         if (body.type === 'CurrentUsers') {
@@ -110,6 +126,8 @@ export const WebSocketProvider = ({ children }) => {
       });
       subscriptionsRef.current[roomId] = [roomSub, userSub];
     }
+
+    // 서버에 현재 방 참여를 알림
     clientRef.current.publish({
       destination: `/app/room/${roomId}/join`,
       body: JSON.stringify({
@@ -122,6 +140,7 @@ export const WebSocketProvider = ({ children }) => {
     setJoinedRoomId(roomId);
   }, [joinedRoomId]);
 
+  // 채팅 메시지를 서버로 전송
   const sendMessage = useCallback((roomId, messageData) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
@@ -137,6 +156,7 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, []);
 
+  // 준비 상태를 서버에 전달
   const toggleReady = useCallback((roomId, userId, isReady) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
@@ -150,6 +170,7 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, []);
 
+  // 방장 권한을 다른 플레이어에게 위임
   const delegateHost = useCallback((roomId, userId) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
@@ -162,6 +183,7 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, []);
 
+  // 게임 시작 요청을 서버로 전송
   const startGame = useCallback((roomId) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
@@ -171,6 +193,7 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, []);
 
+  // 방에서 나가고 관련 구독 및 상태를 정리
   const leaveRoom = useCallback((roomId, userId) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
@@ -184,6 +207,7 @@ export const WebSocketProvider = ({ children }) => {
       }
     }
     setJoinedRoomId(prev => (prev === roomId ? null : prev));
+
     // 방을 나가면 상태를 초기화하여 이전 메시지가 남지 않도록 합니다.
     setMessages([]);
     setUsers([]);
@@ -194,7 +218,7 @@ export const WebSocketProvider = ({ children }) => {
 
 
   // joinRoom and sendMessage functions are defined above
-
+  // 컨텍스트에서 노출할 값들
   const contextValue = {
     messages,
     sendMessage,
@@ -211,6 +235,7 @@ export const WebSocketProvider = ({ children }) => {
     gameStart
   };
 
+  // 자식 컴포넌트들이 사용할 수 있도록 컨텍스트 제공
   return (
       <WebSocketContext.Provider value={contextValue}>
         {children}
@@ -218,7 +243,7 @@ export const WebSocketProvider = ({ children }) => {
   );
 };
 
-// Custom hook to easily consume the context
+// 컨텍스트를 쉽게 사용하기 위한 커스텀 훅
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext);
   if (context === undefined) {
