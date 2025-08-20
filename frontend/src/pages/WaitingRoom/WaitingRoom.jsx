@@ -22,6 +22,16 @@ function WaitingRoom() {
     const nickname = user?.nickname;
     const userId = user?.id;
 
+    const {
+        users,
+        joinRoom,
+        leaveRoom,
+        isConnected,
+        error,
+        joinedRoomId,
+        toggleReady: toggleReadyWs,
+        delegateHost,
+    } = useWebSocket();
 
     // 현재 사용자 닉네임을 가져옵니다.
     const currentUser = nickname || '게스트';
@@ -53,8 +63,8 @@ function WaitingRoom() {
 
 
     const [isReady, setIsReady] = useState(false);
-    const [roomHost, setRoomHost] = useState(currentUser); // 방장도 currentUser로 초기화
-    const isCurrentUserHost = currentUser === roomHost;
+    const [roomHost, setRoomHost] = useState(null); // 방장도 currentUser로 초기화
+    const isCurrentUserHost = users.some(u => u.userId === Number(userId) && u.isHost);
     const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
     const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
     const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);
@@ -118,8 +128,6 @@ function WaitingRoom() {
         navigate('/mainpage');
     };
 
-    const { users, joinRoom, leaveRoom, isConnected, error, joinedRoomId, toggleReady: toggleReadyWs } = useWebSocket();
-
     const toggleReady = () => {
         const newReady = !isReady;
         setIsReady(newReady)
@@ -133,8 +141,14 @@ function WaitingRoom() {
         }
     }, [users, userId]);
 
+    useEffect(() => {
+        const hostUser = users.find(u => u.isHost);
+        setRoomHost(hostUser ? hostUser.nickname : null);
+    }, [users]);
+
     const handleDelegateHost = () => {
         if (selectedPlayer) {
+            delegateHost(roomId, selectedPlayer.userId);
             setRoomHost(selectedPlayer.name);
             setNotification({message: `${selectedPlayer.name}님에게 방장을 위임했습니다.`, type: "success"});
             setTimeout(() => setNotification(null), 3000);
@@ -144,7 +158,7 @@ function WaitingRoom() {
 
     const handleKickPlayer = () => {
         if (selectedPlayer) {
-            if (selectedPlayer.name === roomHost) {
+            if (selectedPlayer.isHost) {
                 setNotification({ message: "방장은 강퇴할 수 없습니다.", type: "error" });
                 setTimeout(() => setNotification(null), 3000);
                 setShowContextMenu(false);
@@ -245,7 +259,7 @@ function WaitingRoom() {
         level: 'Lv.1',
         isReady: user.isReady,
         avatarColor: 'bg-blue-700',
-        isHost: user.nickname === roomHost,
+        isHost: user.isHost,
     }));
 
     const totalSlots = maxParticipants;

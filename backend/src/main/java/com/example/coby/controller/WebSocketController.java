@@ -65,6 +65,7 @@ public class WebSocketController {
         roomService.addUserToRoom(message.userId(), roomId);
         log.info("방 [{}] 에 유저 {} 입장", roomId, message.userId());
 
+        boolean isHost = roomService.isUserHost(Long.parseLong(roomId), Long.parseLong(message.userId()));
         WsMessageDto joinNotice = WsMessageDto.builder()
                 .type("Join")
                 .roomId(roomId)
@@ -72,6 +73,7 @@ public class WebSocketController {
                 .nickname(message.nickname())
                 .profileUrl(message.profileUrl())
                 .isReady(Boolean.FALSE)
+                .isHost(isHost)
                 .build();
 
         messagingTemplate.convertAndSend("/topic/room/" + roomId, joinNotice);
@@ -118,10 +120,35 @@ public class WebSocketController {
         }
     }
 
+    @MessageMapping("/room/{roomId}/host")
+    public void handleDelegateHost(@DestinationVariable String roomId,
+                                   WsMessageDto message,
+                                   SimpMessageHeaderAccessor headerAccessor) {
+        String requesterId = sessionToUser.get(headerAccessor.getSessionId());
+        try {
+            Long rid = Long.parseLong(roomId);
+            Long newHostId = Long.parseLong(message.userId());
+            Long reqId = requesterId != null ? Long.parseLong(requesterId) : null;
+            if (reqId == null || !roomService.isUserHost(rid, reqId)) {
+                return;
+            }
+            roomService.delegateHost(rid, newHostId);
+            WsMessageDto hostNotice = WsMessageDto.builder()
+                    .type("Host")
+                    .roomId(roomId)
+                    .userId(message.userId())
+                    .build();
+            messagingTemplate.convertAndSend("/topic/room/" + roomId, hostNotice);
+        } catch (NumberFormatException e) {
+            log.warn("올바르지 않은 ID: roomId={}, userId={}", roomId, message.userId());
+        }
+    }
+
     @MessageMapping("/room/{roomId}/leave")
     public void handleLeave(@DestinationVariable String roomId,
                           WsMessageDto message,
                           SimpMessageHeaderAccessor headerAccessor) {
+        boolean wasHost = roomService.isUserHost(Long.parseLong(roomId), Long.parseLong(message.userId()));
         roomService.removeUserFromRoom(message.userId(), roomId);
         sessionToRoom.remove(headerAccessor.getSessionId());
         sessionToUser.remove(headerAccessor.getSessionId());
@@ -133,6 +160,19 @@ public class WebSocketController {
                 .build();
 
         messagingTemplate.convertAndSend("/topic/room/" + roomId, leaveNotice);
+
+        if (wasHost) {
+            Long newHost = roomService.findFirstUserId(Long.parseLong(roomId));
+            if (newHost != null) {
+                roomService.delegateHost(Long.parseLong(roomId), newHost);
+                WsMessageDto hostNotice = WsMessageDto.builder()
+                        .type("Host")
+                        .roomId(roomId)
+                        .userId(String.valueOf(newHost))
+                        .build();
+                messagingTemplate.convertAndSend("/topic/room/" + roomId, hostNotice);
+            }
+        }
     }
 
     @EventListener
@@ -142,6 +182,7 @@ public class WebSocketController {
         String userId = sessionToUser.remove(sessionId);
 
         if (roomId != null && userId != null) {
+            boolean wasHost = roomService.isUserHost(Long.parseLong(roomId), Long.parseLong(userId));
             roomService.removeUserFromRoom(userId, roomId);
             WsMessageDto leaveNotice = WsMessageDto.builder()
                     .type("Leave")
@@ -149,6 +190,19 @@ public class WebSocketController {
                     .userId(userId)
                     .build();
             messagingTemplate.convertAndSend("/topic/room/" + roomId, leaveNotice);
+
+            if (wasHost) {
+                Long newHost = roomService.findFirstUserId(Long.parseLong(roomId));
+                if (newHost != null) {
+                    roomService.delegateHost(Long.parseLong(roomId), newHost);
+                    WsMessageDto hostNotice = WsMessageDto.builder()
+                            .type("Host")
+                            .roomId(roomId)
+                            .userId(String.valueOf(newHost))
+                            .build();
+                    messagingTemplate.convertAndSend("/topic/room/" + roomId, hostNotice);
+                }
+            }
         }
     }
 }

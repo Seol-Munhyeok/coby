@@ -69,7 +69,8 @@ export const WebSocketProvider = ({ children }) => {
                 userId: Number(data.userId),
                 nickname: data.nickname,
                 profileUrl: data.profileUrl,
-                isReady: data.isReady ?? false
+                isReady: data.isReady ?? false,
+                isHost: data.isHost ?? false
               }
             ]);
             break;
@@ -82,8 +83,14 @@ export const WebSocketProvider = ({ children }) => {
           case 'Leave':
             setUsers((prev) => prev.filter((u) => u.userId !== data.userId));
             break;
+          case 'Host':
+            setUsers((prev) =>
+                prev.map((u) => ({ ...u, isHost: u.userId === Number(data.userId) }))
+            );
+            break;
           default:
             break;
+
         }
       });
       const userSub = clientRef.current.subscribe(`/user/queue/room/${roomId}/users`, (msg) => {
@@ -92,6 +99,7 @@ export const WebSocketProvider = ({ children }) => {
           setUsers((body.users || []).map((user) => ({
             ...user,
             userId: Number(user.userId),
+            isHost: user.isHost ?? false,
           })));
         }
       });
@@ -137,6 +145,18 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, []);
 
+  const delegateHost = useCallback((roomId, userId) => {
+    if (clientRef.current && clientRef.current.connected) {
+      clientRef.current.publish({
+        destination: `/app/room/${roomId}/host`,
+        body: JSON.stringify({
+          type: 'Host',
+          userId,
+        }),
+      });
+    }
+  }, []);
+
   const leaveRoom = useCallback((roomId, userId) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
@@ -166,6 +186,7 @@ export const WebSocketProvider = ({ children }) => {
     joinRoom,
     leaveRoom,
     toggleReady,
+    delegateHost,
     users,
     isConnected,
     error,
