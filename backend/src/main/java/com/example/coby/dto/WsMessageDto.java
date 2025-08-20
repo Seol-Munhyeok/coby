@@ -8,7 +8,7 @@ import java.util.List;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record WsMessageDto(
-        String type,  // Chat, CurrentUsers, Join, Leave
+        String type,  // Chat, CurrentUsers, Join, Leave, Host
         String roomId,
         String userId,
         String nickname,
