@@ -169,7 +169,6 @@ export const WebSocketProvider = ({ children }) => {
         body: JSON.stringify({ type: 'StartGame'}),
       });
     }
-    setGameStart(true);
   }, []);
 
   const leaveRoom = useCallback((roomId, userId) => {
