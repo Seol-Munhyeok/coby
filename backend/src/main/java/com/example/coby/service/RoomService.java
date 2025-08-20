@@ -190,4 +190,26 @@ public class RoomService {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
     }
+
+    @Transactional
+    public void delegateHost(Long roomId, Long newHostId) {
+        List<RoomUser> roomUsers = roomUserRepository.findByRoomId(roomId);
+        for (RoomUser ru : roomUsers) {
+            ru.setHost(ru.getUserId().equals(newHostId));
+            roomUserRepository.save(ru);
+        }
+    }
+
+    public boolean isUserHost(Long roomId, Long userId) {
+        return roomUserRepository.findById(new RoomUserId(roomId, userId))
+                .map(RoomUser::isHost)
+                .orElse(false);
+    }
+
+    public Long findFirstUserId(Long roomId) {
+        return roomUserRepository.findByRoomId(roomId).stream()
+                .findFirst()
+                .map(RoomUser::getUserId)
+                .orElse(null);
+    }
 }

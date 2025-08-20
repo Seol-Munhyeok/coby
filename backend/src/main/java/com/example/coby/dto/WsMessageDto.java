@@ -14,6 +14,7 @@ public record WsMessageDto(
         String nickname,
         String profileUrl,
         Boolean isReady,
+        Boolean isHost,
         String content,
         List<RoomUserResponse> users
 ) {}
