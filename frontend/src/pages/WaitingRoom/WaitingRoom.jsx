@@ -298,7 +298,7 @@ function WaitingRoom() {
 
     const allPlayersReady = currentPlayers.every(player => player.isReady);
 
-    const canStartGame = isCurrentUserHost && allPlayersReady;
+    const canStartGame = isCurrentUserHost && allPlayersReady && (currentPlayers.length === maxParticipants);
 
     return (
         <div className="WaitingRoom">
