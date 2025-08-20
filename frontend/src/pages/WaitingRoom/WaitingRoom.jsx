@@ -31,6 +31,9 @@ function WaitingRoom() {
         joinedRoomId,
         toggleReady: toggleReadyWs,
         delegateHost,
+        startGame,
+        gameStart,
+        sendMessage,
     } = useWebSocket();
 
     // 현재 사용자 닉네임을 가져옵니다.
@@ -111,8 +114,7 @@ function WaitingRoom() {
             return;
         }
 
-        alert('방에 입장합니다!');
-        navigate(`/gamepage/${roomId}`);
+        startGame(roomId);
     };
 
     const quickbtn = async () => {
@@ -145,6 +147,29 @@ function WaitingRoom() {
         const hostUser = users.find(u => u.isHost);
         setRoomHost(hostUser ? hostUser.nickname : null);
     }, [users]);
+
+    useEffect(() => {
+        if (gameStart) {
+            const countdownMessages = ['잠시 후, 게임이 시작됩니다...', '5', '4', '3', '2', '1'];
+            if (isCurrentUserHost) {
+                countdownMessages.forEach((msg, idx) => {
+                    setTimeout(() => {
+                        sendMessage(roomId, {
+                            roomId,
+                            userId,
+                            nickname: currentUser,
+                            profileUrl: user?.profileUrl || '',
+                            content: msg,
+                        });
+                    }, idx * 1000);
+                });
+            }
+            const timer = setTimeout(() => {
+                navigate(`/gamepage/${roomId}`);
+            }, countdownMessages.length * 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [gameStart, isCurrentUserHost, sendMessage, roomId, userId, currentUser, user, navigate]);
 
     const handleDelegateHost = () => {
         if (selectedPlayer) {
@@ -273,7 +298,7 @@ function WaitingRoom() {
 
     const allPlayersReady = currentPlayers.every(player => player.isReady);
 
-    const canStartGame = isCurrentUserHost && allPlayersReady && (currentPlayers.length === maxParticipants);
+    const canStartGame = isCurrentUserHost && allPlayersReady;
 
     return (
         <div className="WaitingRoom">

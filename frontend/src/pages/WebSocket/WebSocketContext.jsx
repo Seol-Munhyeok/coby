@@ -13,6 +13,7 @@ export const WebSocketProvider = ({ children }) => {
   const clientRef = useRef(null);
   const subscriptionsRef = useRef({});
   const [joinedRoomId, setJoinedRoomId] = useState(null);
+  const [gameStart, setGameStart] = useState(false);
 
   useEffect(() => {
     const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
@@ -45,12 +46,13 @@ export const WebSocketProvider = ({ children }) => {
   const joinRoom = useCallback((roomId, userInfo) => {
     if (!(clientRef.current && clientRef.current.connected)) return;
 
-    // 이미 해당 방에 참여 중이면 재참여를 건너뜀
+    // 이미 해당 방에 참여 중이면 재참여를 건너뜁니다.
     if (joinedRoomId === roomId) return;
 
-    // 새로운 방에 참여할 때 기존 메시지와 유저 목록을 초기화합니다.
+    // 새로운 방에 참여할 때 기존 메시지와 유저 목록, 게임 시작 상태를 초기화합니다.
     setMessages([]);
     setUsers([]);
+    setGameStart(false);
 
     if (!subscriptionsRef.current[roomId]) {
       const roomSub = clientRef.current.subscribe(`/topic/room/${roomId}`, (message) => {
@@ -87,6 +89,9 @@ export const WebSocketProvider = ({ children }) => {
             setUsers((prev) =>
                 prev.map((u) => ({ ...u, isHost: u.userId === Number(data.userId) }))
             );
+            break;
+          case 'StartGame':
+            setGameStart(true);
             break;
           default:
             break;
@@ -157,6 +162,16 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, []);
 
+  const startGame = useCallback((roomId) => {
+    if (clientRef.current && clientRef.current.connected) {
+      clientRef.current.publish({
+        destination: `/app/room/${roomId}/start`,
+        body: JSON.stringify({ type: 'StartGame'}),
+      });
+    }
+    setGameStart(true);
+  }, []);
+
   const leaveRoom = useCallback((roomId, userId) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
@@ -173,6 +188,7 @@ export const WebSocketProvider = ({ children }) => {
     // 방을 나가면 상태를 초기화하여 이전 메시지가 남지 않도록 합니다.
     setMessages([]);
     setUsers([]);
+    setGameStart(false);
   }, []);
 
 
@@ -187,11 +203,13 @@ export const WebSocketProvider = ({ children }) => {
     leaveRoom,
     toggleReady,
     delegateHost,
+    startGame,
     users,
     isConnected,
     error,
     client: clientRef.current,
-    joinedRoomId
+    joinedRoomId,
+    gameStart
   };
 
   return (
