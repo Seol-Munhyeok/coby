@@ -51,6 +51,8 @@ function WaitingRoom() {
         client,
         forcedOut,
         resetForcedOut,
+        systemMessage,
+        clearSystemMessage,
     } = useWebSocket();
 
     // 현재 사용자 닉네임을 가져오고, 없으면 기본값으로 '게스트' 를 사용합니다.
@@ -138,22 +140,18 @@ function WaitingRoom() {
     };
 
 
-    // 사용자가 대기방을 떠나는 동작을 수행하는 함수
-    const quickbtn = async () => {
-        alert('방에서 나갑니다');
-        try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/leave`, {
-                userId: userId,
-            });
-        } catch (error) {
-            console.error('Error leaving room:', error);
+    // 방을 떠나는 동작을 수행하는 함수
+    const [hasLeft, setHasLeft] = useState(false);
+    const quickbtn = () => {
+        if (!hasLeft) {
+            leaveRoom(roomId, userId);
+            setHasLeft(true);
         }
-        leaveRoom(roomId, userId);
         navigate('/mainpage');
-    };
+    }
 
 
-    // 현재 사용자의 준비 상태를 토클하고 서버에 알립니다.
+    // 현재 사용자의 준비 상태를 토글하고 서버에 알립니다.
     const toggleReady = () => {
         const newReady = !isReady;
         setIsReady(newReady)
@@ -303,10 +301,23 @@ function WaitingRoom() {
     // 컴포넌트 언마운트 또는 방 변경 시 자동으로 방을 나감
     useEffect(() => {
         return () => {
-            leaveRoom(roomId, userId);
+            if (!hasLeft) {
+                leaveRoom(roomId, userId);
+            }
         };
-    }, [roomId, userId, leaveRoom]);
+    }, [roomId, userId, leaveRoom, hasLeft]);
 
+    // 시스템 메시지를 토스트로 표시
+    useEffect(() => {
+        if (systemMessage) {
+            setNotification({ message: systemMessage, type: 'info' });
+            const timer = setTimeout(() => {
+                setNotification(null);
+                clearSystemMessage();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [systemMessage, clearSystemMessage]);
 
     // 방 설정 모달에서 저장 버튼을 눌렀을 때 호출
     const handleSaveRoomSettings = (settings) => {
