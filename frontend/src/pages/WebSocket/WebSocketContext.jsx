@@ -21,6 +21,9 @@ export const WebSocketProvider = ({ children }) => {
   // 현재 참여 중인 방 ID와 게임 시작 여부
   const [joinedRoomId, setJoinedRoomId] = useState(null);
   const [gameStart, setGameStart] = useState(false);
+  // 강퇴 여부 및 현재 사용자 ID를 저장
+  const [forcedOut, setForcedOut] = useState(false)
+  const currentUserIdRef = useRef(null);
 
   // 컴포넌트가 마운트될 때 서버와 WebSocket 연결을 설정
   useEffect(() => {
@@ -62,6 +65,9 @@ export const WebSocketProvider = ({ children }) => {
     // 이미 해당 방에 참여 중이면 재참여를 건너뜁니다.
     if (joinedRoomId === roomId) return;
 
+    // 현재 사용자 ID 저장
+    currentUserIdRef.current = userInfo.userId;
+
     // 새로운 방에 참여할 때 기존 메시지와 유저 목록, 게임 시작 상태를 초기화합니다.
     setMessages([]);
     setUsers([]);
@@ -98,6 +104,10 @@ export const WebSocketProvider = ({ children }) => {
             break;
           case 'Leave':
             setUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+            if (Number(data.userId) === Number(currentUserIdRef.current)) {
+              cleanupRoom(roomId);
+              setForcedOut(true);
+            }
             break;
           case 'Host':
             setUsers((prev) =>
@@ -139,6 +149,19 @@ export const WebSocketProvider = ({ children }) => {
     });
     setJoinedRoomId(roomId);
   }, [joinedRoomId]);
+
+  // 방 관련 구독과 상태를 정리하는 공통 함수
+  const cleanupRoom = useCallback((roomId) => {
+    const subs = subscriptionsRef.current[roomId];
+    if (subs) {
+      subs.forEach(s => s.unsubscribe());
+      delete subscriptionsRef.current[roomId];
+    }
+    setJoinedRoomId(prev => (prev === roomId ? null : prev));
+    setMessages([]);
+    setUsers([]);
+    setGameStart(false);
+  }, []);
 
   // 채팅 메시지를 서버로 전송
   const sendMessage = useCallback((roomId, messageData) => {
@@ -198,24 +221,13 @@ export const WebSocketProvider = ({ children }) => {
     if (clientRef.current && clientRef.current.connected) {
       clientRef.current.publish({
         destination: `/app/room/${roomId}/leave`,
-        body: JSON.stringify({ type: 'Leave', userId }),
+        body: JSON.stringify({type: 'Leave', userId}),
       });
-      const subs = subscriptionsRef.current[roomId];
-      if (subs) {
-        subs.forEach(s => s.unsubscribe());
-        delete subscriptionsRef.current[roomId];
-      }
     }
-    setJoinedRoomId(prev => (prev === roomId ? null : prev));
+    cleanupRoom(roomId);
+  }, [cleanupRoom]);
 
-    // 방을 나가면 상태를 초기화하여 이전 메시지가 남지 않도록 합니다.
-    setMessages([]);
-    setUsers([]);
-    setGameStart(false);
-  }, []);
-
-
-
+  const resetForcedOut = useCallback(() => setForcedOut(false), []);
 
   // joinRoom and sendMessage functions are defined above
   // 컨텍스트에서 노출할 값들
@@ -232,7 +244,9 @@ export const WebSocketProvider = ({ children }) => {
     error,
     client: clientRef.current,
     joinedRoomId,
-    gameStart
+    gameStart,
+    forcedOut,
+    resetForcedOut
   };
 
   // 자식 컴포넌트들이 사용할 수 있도록 컨텍스트 제공
