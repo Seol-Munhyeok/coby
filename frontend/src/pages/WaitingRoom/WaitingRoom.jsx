@@ -32,6 +32,9 @@ function WaitingRoom() {
      *  - delegateHost / startGame: 방장 위임과 게임 시작 제어
      *  - gameStart: 서버로부터 받은 게임 시작 신호
      *  - sendMessage: 채팅 메시지 전송
+     *  - client: STOMP WebSocket 클라이언트 인스턴스 (publish 용도)
+     *  - forcedOut: 강제 퇴장 여부를 나타내는 상태 플래그
+     *  - resetForcedOut: 강제 퇴장 플래그 초기화 함수
      */
     const {
         users,
@@ -45,6 +48,11 @@ function WaitingRoom() {
         startGame,
         gameStart,
         sendMessage,
+        client,
+        forcedOut,
+        resetForcedOut,
+        systemMessage,
+        clearSystemMessage,
     } = useWebSocket();
 
     // 현재 사용자 닉네임을 가져오고, 없으면 기본값으로 '게스트' 를 사용합니다.
@@ -132,22 +140,25 @@ function WaitingRoom() {
     };
 
 
-    // 사용자가 대기방을 떠나는 동작을 수행하는 함수
-    const quickbtn = async () => {
-        alert('방에서 나갑니다');
-        try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/leave`, {
-                userId: userId,
-            });
-        } catch (error) {
-            console.error('Error leaving room:', error);
+    // 방을 떠나는 동작을 수행하는 함수
+    // hasLeft는 사용자가 이미 방에서 나갔음을 표시하여 중복 퇴장을 방지합니다.
+    // setHasLeft는 해당 상태를 업데이트하여 컴포넌트 언마운트 시 다시 나가지 않도록 합니다.
+    const [hasLeft, setHasLeft] = useState(false);
+    const quickbtn = () => {
+        if (!hasLeft) {
+            // 아직 나가지 않았다면 서버에 퇴장을 알리고 hasLeft를 true로 설정
+            leaveRoom(roomId, userId);
+            setHasLeft(true);
+            // 잠시 대기 후 메인 페이지로 이동하여 퇴장 메시지가 전송될 시간을 확보
+            setTimeout(() => navigate('/mainpage'), 100);
+        } else {
+            // 이미 퇴장한 경우 바로 메인 페이지로 이동
+            navigate('/mainpage');
         }
-        leaveRoom(roomId, userId);
-        navigate('/mainpage');
-    };
+    }
 
 
-    // 현재 사용자의 준비 상태를 토클하고 서버에 알립니다.
+    // 현재 사용자의 준비 상태를 토글하고 서버에 알립니다.
     const toggleReady = () => {
         const newReady = !isReady;
         setIsReady(newReady)
@@ -213,9 +224,18 @@ function WaitingRoom() {
                 setShowContextMenu(false);
                 return;
             }
-
-            leaveRoom(roomId, selectedPlayer.userId);
-            setNotification({ message: `${selectedPlayer.name}님을 강퇴했습니다.`, type: "success" });
+            try {
+                if (client && client.connected) {
+                    client.publish({
+                        destination: `/app/room/${roomId}/kick`,
+                        body: JSON.stringify({ type: 'Kick', userId: selectedPlayer.userId }),
+                    });
+                    setNotification({ message: `${selectedPlayer.name}님을 강퇴했습니다.`, type: "success" });
+                }
+            } catch (error) {
+                console.error('Error kicking user:', error);
+                setNotification({ message: "강퇴에 실패했습니다.", type: "error" });
+            }
             setTimeout(() => setNotification(null), 3000);
             setShowContextMenu(false);
         }
@@ -276,14 +296,36 @@ function WaitingRoom() {
         }
     }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl]);
 
+    // 강퇴되었을 때 메인 페이지로 이동하며 다시 Leave 이벤트를 보내지 않도록 표시
+    useEffect(() => {
+        if (forcedOut) {
+            setHasLeft(true); // 언마운트 시 중복 퇴장 방지
+            navigate('/mainpage', { state: { kicked: true } });
+            resetForcedOut();
+        }
+    }, [forcedOut, navigate, resetForcedOut]);
 
     // 컴포넌트 언마운트 또는 방 변경 시 자동으로 방을 나감
     useEffect(() => {
         return () => {
-            leaveRoom(roomId, userId);
+            if (!hasLeft) {
+                // 사용자가 직접 나가기 버튼을 누르지 않은 경우에만 서버에 퇴장을 알림
+                leaveRoom(roomId, userId);
+            }
         };
-    }, [roomId, userId, leaveRoom]);
+    }, [roomId, userId, leaveRoom, hasLeft]);
 
+    // 시스템 메시지를 토스트로 표시
+    useEffect(() => {
+        if (systemMessage) {
+            setNotification({ message: systemMessage, type: 'info' });
+            const timer = setTimeout(() => {
+                setNotification(null);
+                clearSystemMessage();
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [systemMessage, clearSystemMessage]);
 
     // 방 설정 모달에서 저장 버튼을 눌렀을 때 호출
     const handleSaveRoomSettings = (settings) => {

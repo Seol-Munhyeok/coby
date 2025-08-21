@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './MainPage.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import axios from 'axios';
 import { useAuth } from '../AuthContext/AuthContext'; 
@@ -18,6 +18,7 @@ function MainPage() {
     const [isUserMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef(null);
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
 
 
@@ -31,8 +32,16 @@ function MainPage() {
         password: '',
     });
 
+    // 강퇴 후 이동해 온 경우 알림을 표시
     useEffect(() => {
-        fetchRooms(); 
+        if (location.state?.kicked) {
+            alert('강퇴되었습니다.');
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location, navigate]);
+
+    useEffect(() => {
+        fetchRooms();
     }, []);
 
     const fetchRooms = async () => {
