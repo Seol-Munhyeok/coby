@@ -258,10 +258,18 @@ public class WebSocketController {
     public void handleLeave(@DestinationVariable String roomId,
                           WsMessageDto message,
                           SimpMessageHeaderAccessor headerAccessor) {
+        String sessionId = headerAccessor.getSessionId();
+        // 이미 새로운 세션으로 재입장한 뒤 이전 세션에서 온 Leave 메시지는 무시한다.
+        String mappedSession = userToSession.get(message.userId());
+        if (mappedSession == null || !mappedSession.equals(sessionId)) {
+            return;
+        }
+
         boolean wasHost = roomService.isUserHost(Long.parseLong(roomId), Long.parseLong(message.userId()));
         roomService.removeUserFromRoom(message.userId(), roomId);
         sessionToRoom.remove(headerAccessor.getSessionId());
         sessionToUser.remove(headerAccessor.getSessionId());
+        userToSession.remove(message.userId());  // 자발적으로 방을 떠난 사용자의 세션 정보도 정리
 
         WsMessageDto leaveNotice = WsMessageDto.builder()
                 .type("Leave")
@@ -294,6 +302,11 @@ public class WebSocketController {
         String sessionId = event.getSessionId();
         String roomId = sessionToRoom.remove(sessionId);
         String userId = sessionToUser.remove(sessionId);
+
+        // 연결 종료 시 userToSession 매핑도 제거하여 메모리를 정리한다.
+        if (userId != null) {
+            userToSession.remove(userId);
+        }
 
         if (roomId != null && userId != null) {
             boolean wasHost = roomService.isUserHost(Long.parseLong(roomId), Long.parseLong(userId));

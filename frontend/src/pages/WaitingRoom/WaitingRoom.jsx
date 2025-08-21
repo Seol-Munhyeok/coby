@@ -141,13 +141,20 @@ function WaitingRoom() {
 
 
     // 방을 떠나는 동작을 수행하는 함수
+    // hasLeft는 사용자가 이미 방에서 나갔음을 표시하여 중복 퇴장을 방지합니다.
+    // setHasLeft는 해당 상태를 업데이트하여 컴포넌트 언마운트 시 다시 나가지 않도록 합니다.
     const [hasLeft, setHasLeft] = useState(false);
     const quickbtn = () => {
         if (!hasLeft) {
+            // 아직 나가지 않았다면 서버에 퇴장을 알리고 hasLeft를 true로 설정
             leaveRoom(roomId, userId);
             setHasLeft(true);
+            // 잠시 대기 후 메인 페이지로 이동하여 퇴장 메시지가 전송될 시간을 확보
+            setTimeout(() => navigate('/mainpage'), 100);
+        } else {
+            // 이미 퇴장한 경우 바로 메인 페이지로 이동
+            navigate('/mainpage');
         }
-        navigate('/mainpage');
     }
 
 
@@ -289,11 +296,11 @@ function WaitingRoom() {
         }
     }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl]);
 
-    // 강퇴되었을 때 메인 페이지로 이동
+    // 강퇴되었을 때 메인 페이지로 이동하며 다시 Leave 이벤트를 보내지 않도록 표시
     useEffect(() => {
         if (forcedOut) {
-            alert('강퇴되었습니다.');
-            navigate('/mainpage');
+            setHasLeft(true); // 언마운트 시 중복 퇴장 방지
+            navigate('/mainpage', { state: { kicked: true } });
             resetForcedOut();
         }
     }, [forcedOut, navigate, resetForcedOut]);
@@ -302,6 +309,7 @@ function WaitingRoom() {
     useEffect(() => {
         return () => {
             if (!hasLeft) {
+                // 사용자가 직접 나가기 버튼을 누르지 않은 경우에만 서버에 퇴장을 알림
                 leaveRoom(roomId, userId);
             }
         };
