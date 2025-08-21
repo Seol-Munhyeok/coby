@@ -49,7 +49,7 @@ function WaitingRoom() {
         gameStart,
         sendMessage,
         client,
-        forceOut,
+        forcedOut,
         resetForcedOut,
     } = useWebSocket();
 
@@ -211,7 +211,7 @@ function WaitingRoom() {
     };
 
     // 선택한 플레이어를 강퇴
-    const handleKickPlayer = async () => {
+    const handleKickPlayer = () => {
         if (selectedPlayer) {
             if (selectedPlayer.isHost) {
                 setNotification({ message: "방장은 강퇴할 수 없습니다.", type: "error" });
@@ -220,16 +220,13 @@ function WaitingRoom() {
                 return;
             }
             try {
-                await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/leave`, {
-                    userId: selectedPlayer.userId,
-                });
                 if (client && client.connected) {
                     client.publish({
-                        destination: `/topic/room/${roomId}`,
-                        body: JSON.stringify({ type: 'Leave', userId: selectedPlayer.userId }),
+                        destination: `/app/room/${roomId}/kick`,
+                        body: JSON.stringify({ type: 'Kick', userId: selectedPlayer.userId }),
                     });
+                    setNotification({ message: `${selectedPlayer.name}님을 강퇴했습니다.`, type: "success" });
                 }
-                setNotification({ message: `${selectedPlayer.name}님을 강퇴했습니다.`, type: "success" });
             } catch (error) {
                 console.error('Error kicking user:', error);
                 setNotification({ message: "강퇴에 실패했습니다.", type: "error" });
@@ -296,12 +293,12 @@ function WaitingRoom() {
 
     // 강퇴되었을 때 메인 페이지로 이동
     useEffect(() => {
-        if (forceOut) {
+        if (forcedOut) {
             alert('강퇴되었습니다.');
             navigate('/mainpage');
             resetForcedOut();
         }
-    }, [forceOut, navigate, resetForcedOut]);
+    }, [forcedOut, navigate, resetForcedOut]);
 
     // 컴포넌트 언마운트 또는 방 변경 시 자동으로 방을 나감
     useEffect(() => {

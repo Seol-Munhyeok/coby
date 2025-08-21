@@ -103,7 +103,22 @@ export const WebSocketProvider = ({ children }) => {
             );
             break;
           case 'Leave':
-            setUsers((prev) => prev.filter((u) => u.userId !== data.userId));
+            // 사용자 목록(users) 상태를 업데이트
+            setUsers((prev) => {
+              // 이전 사용자 목록(prev)에서 지금 나간 사용자의 정보를 찾음
+              const leavingUser = prev.find((u) => u.userId === Number(data.userId));
+
+              if (leavingUser) {
+                setMessages((msgs) => [
+                  ...msgs,
+                  { sender: 'System', text: `${leavingUser.nickname}님이 퇴장했습니다.`, profileUrl: '' }
+                ]);
+              }
+              // 기존 사용자 목록에서 나간 사용자를 제외한 새로운 배열을 반환하여 화면을 갱신
+              return prev.filter((u) => u.userId !== Number(data.userId));
+            });
+
+            // 나간 사용자가 '나 자신'인지 확인
             if (Number(data.userId) === Number(currentUserIdRef.current)) {
               cleanupRoom(roomId);
               setForcedOut(true);
@@ -134,7 +149,16 @@ export const WebSocketProvider = ({ children }) => {
           })));
         }
       });
-      subscriptionsRef.current[roomId] = [roomSub, userSub];
+
+      // 강퇴 알림을 위한 개인 큐 구독
+      const kickedSub = clientRef.current.subscribe('/user/queue/kicked', (msg) => {
+        const body = JSON.parse(msg.body);
+        if (body.type === 'Kicked') {
+          cleanupRoom(body.roomId);
+          setForcedOut(true);
+        }
+      });
+      subscriptionsRef.current[roomId] = [roomSub, userSub, kickedSub];
     }
 
     // 서버에 현재 방 참여를 알림
