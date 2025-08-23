@@ -103,7 +103,7 @@ for num in range(len(n)):
 
     // 상대방 정보는 더미 데이터로 시작하며, 실제로는 서버에서 받아와야 합니다.
     const [opponents, setOpponents] = useState([]);
-    const [problemId, setProblemId] = useState(null); // TODO: set actual problem ID
+    const [problemId, setProblemId] = useState(1); // TODO: set actual problem ID
 
 
     const handleSubmit = async () => {
@@ -131,19 +131,25 @@ for num in range(len(n)):
                 return;
             }
 
+            
+            const submissionData = {
+                userId: parseInt(userId, 10),
+                problemId: problemId,
+                roomId: parseInt(roomId, 10),
+                language: languageRef.current.value,
+                sourceCode: editorRef.current.getValue(),
+            };
+
+            console.log("Submitting data:", submissionData); // 이 부분을 추가
+
+
             const response = await fetch(`${process.env.REACT_APP_API_URL}/api/submissions`, {
                 method: "POST",
                 credentials: 'include',
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    userId: userId,
-                    problemId: problemId,
-                    roomId: roomId,
-                    language: languageRef.current.value,
-                    sourceCode: editorRef.current.getValue(),
-                }),
+                body: JSON.stringify(submissionData),
             });
 
             console.info(editorRef.current.getValue(), languageRef.current.value);
