@@ -207,9 +207,12 @@ export default function CodingBattle() {
             setIsLoadingProblem(true);
             try {
                 const response = await fetch(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
+
                 if (!response.ok) {
-                    throw new Error("문제 정보를 불러오는 데 실패했습니다.");
+                    const errorMessage = `HTTP 오류: ${response.status} ${response.statusText}`;
+                    throw new Error(errorMessage);
                 }
+
                 const data = await response.json();
                 setProblem(data);
             } catch (error) {
@@ -220,7 +223,9 @@ export default function CodingBattle() {
             }
         };
 
+        // fetchRoomDetails() 대신 fetchProblem() 함수를 직접 호출하도록 수정
         fetchProblem();
+
     }, [roomId]);
     // Main battle timer useEffect
     useEffect(() => {
