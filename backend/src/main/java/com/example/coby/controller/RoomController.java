@@ -49,6 +49,14 @@ public class RoomController {
         }
         return ResponseEntity.ok(ProblemResponse.from(problem));
     }
+    @PostMapping("/{id}/change-problem")
+    public ResponseEntity<RoomResponse> changeRoomProblem(@PathVariable Long id) {
+        Room updatedRoom = roomService.changeRoomProblem(id);
+        if (updatedRoom == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(RoomResponse.from(updatedRoom));
+    }
 
     @PostMapping("/{id}/join")
     public ResponseEntity<RoomResponse> joinRoom(@PathVariable Long id,
