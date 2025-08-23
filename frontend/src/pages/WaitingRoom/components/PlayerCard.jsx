@@ -1,10 +1,12 @@
 /**
- * 개별 플레이어 카드를 렌더링하는 컴포넌트입니다. host 클래스가 동적으로 적용됩니다.
+ * 개별 플레이어 카드를 렌더링하는 컴포넌트입니다.
+ * showReadyStatus prop을 통해 '준비 완료'/'대기 중' UI를 제어할 수 있습니다.
  */
 import React from 'react';
 import '../WaitingRoom.css';
 
-function PlayerCard({ player, handlePlayerCardClick }) {
+// showReadyStatus prop을 추가하고 기본값을 true로 설정합니다.
+function PlayerCard({ player, handlePlayerCardClick, showReadyStatus = true }) {
   if (player.isEmpty) {
     return (
       <div className="bg-white shadow-md rounded-xl p-4 flex flex-col items-center opacity-50 m-2">
@@ -20,7 +22,6 @@ function PlayerCard({ player, handlePlayerCardClick }) {
     );
   }
 
-  // Existing PlayerCard rendering logic for active players
   return (
     <div
       className={`waitingRoom-player-card bg-white shadow-md rounded-xl p-4 flex flex-col items-center relative m-2
@@ -42,9 +43,12 @@ function PlayerCard({ player, handlePlayerCardClick }) {
         </div>
         <span className="text-xs waitingRoom-text">{player.level}</span>
       </div>
-      <div className={`${player.isReady ? 'waitingRoom-player-ready' : 'waitingRoom-player-not-ready'}`}>
-          {player.isReady ? '준비 완료' : '대기 중'}
-      </div>
+      {/* showReadyStatus가 true일 때만 아래 div 블록이 렌더링됩니다. */}
+      {showReadyStatus && (
+        <div className={`${player.isReady ? 'waitingRoom-player-ready' : 'waitingRoom-player-not-ready'}`}>
+            {player.isReady ? '준비 완료' : '대기 중'}
+        </div>
+      )}
     </div>
   );
 }
