@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Random;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,7 +34,16 @@ public class RoomService {
         return roomRepository.findById(id).orElse(null);
     }
 
+    @Transactional
     public Room createRoom(CreateRoomRequest req) {
+        // 1. 모든 문제 목록을 가져와서 랜덤으로 하나를 선택합니다.
+        List<Problem> problems = problemRepository.findAll();
+        if (problems.isEmpty()) {
+            throw new IllegalStateException("문제 데이터가 없습니다.");
+        }
+        Problem selectedProblem = problems.get(new Random().nextInt(problems.size()));
+
+        // 2. Room을 빌드할 때 선택된 문제를 할당합니다.
         Room room = Room.builder()
                 .roomName(req.getRoomName())
                 .difficulty(req.getDifficulty())
@@ -46,27 +56,40 @@ public class RoomService {
                 .itemMode(req.isItemMode())
                 .currentCapacity(0)
                 .maxCapacity(req.getMaxParticipants())
+                .problem(selectedProblem) // ✨ 여기에서 문제를 할당
                 .build();
         return roomRepository.save(room);
     }
 
     @Transactional
+    public Room changeRoomProblem(Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
+
+        Problem currentProblem = room.getProblem();
+
+        // 현재 문제와 다른 새로운 문제를 찾기
+        List<Problem> allProblems = problemRepository.findAll();
+        if (allProblems.size() <= 1) {
+            // 문제가 1개 이하일 경우 변경 불가
+            log.warn("문제 DB에 문제 수가 부족하여 문제를 변경할 수 없습니다.");
+            return room;
+        }
+
+        Problem newProblem;
+        do {
+            newProblem = allProblems.get(new Random().nextInt(allProblems.size()));
+        } while (newProblem.equals(currentProblem)); // 현재 문제와 동일하면 다시 찾기
+
+        room.setProblem(newProblem);
+        return roomRepository.save(room);
+    }
+
+    @Transactional(readOnly = true) // 읽기 전용 트랜잭션으로 성능 최적화
     public Problem getRoomProblem(Long roomId) {
-        Room room = roomRepository.findById(roomId).orElse(null);
-        if (room == null) {
-            return null;
-        }
-        if (room.getProblem() != null) {
-            return room.getProblem();
-        }
-        List<Problem> problems = problemRepository.findAll();
-        if (problems.isEmpty()) {
-            return null;
-        }
-        Problem randomProblem = problems.get((int) (Math.random() * problems.size()));
-        room.setProblem(randomProblem);
-        roomRepository.save(room);
-        return randomProblem;
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다."));
+        return room.getProblem();
     }
 
     @Transactional
