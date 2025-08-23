@@ -87,19 +87,16 @@ export default function CodingBattle() {
         setModalType('info');
     };
 
-    const defaultCode = `n = input()
-lst = []
-
-for i in range(len(n)):
-    lst.append(int(n[i]))
-
-lst.sort(reverse=True)
-for num in range(len(n)):
-    print(lst[num], end='')`;
+    const defaultCode = `# Coby 게임에 오신 것을 환영합니다!
+# 다른 AI의 도움을 받지 않고 정정당당하게 승리하세요.
+# (Ctrl + C, Ctrl + V는 불가합니다.)
+# 화이팅! 💪✨🔥`;
 
     answerRef.value = defaultCode; // This might cause issues if defaultCode is large, consider using useState for code.
    //nicknameRef.value = "python"; // Same here, consider useState.
-
+    // ADDITIONS: API를 통해 불러온 문제 데이터를 저장할 상태 변수
+    const [problem, setProblem] = useState(null);
+    const [isLoadingProblem, setIsLoadingProblem] = useState(true);
     // 상대방 정보는 더미 데이터로 시작하며, 실제로는 서버에서 받아와야 합니다.
     const [opponents, setOpponents] = useState([]);
 
@@ -188,7 +185,26 @@ for num in range(len(n)):
             navigate(`/resultpage/${roomId}`);
         }, 1500);
     };
+    useEffect(() => {
+        const fetchProblem = async () => {
+            setIsLoadingProblem(true);
+            try {
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
+                if (!response.ok) {
+                    throw new Error("문제 정보를 불러오는 데 실패했습니다.");
+                }
+                const data = await response.json();
+                setProblem(data);
+            } catch (error) {
+                console.error("문제 불러오기 오류:", error);
+                showModal("오류", `문제 정보를 불러오는 중 오류가 발생했습니다: ${error.message}`, "error");
+            } finally {
+                setIsLoadingProblem(false);
+            }
+        };
 
+        fetchProblem();
+    }, [roomId]);
     // Main battle timer useEffect
     useEffect(() => {
         intervalRef.current = setInterval(() => {
@@ -642,28 +658,23 @@ for num in range(len(n)):
                     <PanelGroup direction="horizontal" className="flex-1 w-full">
                         {/* Problem Section (Left Panel) */}
                         <Panel defaultSize={40} minSize={20} className="bg-slate-800 rounded-xl p-6 overflow-y-auto">
-                            <h2 className="text-2xl font-bold mb-4">문제: 두 수의 합</h2>
-                            <div className="bg-slate-700 p-4 rounded-lg mb-4">
-                                <p className="mb-3">정수 배열 <code className="bg-slate-800 px-1 rounded">nums</code>와 정수 <code className="bg-slate-800 px-1 rounded">target</code>이 주어졌을 때, <code className="bg-slate-800 px-1 rounded">nums</code>에서 두 수를 더해 <code className="bg-slate-800 px-1 rounded">target</code>이 되는 두 수의 인덱스를 반환하세요.</p>
-                                <h3 className="font-bold text-lg mb-2 mt-4">예시:</h3>
-                                <div className="bg-slate-800 p-3 rounded mb-3">
-                                    <p>입력: nums = [2,7,11,15], target = 9</p>
-                                    <p>출력: [0,1]</p>
-                                    <p>설명: nums[0] + nums[1] == 9 이므로, [0, 1]을 반환합니다.</p>
-                                </div>
-                                <div className="bg-slate-800 p-3 rounded mb-3">
-                                    <p>입력: nums = [3,2,4], target = 6</p>
-                                    <p>출력: [1,2]</p>
-                                </div>
-                                <h3 className="font-bold text-lg mb-2">제약 조건:</h3>
-                                <ul className="list-disc pl-5 space-y-1">
-                                    <li>2 &lt;= nums.length &lt;= 10^4</li>
-                                    <li>-10^9 &lt;= nums[i] &lt;= 10^9</li>
-                                    <li>-10^9 &lt;= target &lt;= 10^9</li>
-                                    <li>정확히 하나의 해만 존재합니다.</li>
-                                </ul>
-                            </div>
+                            {/* 로딩 상태와 데이터 존재 여부에 따라 조건부 렌더링 */}
+                            {isLoadingProblem ? (
+                                <p className="text-center text-lg animate-pulse">문제를 불러오는 중...</p>
+                            ) : problem ? (
+                                <>
+                                    {/* 문제 제목을 동적으로 표시 */}
+                                    <h2 className="text-2xl font-bold mb-4">{problem.title}</h2>
+                                    <div className="bg-slate-700 p-4 rounded-lg mb-4">
+                                        {/* content 필드의 줄바꿈을 그대로 적용하여 표시 */}
+                                        <p className="whitespace-pre-wrap">{problem.content}</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <p className="text-center text-red-400 text-lg">문제를 불러올 수 없습니다. 방 번호를 확인해주세요.</p>
+                            )}
                         </Panel>
+
 
                         {/* Resizer between Problem and Editor/Result */}
                         <PanelResizeHandle className="resize-handle" />

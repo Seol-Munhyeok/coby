@@ -133,10 +133,27 @@ function ResultRoom() {
         navigate('/mainpage');
     };
 
-    const regameBtn = () => {
-        alert('재대결을 준비하세요');
-        navigate(`/waitingRoom/${roomId}`);
+    const regameBtn = async () => {
+        if (!roomDetails) {
+            alert('방 정보가 없어 재대결을 시작할 수 없습니다.');
+            return;
+        }
+
+        try {
+            // 새로운 API를 호출하여 기존 방의 문제만 변경합니다.
+            await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/change-problem`);
+
+            alert('새로운 문제로 재대결을 시작합니다.');
+
+            // 기존 방 ID를 사용해 대기실로 이동 (새로운 문제를 다시 불러오게 됨)
+            navigate(`/waitingRoom/${roomId}`);
+
+        } catch (error) {
+            console.error('재대결 문제 변경 중 오류 발생:', error);
+            alert('재대결 문제 변경 중 오류가 발생했습니다.');
+        }
     };
+
 
     // 로딩 중이거나 방 정보가 없을 때 로딩 화면을 표시
     if (loading || !roomDetails) {
