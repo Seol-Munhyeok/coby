@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import axios from 'axios';
 import { useAuth } from '../AuthContext/AuthContext'; 
+import ToastNotification from '../../Common/components/ToastNotification';
 
 // 분리된 컴포넌트들 임포트
 import MyCard from './MyCard';
@@ -20,6 +21,7 @@ function MainPage() {
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
+    const [notification, setNotification] = useState(null);  // 상단 토스트 알림
 
 
     const [newRoomSettings, setNewRoomSettings] = useState({
@@ -35,8 +37,10 @@ function MainPage() {
     // 강퇴 후 이동해 온 경우 알림을 표시
     useEffect(() => {
         if (location.state?.kicked) {
-            alert('강퇴되었습니다.');
+            setNotification({message: "방에서 강퇴되었습니다.", type: "success"});
+            setTimeout(() => setNotification(null), 3000);
             navigate(location.pathname, { replace: true, state: {} });
+            
         }
     }, [location, navigate]);
 
@@ -255,6 +259,13 @@ function MainPage() {
                 initialSettings={newRoomSettings}
                 currentParticipantsCount={0}
             />
+            {notification && (
+                <ToastNotification
+                    message={notification.message}
+                    type={notification.type}
+                    onClose={() => setNotification(null)}
+                />
+            )}
             <div id="joinRoomModal" className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
                 <div className="main-glass-effect rounded-xl w-full max-w-md p-6 main-animate-fade-in">
                     <div className="flex justify-between items-center mb-4">
