@@ -59,6 +59,7 @@ export default function CodingBattle() {
 
     // Modal State for FullscreenPromptModal
     const [isFullscreenPromptOpen, setIsFullscreenPromptOpen] = useState(false);
+    
 
     // WebSocket 연결을 위한 ref
     //const wsRef = useRef(null);
@@ -99,6 +100,7 @@ export default function CodingBattle() {
     const [isLoadingProblem, setIsLoadingProblem] = useState(true);
     // 상대방 정보는 더미 데이터로 시작하며, 실제로는 서버에서 받아와야 합니다.
     const [opponents, setOpponents] = useState([]);
+    const [problemId, setProblemId] = useState(1); // TODO: set actual problem ID
 
 
     const handleSubmit = async () => {
@@ -120,16 +122,31 @@ export default function CodingBattle() {
         }, 100);
 
         try {
-            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/submit`, {
+            if (!userId || !roomId || !problemId) {
+                showModal("제출 오류", "필수 정보(userId, roomId, problemId)가 누락되었습니다.", "error");
+                setIsLoading(false);
+                return;
+            }
+
+            
+            const submissionData = {
+                userId: parseInt(userId, 10),
+                problemId: problemId,
+                roomId: parseInt(roomId, 10),
+                language: languageRef.current.value,
+                sourceCode: editorRef.current.getValue(),
+            };
+
+            console.log("Submitting data:", submissionData); // 이 부분을 추가
+
+
+            const response = await fetch(`${process.env.REACT_APP_API_URL}/api/submissions`, {
                 method: "POST",
                 credentials: 'include',
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    code: editorRef.current.getValue(), // editorRef.current에서 직접 값 가져오기
-                    language: languageRef.current.value,
-                }),
+                body: JSON.stringify(submissionData),
             });
 
             console.info(editorRef.current.getValue(), languageRef.current.value);
