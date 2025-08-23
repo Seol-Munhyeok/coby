@@ -1,95 +1,92 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ChatWindow from './ChatWindow'; // 기존 ChatWindow 컴포넌트
-import './FloatingChat.css'; // CSS는 변경 없음
+import ChatWindow from './ChatWindow';
+import './FloatingChat.css';
 
 const FloatingChat = () => {
-    // 채팅창의 확장/축소 상태 관리
     const [isOpen, setIsOpen] = useState(false);
 
-    // 플로팅 요소의 위치 관리
+    // ✨ [변경 1] position의 의미 변경: {x: right, y: bottom}
+    // 초기 위치를 오른쪽, 아래쪽에서 각각 20px 떨어진 곳으로 설정합니다.
     const [position, setPosition] = useState({
-        x: window.innerWidth - 80,
-        y: window.innerHeight - 80,
+        x: 20, // right: 20px
+        y: 20, // bottom: 20px
     });
 
-    // 드래그 상태 및 로직 처리를 위한 Ref
-    const nodeRef = useRef(null); // 플로팅 요소의 DOM 노드 참조
-    const isDraggingRef = useRef(false); // 현재 드래그 중인지 여부
-    const hasDraggedRef = useRef(false); // 드래그 동작이 발생했는지 여부 (클릭과 구분용)
-    const dragStartPosRef = useRef({ x: 0, y: 0 }); // 드래그 시작 시 마우스 위치
+    const nodeRef = useRef(null);
+    const isDraggingRef = useRef(false);
+    const hasDraggedRef = useRef(false);
+    const dragStartPosRef = useRef({ x: 0, y: 0 });
 
-    // ✨ 마우스 다운 이벤트 핸들러 (드래그 시작점)
-    // 이 함수는 축소된 버튼과 확장된 창의 헤더 모두에서 사용됩니다.
     const onMouseDown = (e) => {
-        // e.button === 0 은 마우스 왼쪽 버튼 클릭을 의미합니다.
         if (e.button !== 0) return;
 
         isDraggingRef.current = true;
-        hasDraggedRef.current = false; // 드래그 시작 시 '이동 없었음'으로 초기화
+        hasDraggedRef.current = false;
+        
+        // ✨ [변경 2] 드래그 시작점 계산 변경
+        // 마우스 위치를 화면 오른쪽 하단 기준으로 계산합니다.
         dragStartPosRef.current = {
-            x: e.clientX - position.x,
-            y: e.clientY - position.y,
+            x: (window.innerWidth - e.clientX) - position.x,
+            y: (window.innerHeight - e.clientY) - position.y,
         };
-        // 드래그 중 텍스트 선택 같은 기본 동작 방지
         e.preventDefault();
     };
 
-    // ↔️ 전역 mousemove 이벤트 핸들러 (드래그 중 위치 이동)
     useEffect(() => {
         const onMouseMove = (e) => {
             if (!isDraggingRef.current) return;
-
-            // 드래그가 시작되면 '이동 있었음'으로 표시
             hasDraggedRef.current = true;
 
-            const newX = e.clientX - dragStartPosRef.current.x;
-            const newY = e.clientY - dragStartPosRef.current.y;
+            // ✨ [변경 3] 새 위치 계산 로직 변경
+            // 마우스의 현재 위치를 기준으로 새로운 right, bottom 값을 계산합니다.
+            const newX = (window.innerWidth - e.clientX) - dragStartPosRef.current.x;
+            const newY = (window.innerHeight - e.clientY) - dragStartPosRef.current.y;
             
             setPosition({ x: newX, y: newY });
         };
 
         window.addEventListener('mousemove', onMouseMove);
         return () => window.removeEventListener('mousemove', onMouseMove);
-    }, []); // 의존성 배열이 비어있으므로 컴포넌트 마운트 시 한 번만 실행
+    }, []); // position을 의존성 배열에서 제거하여 불필요한 재등록 방지
 
-    // 🖱️ 전역 mouseup 이벤트 핸들러 (드래그 종료 및 클릭 판별)
     useEffect(() => {
         const onMouseUp = () => {
             if (!isDraggingRef.current) return;
-
             isDraggingRef.current = false;
-
-            // 드래그 동작이 없었을 경우 '클릭'으로 간주하고 창 상태를 토글합니다.
-            if (!hasDraggedRef.current) {
-                setIsOpen(prev => !prev);
+            
+            // ✨ 변경점: 드래그가 아니고(!hasDraggedRef) 창이 닫혀있을 때(!isOpen)만 실행
+            if (!hasDraggedRef.current && !isOpen) {
+                setIsOpen(true); // 토글이 아닌 '열기'로 동작을 명확히 함
             }
+            
+            // 드래그 상태가 끝났으니 hasDraggedRef를 다시 false로 초기화해주는 것이 좋습니다.
+            hasDraggedRef.current = false; 
         };
         
         window.addEventListener('mouseup', onMouseUp);
         return () => window.removeEventListener('mouseup', onMouseUp);
-    }, []); // 의존성 배열이 비어있으므로 컴포넌트 마운트 시 한 번만 실행
+    }, [isOpen]); // ✨ 변경점: 의존성 배열에 isOpen 추가
 
     return (
         <div
             ref={nodeRef}
             className={`floating-chat-container ${isOpen ? 'open' : ''}`}
-            style={{ top: `${position.y}px`, left: `${position.x}px` }}
+            // ✨ [변경 4] style 속성을 bottom과 right로 변경
+            style={{ 
+                bottom: `${position.y}px`, 
+                right: `${position.x}px` 
+            }}
         >
             {isOpen ? (
-                // 채팅창이 열린 상태
                 <div className="chat-window-wrapper">
-                    {/* 헤더에 onMouseDown을 추가하여 드래그 가능하게 만듭니다. */}
-                    <header className="chat-window-header" onMouseDown={onMouseDown}>
-                        {/* 닫기 버튼은 드래그가 아닌 단순 클릭으로 동작해야 하므로 onMouseDown을 적용하지 않습니다. */}
+                    <ChatWindow />
+                    <footer className="chat-window-header" onMouseDown={onMouseDown}>
                         <button onClick={() => setIsOpen(false)} className="close-btn">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
-                    </header>
-                    <ChatWindow />
+                    </footer>
                 </div>
             ) : (
-                // 축소된 플로팅 버튼 상태
-                // 버튼에서는 onClick을 제거하고 onMouseDown으로 모든 동작을 처리합니다.
                 <button
                     className="floating-toggle-button"
                     onMouseDown={onMouseDown}

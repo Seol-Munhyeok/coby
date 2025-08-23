@@ -333,6 +333,7 @@ function ResultRoom() {
                                         key={player.name}
                                         player={player}
                                         handlePlayerCardClick={player.isEmpty ? null : handlePlayerCardClick}
+                                        showReadyStatus = {false}
                                     />
                                 ))}
                             </div>
