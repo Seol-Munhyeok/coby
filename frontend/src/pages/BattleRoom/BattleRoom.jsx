@@ -8,7 +8,8 @@ import WarningModal from './WarningModal';
 import FullscreenPromptModal from './FullscreenPromptModal';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
-import { useAuth } from '../AuthContext/AuthContext'; 
+import { useAuth } from '../AuthContext/AuthContext';
+import {number} from "sockjs-client/lib/utils/random";
 
 
 export default function CodingBattle() {
@@ -102,6 +103,38 @@ export default function CodingBattle() {
     const [opponents, setOpponents] = useState([]);
     const [problemId, setProblemId] = useState(1); // TODO: set actual problem ID
 
+    const pollSubmissionResult = async (submissionId) => {
+        let intervalId;
+
+        return new Promise((resolve, reject) => {
+            intervalId = setInterval(async () => {
+                try{
+                    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/submissions`, {
+                        method: "GET",
+                        credentials: 'include',
+                        headers: {
+                            "Content-Type": "application/json",
+                        }
+                    });
+
+                    if (!res.ok) throw new Error("조회 실패");
+                    const data = await res.json();
+
+                    if(data.status !== "Pending"){
+                        if (connectTimeRef.current) clearInterval(connectTimeRef.current);
+                        if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+                        resolve(data);
+                    }
+                } catch(err) {
+                    if (connectTimeRef.current) clearInterval(connectTimeRef.current);
+                    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+                    reject(err);
+                }
+            },3000);
+        });
+    };
+
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     const handleSubmit = async () => {
         // 부정행위가 감지되면 제출을 막음
@@ -154,9 +187,12 @@ export default function CodingBattle() {
             if (!response.ok) {
                 throw new Error("서버 응답 실패");
             }
+            const accept = await response.json();
+            console.log("서버 응답:", accept);
 
-            const result = await response.json();
-            console.log("서버 응답:", result);
+            await delay(15000); // 15초 대기
+
+            const result = await pollSubmissionResult(accept.submissionId);
 
             // 요청 성공 시
             if (connectTimeRef.current) {
@@ -166,7 +202,7 @@ export default function CodingBattle() {
                 setIsLoading(false);
                 showModal(
                    "제출 완료",
-                <> 
+                <>
                         코드가 성공적으로 제출되었습니다.<br />
                         결과: {result.result || '정보 없음'}<br />
                         평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
@@ -175,7 +211,7 @@ export default function CodingBattle() {
                  "info"
                 );
                 setExecutionResult(
-                <> 
+                <>
                         코드가 성공적으로 제출되었습니다.<br />
                         결과: {result.result || '정보 없음'}<br />
                         평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
@@ -185,17 +221,20 @@ export default function CodingBattle() {
             }, 500);
 
         } catch (error) {
-            if (connectTimeRef.current) {
-                clearInterval(connectTimeRef.current);
-            }
+            // if (connectTimeRef.current) {
+            //     clearInterval(connectTimeRef.current);
+            // }
             setIsLoading(false);
             console.error("제출 중 오류:", error);
-            showModal("제출 오류", '코드 실행 중 오류가 발생했습니다: ' + error.message, "error");
-            setExecutionResult('코드 실행 중 오류가 발생했습니다: ' + error.message);
+            showModal("제출 오류", "코드 실행 중 오류가 발생했습니다: " + error.message, "error");
+            setExecutionResult("코드 실행 중 오류가 발생했습니다: " + error.message);
+        } finally {
+            if (connectTimeRef.current) clearInterval(connectTimeRef.current);
+            if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
         }
     };
 
-        const handleGiveUp = async () => {
+    const handleGiveUp = async () => {
         showModal("포기", '수고하셨습니다!', "info");
         // Add a slight delay before navigating to allow user to see the modal
         setTimeout(() => {
