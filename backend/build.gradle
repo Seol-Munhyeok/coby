@@ -44,9 +44,9 @@ dependencies {
 	implementation 'software.amazon.awssdk:sns'
 	implementation 'software.amazon.awssdk:sqs'
 	implementation 'software.amazon.awssdk:s3'
-//	implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.4.0')
+	implementation platform('io.awspring.cloud:spring-cloud-aws-dependencies:3.4.0')
 //	implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3'
-//	implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs'
+	implementation 'io.awspring.cloud:spring-cloud-aws-starter-sqs'
 //	implementation "io.awspring.cloud:spring-cloud-aws-starter-sns"
 	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 }

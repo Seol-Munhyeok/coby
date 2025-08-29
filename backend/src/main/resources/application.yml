@@ -54,19 +54,11 @@ spring:
     aws:
       region:
         static: ap-northeast-2
-      s3:
-        enabled: true
-      sqs:
-        enabled: true
-
 aws:
   s3:
     bucket: grading-source-codes-coby
-  sqs:
-    queue:
-      url: https://sqs.ap-northeast-2.amazonaws.com/997241705477/Compile-Request
   sns:
-    topic-arn: arn:aws:sns:ap-northeast-2:997241705477:submissions-topic
+    topic-url: arn:aws:sns:ap-northeast-2:997241705477:submissions-topic
 
 logging:
   level:
