@@ -1,7 +1,7 @@
 version: 0.2
 
 env:
-  secret-manager:
+  secrets-manager:
     DB_USERNAME: "coby-app/db-credentials:DB_USERNAME"
     DB_PASSWORD: "coby-app/db-credentials:DB_PASSWORD"
     GOOGLE_CLIENT_ID: "coby-app/db-credentials:GOOGLE_CLIENT_ID"
