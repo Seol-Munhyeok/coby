@@ -122,12 +122,12 @@ export default function CodingBattle() {
 
                     if(data.status !== "Pending"){
                         if (connectTimeRef.current) clearInterval(connectTimeRef.current);
-                        if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+                        // if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
                         resolve(data);
                     }
                 } catch(err) {
                     if (connectTimeRef.current) clearInterval(connectTimeRef.current);
-                    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+                    // if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
                     reject(err);
                 }
             },3000);
@@ -230,7 +230,7 @@ export default function CodingBattle() {
             setExecutionResult("코드 실행 중 오류가 발생했습니다: " + error.message);
         } finally {
             if (connectTimeRef.current) clearInterval(connectTimeRef.current);
-            if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+            // if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
         }
     };
 
