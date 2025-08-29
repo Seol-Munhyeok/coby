@@ -3,6 +3,7 @@ package com.example.coby.service;
 import com.example.coby.dto.JudgeRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.regions.Region;
@@ -24,13 +25,13 @@ public class JudgeNotificationService {
     private final String judgeTopicArn;
 
     public JudgeNotificationService(
-            @Value("${aws.sns.topic-arn}") String judgeTopicArn,
-            @Value("${spring.cloud.aws.region.static}") String awsRegion) {
+            SnsClient snsClient,
+            ObjectMapper objectMapper,
+            @Value("${aws.sns.topic-url}") String judgeTopicArn
+    ) {
+        this.snsClient = snsClient;
+        this.objectMapper = objectMapper;
         this.judgeTopicArn = judgeTopicArn;
-        this.snsClient = SnsClient.builder()
-                .region(Region.of(awsRegion))
-                .build();
-        this.objectMapper = new ObjectMapper();
     }
 
     public String sendJudgeRequest(JudgeRequest judgeRequest) {

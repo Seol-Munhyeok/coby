@@ -9,10 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -25,6 +22,11 @@ public class SubmissionController {
     private JudgeNotificationService judgeNotificationService;
     private final SubmissionService submissionService;
 
+    @GetMapping("/submissions/{id}")
+    public ResponseEntity<SubmissionResponseDto> getSubmission(@PathVariable long id) {
+        SubmissionResponseDto submissionDto = submissionService.getSubmissionDtoById(id);
+        return ResponseEntity.ok(submissionDto);
+    }
 
     @PostMapping("/submissions")
     public ResponseEntity<?> createSubmission(@RequestBody SubmissionRequestDto requestDto){
@@ -37,7 +39,7 @@ public class SubmissionController {
                     requestDto.getProblemId()
             );
 
-            //submission db에 저장 - 미완성
+            //submission db에 저장
             Long submissionId = submissionService.processSubmission(
                     requestDto.getUserId(),
                     requestDto.getProblemId(),
@@ -55,6 +57,8 @@ public class SubmissionController {
             String messageId = judgeNotificationService.sendJudgeRequest(judgeRequest);
             System.out.println("제출 처리 완료 - submissionId = " + submissionId +
                     "Sns Message Id: " + messageId);
+
+            // 결과 가져오기
 
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("submissionId", submissionId));
         } catch (Exception e){
