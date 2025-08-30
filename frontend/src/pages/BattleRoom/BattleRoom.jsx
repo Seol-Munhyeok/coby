@@ -117,17 +117,18 @@ export default function CodingBattle() {
                         }
                     });
 
-                    if (!res.ok) throw new Error("조회 실패");
+                    if (!res.ok){
+                        clearInterval(intervalId);
+                        throw new Error("조회 실패");
+                    }
                     const data = await res.json();
 
                     if(data.status !== "Pending"){
-                        if (connectTimeRef.current) clearInterval(connectTimeRef.current);
-                        // if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+                        clearInterval(intervalId);
                         resolve(data);
                     }
                 } catch(err) {
-                    if (connectTimeRef.current) clearInterval(connectTimeRef.current);
-                    // if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+                    clearInterval(intervalId);
                     reject(err);
                 }
             },3000);
@@ -195,9 +196,7 @@ export default function CodingBattle() {
             const result = await pollSubmissionResult(accept.submissionId);
 
             // 요청 성공 시
-            if (connectTimeRef.current) {
-                clearInterval(connectTimeRef.current);
-            }
+            clearInterval(timerInterval);
             setTimeout(() => {
                 setIsLoading(false);
                 showModal(
