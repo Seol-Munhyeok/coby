@@ -89,9 +89,8 @@ public class SubmissionService {
                 contentType(contentTypeMap.get(language)).build();
         byte[] codeBytes = sourceCode.getBytes(StandardCharsets.UTF_8);
         s3client.putObject(putObjectRequest, RequestBody.fromBytes(codeBytes));
-        String s3_path = String.format("s3://%s/%s", bucket, s3Key);
 
-        return s3_path;
+        return s3Key;
     }
 
     @Transactional
