@@ -109,7 +109,7 @@ export default function CodingBattle() {
         return new Promise((resolve, reject) => {
             intervalId = setInterval(async () => {
                 try{
-                    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/submissions`, {
+                    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/submissions/${submissionId}`, {
                         method: "GET",
                         credentials: 'include',
                         headers: {
