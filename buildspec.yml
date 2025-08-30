@@ -7,6 +7,7 @@ env:
     GOOGLE_CLIENT_ID: "coby-app/db-credentials:GOOGLE_CLIENT_ID"
     GOOGLE_CLIENT_SECRET: "coby-app/db-credentials:GOOGLE_CLIENT_SECRET"
     KAKAO_CLIENT_ID: "coby-app/db-credentials:KAKAO_CLIENT_ID"
+    REACT_APP_API_URL: "coby-app/db-credentials:REACT_APP_API_URL"
 
 phases:
   install:
