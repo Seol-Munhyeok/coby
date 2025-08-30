@@ -50,7 +50,7 @@ phases:
       - echo "export GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" >> build_output/scripts/env.sh
       - echo "export GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}" >> build_output/scripts/env.sh
       - echo "export KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}" >> build_output/scripts/env.sh
-      - echo "export REACT_APP_API_URL=${REACT_APP_API_URL} >> build_output/scripts/env.sh"
+      - echo "export REACT_APP_API_URL=${REACT_APP_API_URL}" >> build_output/scripts/env.sh
       - chmod +x build_output/scripts/*.sh
 
 
