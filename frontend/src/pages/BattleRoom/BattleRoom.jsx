@@ -123,7 +123,7 @@ export default function CodingBattle() {
                     }
                     const data = await res.json();
 
-                    if(data.status !== "Pending"){
+                    if(data.result !== "Pending"){
                         clearInterval(intervalId);
                         resolve(data);
                     }
@@ -147,10 +147,13 @@ export default function CodingBattle() {
         setIsLoading(true);
         setElapsedTime(0);
         startTimeRef.current = Date.now();
-        setExecutionResult('코드 실행 중...'); // Update execution result on submission
+        setExecutionResult('코드 실행 중...');
+
+        // 타이머 변수를 선언
+        let timerInterval = null;
 
         // 경과 시간 업데이트 시작
-        connectTimeRef.current = setInterval(() => {
+        timerInterval = setInterval(() => {
             const elapsed = (Date.now() - (startTimeRef.current || 0)) / 1000;
             setElapsedTime(parseFloat(elapsed.toFixed(1)));
         }, 100);
@@ -162,7 +165,6 @@ export default function CodingBattle() {
                 return;
             }
 
-            
             const submissionData = {
                 userId: parseInt(userId, 10),
                 problemId: problemId,
@@ -170,9 +172,6 @@ export default function CodingBattle() {
                 language: languageRef.current.value,
                 sourceCode: editorRef.current.getValue(),
             };
-
-            console.log("Submitting data:", submissionData); // 이 부분을 추가
-
 
             const response = await fetch(`${process.env.REACT_APP_API_URL}/api/submissions`, {
                 method: "POST",
@@ -183,53 +182,43 @@ export default function CodingBattle() {
                 body: JSON.stringify(submissionData),
             });
 
-            console.info(editorRef.current.getValue(), languageRef.current.value);
-
             if (!response.ok) {
                 throw new Error("서버 응답 실패");
             }
             const accept = await response.json();
-            console.log("서버 응답:", accept);
 
-            await delay(15000); // 15초 대기
-
+            // 불필요한 delay(15000)를 제거하고
+            // pollSubmissionResult 함수가 끝날 때까지 기다립니다.
             const result = await pollSubmissionResult(accept.submissionId);
 
-            // 요청 성공 시
-            clearInterval(timerInterval);
-            setTimeout(() => {
-                setIsLoading(false);
-                showModal(
-                   "제출 완료",
+            setIsLoading(false);
+            showModal(
+                "제출 완료",
                 <>
-                        코드가 성공적으로 제출되었습니다.<br />
-                        결과: {result.result || '정보 없음'}<br />
-                        평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
+                    코드가 성공적으로 제출되었습니다.<br />
+                    결과: {result.result || '정보 없음'}<br />
+                    평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
                     평균 메모리 사용: {result.avg_memory || '정보 없음'} MB
                 </>,
-                 "info"
-                );
-                setExecutionResult(
+                "info"
+            );
+            setExecutionResult(
                 <>
-                        코드가 성공적으로 제출되었습니다.<br />
-                        결과: {result.result || '정보 없음'}<br />
-                        평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
+                    코드가 성공적으로 제출되었습니다.<br />
+                    결과: {result.result || '정보 없음'}<br />
+                    평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
                     평균 메모리 사용: {result.avg_memory || '정보 없음'} MB
                 </>,
-                 "info"); // Assuming 'result.output'
-            }, 500);
+                "info");
 
         } catch (error) {
-            // if (connectTimeRef.current) {
-            //     clearInterval(connectTimeRef.current);
-            // }
             setIsLoading(false);
             console.error("제출 중 오류:", error);
             showModal("제출 오류", "코드 실행 중 오류가 발생했습니다: " + error.message, "error");
             setExecutionResult("코드 실행 중 오류가 발생했습니다: " + error.message);
         } finally {
-            if (connectTimeRef.current) clearInterval(connectTimeRef.current);
-            // if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+            // 성공하든 실패하든 여기서 타이머를 멈춥니다.
+            if (timerInterval) clearInterval(timerInterval);
         }
     };
 
