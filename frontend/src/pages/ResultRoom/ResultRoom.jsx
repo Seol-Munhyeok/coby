@@ -57,6 +57,9 @@ function ResultRoom() {
     const [roomDetails, setRoomDetails] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // 점수 애니메이션 트리거 상태 추가
+    const [triggerScoreAnimation, setTriggerScoreAnimation] = useState(false);
+
     // 컨텍스트 메뉴 관련 훅
     const {
         showContextMenu,
@@ -123,6 +126,16 @@ function ResultRoom() {
         };
     }, [roomId, userId, leaveRoom]);
 
+    // 방 정보를 모두 불러온 후, 2초 뒤에 애니메이션 시작
+    useEffect(() => {
+        if (!loading && roomDetails) {
+            const timer = setTimeout(() => {
+                setTriggerScoreAnimation(true);
+            }, 2000); // 2초 딜레이
+            return () => clearTimeout(timer);
+        }
+    }, [loading, roomDetails]);
+
 
     const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
     const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
@@ -169,14 +182,16 @@ function ResultRoom() {
             return users.find(user => user.userId === userId);
         });
 
-    const currentPlayers = uniqueUsers.map(user => ({
+    const currentPlayers = uniqueUsers.map((user, index) => ({
         name: user.nickname,
         userId: user.userId,
         avatarInitials:
             user.nickname.charAt(0).toUpperCase() + (user.nickname.charAt(1) || '').toUpperCase(),
-        tier: '다이아',
-        level: 'Lv.1',
+        tier: '골드',
         avatarColor: 'bg-blue-700',
+        // 점수 데이터 추가 (예시)
+        oldScore: 1520, // 기존 점수
+        newScore: 1545 - (index * 5), // 새로 획득한 점수를 반영한 최종 점수
     }));
 
     // 최대 참가자 수에 맞춰 빈 슬롯을 포함한 players 배열을 생성합니다.
@@ -334,6 +349,10 @@ function ResultRoom() {
                                         player={player}
                                         handlePlayerCardClick={player.isEmpty ? null : handlePlayerCardClick}
                                         showReadyStatus = {false}
+                                        // [TODO] 애니메이션 props 전달
+                                        // oldScore={player.oldScore}
+                                        // newScore={player.newScore}
+                                        // startAnimation={triggerScoreAnimation}
                                     />
                                 ))}
                             </div>
