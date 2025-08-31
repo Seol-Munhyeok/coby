@@ -5,7 +5,6 @@ import Login from "./pages/Login/Login";
 import NicknamePopup from "./pages/NickName/NicknamePopup";
 import MainPage from "./pages/Main/MainPage";
 import WaitingRoom from "./pages/WaitingRoom/WaitingRoom";
-import MyPage from "./pages/MyPage/MyPage";
 import BattleRoom from "./pages/BattleRoom/BattleRoom";
 import ResultRoom from "./pages/ResultRoom/ResultRoom";
 import WebSocketLayout from "./pages/WebSocket/WebSocketLayout";
@@ -21,7 +20,6 @@ const Router = () => {
       <Route element={<AuthLayout />}>
         <Route path="/nickname" element={<NicknamePopup />} />
         <Route path="/mainpage" element={<MainPage />} />
-        <Route path="/myPage" element={<MyPage />} />
 
         {/* WebSocket이 필요한 라우트들을 WebSocketProvider로 감쌉니다. */}
         <Route element={<WebSocketLayout />}>
