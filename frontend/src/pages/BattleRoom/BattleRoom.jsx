@@ -65,13 +65,23 @@ export default function CodingBattle() {
     //const wsRef = useRef(null);
     const stompClientRef = useRef(null);
 
-    const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
-    const nickname = user?.nickname || '게스트';
+    // AuthContext에서 user 정보 가져오기
+    const { user } = useAuth(); 
+    const userNickname = user?.nickname || '게스트';
     const userId = user?.id || 0
-    console.log("id =" + userId)
+    const userPreferredLanguage = user?.preferredLanguage || 'python';
 
-    // 현재 사용자 닉네임을 가져옵니다.
-    const currentUser = nickname || '게스트';
+        
+    useEffect(() => {
+        // useRef 값 초기화 (DOM이 마운트된 후에 접근)
+        if (languageRef.current) {
+            // 사용자의 선호 언어로 초기값을 설정합니다.
+            languageRef.current.value = userPreferredLanguage;
+        }
+    }, [userPreferredLanguage]); // userPreferredLanguage가 변경될 때도 이 효과가 다시 실행됩니다.
+
+    
+    console.log("id =" + userId)
 
 
     const showModal = (title, message, type = 'info') => {
@@ -269,15 +279,6 @@ export default function CodingBattle() {
         return () => {
             clearInterval(intervalRef.current);
         };
-    }, []);
-    useEffect(() => {
-
-        // useRef 값 초기화 (DOM이 마운트된 후에 접근)
-        
-        
-        if (languageRef.current) {
-            languageRef.current.value = "python"; // 예시 언어
-        }
     }, []);
 
     // Progress bar and time display useEffect (domTimerRef 사용으로 수정)
@@ -651,7 +652,7 @@ export default function CodingBattle() {
 
                     <div className="flex items-center">
                         <div className={`BR-player-avatar bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold ${isFeverTime ? 'fever-time' : ''}`}>나</div>
-                        <div className="ml-2 text-sm font-medium">{currentUser}</div>
+                        <div className="ml-2 text-sm font-medium">{userNickname}</div>
                     </div>
                 </div>
             </header>
@@ -778,7 +779,7 @@ export default function CodingBattle() {
                                     <div className="flex-1 h-full rounded-lg overflow-hidden">
                                         <Editor
                                             height="100%"
-                                            defaultLanguage="python"
+                                            defaultLanguage={userPreferredLanguage}
                                             defaultValue={defaultCode}
                                             theme="vs-dark"
                                             onMount={handleEditorDidMount} // onMount 핸들러 연결
