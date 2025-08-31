@@ -169,6 +169,7 @@ function MainPage() {
                     <div className="lg:col-span-1 space-y-8">
                         <MyCard />
                         <TierInfo />
+                        <RecentMatches/> {/* 최근 전적 UI 삽입 */}
                     </div>
 
                     {/* Right Section - Ranking and Game Participation */}
