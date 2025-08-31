@@ -4,6 +4,36 @@
  */
 import React from 'react';
 import '../WaitingRoom.css';
+// 1. TierInfo.jsx에서 뱃지 컴포넌트들을 import 합니다.
+import {
+  BronzeTierBadge,
+  SilverTierBadge,
+  GoldTierBadge,
+  PlatinumTierBadge,
+  DiamondTierBadge,
+  MasterTierBadge
+} from '../../Main/TierInfo';
+
+// 2. player.tier 값에 따라 적절한 뱃지를 반환하는 헬퍼 함수를 만듭니다.
+const renderTierBadge = (tier) => {
+  switch (tier) {
+    case '브론즈':
+      return <BronzeTierBadge />;
+    case '실버':
+      return <SilverTierBadge />;
+    case '골드':
+      return <GoldTierBadge />;
+    case '플래티넘':
+      return <PlatinumTierBadge />;
+    case '다이아몬드':
+      return <DiamondTierBadge />;
+    case '마스터':
+      return <MasterTierBadge />;
+    default:
+      // 혹시 모를 기본값으로 실버 티어를 설정합니다.
+      return <GoldTierBadge />;
+  }
+};
 
 // showReadyStatus prop을 추가하고 기본값을 true로 설정합니다.
 function PlayerCard({ player, handlePlayerCardClick, showReadyStatus = true }) {
@@ -37,11 +67,9 @@ function PlayerCard({ player, handlePlayerCardClick, showReadyStatus = true }) {
         </div>
       </div>
       <h3 className="font-medium  text-center">{player.name}</h3>
-      <div className="flex items-center mt-1">
-        <div className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-1">
-          <span className="text-[0.6rem] font-bold text-blue-200">{player.tier}</span>
-        </div>
-        <span className="text-xs waitingRoom-text">{player.level}</span>
+      {/* 3. 기존 티어 UI를 새로운 뱃지 렌더링 코드로 교체합니다. */}
+      <div className="flex items-center mt-1 h-6"> {/* h-6으로 높이를 고정하여 UI 떨림 방지 */}
+        {renderTierBadge(player.tier)}
       </div>
       {/* showReadyStatus가 true일 때만 아래 div 블록이 렌더링됩니다. */}
       {showReadyStatus && (

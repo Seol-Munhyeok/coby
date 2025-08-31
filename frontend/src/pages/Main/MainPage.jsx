@@ -11,6 +11,7 @@ import MyCard from './MyCard';
 import TierInfo from './TierInfo';
 import RankCard from './RankCard';
 import RoomList from './RoomList';
+import RecentMatches from './RecentMatches';
 
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
@@ -95,9 +96,8 @@ function MainPage() {
         }
     };
 
-
-    const enterMypageBtn = () => {
-        navigate('/myPage');
+    const enterSettingBtn = () => {
+        alert("미구현")
     };
 
     const enterloginBtn = () => {
@@ -149,10 +149,7 @@ function MainPage() {
                         {/* User Menu Dropdown */}
                         {isUserMenuOpen && (
                             <div id="userMenu" ref={userMenuRef} className="absolute right-4 mt-32 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                <button type="button" className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100" onClick={enterMypageBtn}>
-                                    <i className="fas fa-user mr-2"></i> 마이페이지
-                                </button>
-                                <button type="button" className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100" onClick={enterloginBtn}>
+                                <button type="button" className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100" onClick={enterSettingBtn}>
                                     <i className="fas fa-cog mr-2"></i> 설정
                                 </button>
                                 <div className="border-t border-gray-200 my-1"></div>
@@ -169,9 +166,10 @@ function MainPage() {
             <main className="container mx-auto px-4 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Section - My Card & Tier Info */}
-                    <div className="lg:col-span-1">
+                    <div className="lg:col-span-1 space-y-8">
                         <MyCard />
                         <TierInfo />
+                        <RecentMatches/> {/* 최근 전적 UI 삽입 */}
                     </div>
 
                     {/* Right Section - Ranking and Game Participation */}
