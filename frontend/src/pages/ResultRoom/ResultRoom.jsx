@@ -56,7 +56,7 @@ function ResultRoom() {
     // 방 정보 상태와 로딩 상태를 관리합니다.
     const [roomDetails, setRoomDetails] = useState(null);
     const [loading, setLoading] = useState(true);
-
+    const [problem, setProblem] = useState(null);
     // 점수 애니메이션 트리거 상태 추가
     const [triggerScoreAnimation, setTriggerScoreAnimation] = useState(false);
 
@@ -86,11 +86,13 @@ function ResultRoom() {
 
     // 방 정보를 불러오는 useEffect 훅
     useEffect(() => {
-        const fetchRoomDetails = async () => {
+        const fetchRoomAndProblemDetails = async () => {
             try {
                 const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms`);
                 const allRooms = response.data;
                 const currentRoom = allRooms.find(room => room.id.toString() === roomId);
+                const problemResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
+                setProblem(problemResponse.data);
 
                 if (currentRoom) {
                     setRoomDetails(currentRoom);
@@ -109,7 +111,7 @@ function ResultRoom() {
             }
         };
         if (roomId) {
-            fetchRoomDetails();
+            fetchRoomAndProblemDetails();
         }
     }, [roomId, navigate]);
 
@@ -360,14 +362,11 @@ function ResultRoom() {
                             {/* 버튼들이 있던 자리는 비워짐 */}
                         </div>
 
-                        {/* 중간 열: 문제 설명*/}
                         <div className="w-1/2">
                             <div className="result-card p-6 flex flex-col" style={{ height: '600px', overflowY: 'auto' }}>
-                                <h3 className="text-xl font-bold mb-4">문제: ###</h3>
+                                <h3 className="text-xl font-bold mb-4">문제: {problem?.title || '문제 정보를 불러올 수 없습니다.'}</h3>
                                 <div className="text-gray-300 space-y-4">
-                                    <p> 테스트1 </p>
-                                    <p> 테스트2 </p>
-
+                                    <p className="whitespace-pre-wrap">{problem?.content || '문제 내용이 없습니다.'}</p>
                                 </div>
                             </div>
                         </div>
