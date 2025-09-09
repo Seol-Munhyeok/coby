@@ -120,10 +120,7 @@ export default function CodingBattle() {
                 try{
                     const res = await fetch(`${process.env.REACT_APP_API_URL}/api/submissions/${submissionId}`, {
                         method: "GET",
-                        credentials: 'include',
-                        headers: {
-                            "Content-Type": "application/json",
-                        }
+                        credentials: 'include'
                     });
 
                     if (!res.ok){
@@ -134,6 +131,7 @@ export default function CodingBattle() {
 
                     if(data.result !== "Pending"){
                         clearInterval(intervalId);
+                        console.log("Pending 외의 상태 수신: ",data.status, data.details)
                         resolve(data);
                     }
                 } catch(err) {

@@ -46,7 +46,7 @@ public class SubmissionService {
     public SubmissionResponseDto getSubmissionDtoById(Long submissionId) {
         submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 ID의 Submission을 찾을 수 없습니다: " + submissionId));
-
+        System.out.println("🔥 확인 중인 제출: " + submission);
         return convertToDto(submission);
     }
 
@@ -84,6 +84,7 @@ public class SubmissionService {
             RoomResultDto winnerDto = RoomResultDto.builder()
                     .roomId(roomId)
                     .userId(userId)
+                    .submissionId(submissionId)
                     .nickname(submission.getUser().getNickname())
                     .finishedAt(LocalDateTime.now())
                     .build();

@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public record RoomResultDto(
         Long roomId,
         Long userId,
+        Long submissionId,
         String nickname,
         LocalDateTime finishedAt
 ) {}
