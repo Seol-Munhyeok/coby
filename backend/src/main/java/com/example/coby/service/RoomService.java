@@ -235,4 +235,9 @@ public class RoomService {
                 .map(RoomUser::getUserId)
                 .orElse(null);
     }
+
+    @Transactional
+    public void finishRoom(Long roomId, Long winnerId) {
+        roomRepository.updateWinnerAndFinish(roomId, winnerId, LocalDateTime.now(), 2);
+    }
 }
