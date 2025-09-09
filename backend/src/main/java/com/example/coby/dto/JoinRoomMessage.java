@@ -8,5 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record JoinRoomMessage(
         String type,    // "join_room"
         String roomId,
-        String userId
+        String userId,
+        String userNickname
 ) {}
