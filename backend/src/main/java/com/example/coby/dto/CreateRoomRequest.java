@@ -1,5 +1,6 @@
 package com.example.coby.dto;
 
+import com.example.coby.entity.RoomStatus;
 import lombok.Data;
 
 @Data
@@ -9,7 +10,7 @@ public class CreateRoomRequest {
     private String timeLimit;
     private int maxParticipants;
     private int currentPart;
-    private int status;
+    private RoomStatus status;
     private boolean isPrivate;
     private String password;
     private boolean itemMode;

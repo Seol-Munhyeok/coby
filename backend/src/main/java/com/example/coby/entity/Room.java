@@ -42,8 +42,10 @@ public class Room {
 
     private LocalDateTime createdAt;      // created_at
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private int status;                   // status (0: 대기, 1: 진행, 2: 결과)
+    @Builder.Default
+    private RoomStatus status = RoomStatus.WAITING;                   // status (0: 대기, 1: 진행, 2: 결과)
 
     @ManyToOne
     @JoinColumn(name = "problem_id")
@@ -57,4 +59,8 @@ public class Room {
 
     @Column(nullable = false)
     private int maxCapacity = 4;          // ✅ DB에 존재하므로 필수 추가
+
+    private Long winnerId;
+
+    private LocalDateTime finishedAt;
 }
