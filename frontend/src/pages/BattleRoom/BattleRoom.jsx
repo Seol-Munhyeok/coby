@@ -110,7 +110,7 @@ export default function CodingBattle() {
     const [isLoadingProblem, setIsLoadingProblem] = useState(true);
     // 상대방 정보는 더미 데이터로 시작하며, 실제로는 서버에서 받아와야 합니다.
     const [opponents, setOpponents] = useState([]);
-    const [problemId, setProblemId] = useState(1); // TODO: set actual problem ID
+    const [problemId, setProblemId] = useState(null);
 
     const pollSubmissionResult = async (submissionId) => {
         let intervalId;
@@ -251,6 +251,7 @@ export default function CodingBattle() {
 
                 const data = await response.json();
                 setProblem(data);
+                setProblemId(data.id);
             } catch (error) {
                 console.error("문제 불러오기 오류:", error);
                 showModal("오류", `문제 정보를 불러오는 중 오류가 발생했습니다: ${error.message}`, "error");
@@ -292,6 +293,7 @@ export default function CodingBattle() {
         // domTimerRef.current가 유효한 DOM 요소를 참조하는지 확인
         if (domTimerRef.current) {
             domTimerRef.current.textContent = `${minutes}:${seconds}`;
+
         }
     }, [remainingTime]);
 

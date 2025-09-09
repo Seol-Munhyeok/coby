@@ -5,7 +5,7 @@ set -e
 JAR_NAME="coby-0.0.1-SNAPSHOT.jar"
 EC2_USER="ubuntu"
 EC2_HOST="54.180.197.9"
-EC2_KEY_PATH="/d/coby_bastion.pem"
+EC2_KEY_PATH="C:\Users\dasom\Desktop\coby_bastion.pem"
 REACT_API_URL="http://54.180.197.9:8080"
 
 # === 로그 출력 함수 ===
@@ -47,7 +47,7 @@ cd ..
 # === [3] Spring Boot 빌드 ===
 echo "🛠️ [2/4] Spring Boot JAR 빌드 중..."
 cd backend || exit
-export JAVA_HOME="/c/Program Files/Java/jdk-17"
+export JAVA_HOME="/c/Program Files/Java/jdk-20"
 export PATH="$JAVA_HOME/bin:$PATH"
 ./gradlew clean build -x test
 cd ..
