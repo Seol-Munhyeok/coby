@@ -16,6 +16,8 @@ function ResultRoom() {
     const [notification, setNotification] = useState(null);
     const { roomId } = useParams();
     const { user } = useAuth();
+    const [problem, setProblem] = useState(null);
+    const [submissionCode, setSubmissionCode] = useState('');
 
     const currentUser = user?.nickname || '게스트';
     const userId = user?.id || 0;
