@@ -1,6 +1,7 @@
 package com.example.coby.dto;
 
 import com.example.coby.entity.Room;
+import com.example.coby.entity.RoomStatus;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -16,7 +17,7 @@ public record RoomResponse(
         boolean isPrivate,
         boolean itemMode,
         LocalDateTime createdAt,
-        int status
+        RoomStatus status
 ) {
     public static RoomResponse from(Room room) {
         return RoomResponse.builder()

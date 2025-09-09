@@ -1,11 +1,9 @@
 package com.example.coby.service;
 
+import com.example.coby.dto.RoomResultDto;
 import com.example.coby.dto.SubmissionRequestDto;
 import com.example.coby.dto.SubmissionResponseDto;
-import com.example.coby.entity.submission;
-import com.example.coby.entity.Problem;
-import com.example.coby.entity.Room;
-import com.example.coby.entity.User;
+import com.example.coby.entity.*;
 import com.example.coby.property.awsProperties;
 import com.example.coby.repository.SubmissionRepository;
 import com.example.coby.repository.ProblemRepository;
@@ -17,6 +15,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -40,6 +39,8 @@ public class SubmissionService {
     private final ProblemRepository problemRepository;
     private final RoomRepository roomRepository;
     private final awsProperties awsProperties;
+    private final RoomService roomService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional(readOnly = true)
     public SubmissionResponseDto getSubmissionDtoById(Long submissionId) {
@@ -69,6 +70,26 @@ public class SubmissionService {
         submissionRepository.save(submission);
         log.info("Submission ID {}의 상태가 '{}'(으)로 업데이트되었습니다.", submissionId,
                 resultDto.getResult());
+
+        Room room = submission.getRoom();
+        if (room.getStatus() == RoomStatus.RESULT) {
+            return;
+        }
+
+        if ("Accepted".equals(resultDto.getResult()) && room.getWinnerId() == null) {
+            Long roomId = room.getId();
+            Long userId = submission.getUser().getId();
+            roomService.finishRoom(roomId, userId);
+
+            RoomResultDto winnerDto = RoomResultDto.builder()
+                    .roomId(roomId)
+                    .userId(userId)
+                    .nickname(submission.getUser().getNickname())
+                    .finishedAt(LocalDateTime.now())
+                    .build();
+
+            messagingTemplate.convertAndSend("/topic/room/" + roomId + "/result", winnerDto);
+        }
     }
 
     public String processWrapping(String sourceCode, String language,Long user_id, Long problem_id) {
