@@ -36,9 +36,8 @@ export default function CodingBattle() {
     const [elapsedTime, setElapsedTime] = useState(0);
     const [isFeverTime, setIsFeverTime] = useState(false);
     // State for the main battle timer
-    const TOTAL_TIME_SECONDS = 15 * 60; // 15 minutes in seconds (your current setup)
-    const DISPLAY_TOTAL_TIME_SECONDS = 60 * 60; // 1 hour for the display in the progress bar
-    const [remainingTime, setRemainingTime] = useState(TOTAL_TIME_SECONDS);
+    const [totalTimeSeconds, setTotalTimeSeconds] = useState(null);
+    const [remainingTime, setRemainingTime] = useState(null);
     const [progressBarWidth, setProgressBarWidth] = useState(100);
 
     // Drawer state: 0: 완전히 닫힘, 1: 일부 열림, 2: 완전 열림
@@ -66,13 +65,23 @@ export default function CodingBattle() {
     //const wsRef = useRef(null);
     const stompClientRef = useRef(null);
 
-    const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
-    const nickname = user?.nickname || '게스트';
-    const userId = user.id
-    console.log("id =" + userId)
+    // AuthContext에서 user 정보 가져오기
+    const { user } = useAuth(); 
+    const userNickname = user?.nickname || '게스트';
+    const userId = user?.id || 0
+    const userPreferredLanguage = user?.preferredLanguage || 'python';
 
-    // 현재 사용자 닉네임을 가져옵니다.
-    const currentUser = nickname || '게스트';
+        
+    useEffect(() => {
+        // useRef 값 초기화 (DOM이 마운트된 후에 접근)
+        if (languageRef.current) {
+            // 사용자의 선호 언어로 초기값을 설정합니다.
+            languageRef.current.value = userPreferredLanguage;
+        }
+    }, [userPreferredLanguage]); // userPreferredLanguage가 변경될 때도 이 효과가 다시 실행됩니다.
+
+    
+    console.log("id =" + userId)
 
 
     const showModal = (title, message, type = 'info') => {
@@ -120,7 +129,7 @@ export default function CodingBattle() {
                     }
                     const data = await res.json();
 
-                    if(data.status !== "Pending"){
+                    if(data.result !== "Pending"){
                         clearInterval(intervalId);
                         console.log("Pending 외의 상태 수신: ",data.status, data.details)
                         resolve(data);
@@ -145,10 +154,13 @@ export default function CodingBattle() {
         setIsLoading(true);
         setElapsedTime(0);
         startTimeRef.current = Date.now();
-        setExecutionResult('코드 실행 중...'); // Update execution result on submission
+        setExecutionResult('코드 실행 중...');
+
+        // 타이머 변수를 선언
+        let timerInterval = null;
 
         // 경과 시간 업데이트 시작
-        connectTimeRef.current = setInterval(() => {
+        timerInterval = setInterval(() => {
             const elapsed = (Date.now() - (startTimeRef.current || 0)) / 1000;
             setElapsedTime(parseFloat(elapsed.toFixed(1)));
         }, 100);
@@ -160,7 +172,6 @@ export default function CodingBattle() {
                 return;
             }
 
-            
             const submissionData = {
                 userId: parseInt(userId, 10),
                 problemId: problemId,
@@ -168,9 +179,6 @@ export default function CodingBattle() {
                 language: languageRef.current.value,
                 sourceCode: editorRef.current.getValue(),
             };
-
-            console.log("Submitting data:", submissionData); // 이 부분을 추가
-
 
             const response = await fetch(`${process.env.REACT_APP_API_URL}/api/submissions`, {
                 method: "POST",
@@ -181,53 +189,43 @@ export default function CodingBattle() {
                 body: JSON.stringify(submissionData),
             });
 
-            console.info(editorRef.current.getValue(), languageRef.current.value);
-
             if (!response.ok) {
                 throw new Error("서버 응답 실패");
             }
             const accept = await response.json();
-            console.log("서버 응답:", accept);
 
-            await delay(15000); // 15초 대기
-
+            // 불필요한 delay(15000)를 제거하고
+            // pollSubmissionResult 함수가 끝날 때까지 기다립니다.
             const result = await pollSubmissionResult(accept.submissionId);
 
-            // 요청 성공 시
-            clearInterval(timerInterval);
-            setTimeout(() => {
-                setIsLoading(false);
-                showModal(
-                   "제출 완료",
+            setIsLoading(false);
+            showModal(
+                "제출 완료",
                 <>
-                        코드가 성공적으로 제출되었습니다.<br />
-                        결과: {result.result || '정보 없음'}<br />
-                        평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
+                    코드가 성공적으로 제출되었습니다.<br />
+                    결과: {result.result || '정보 없음'}<br />
+                    평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
                     평균 메모리 사용: {result.avg_memory || '정보 없음'} MB
                 </>,
-                 "info"
-                );
-                setExecutionResult(
+                "info"
+            );
+            setExecutionResult(
                 <>
-                        코드가 성공적으로 제출되었습니다.<br />
-                        결과: {result.result || '정보 없음'}<br />
-                        평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
+                    코드가 성공적으로 제출되었습니다.<br />
+                    결과: {result.result || '정보 없음'}<br />
+                    평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
                     평균 메모리 사용: {result.avg_memory || '정보 없음'} MB
                 </>,
-                 "info"); // Assuming 'result.output'
-            }, 500);
+                "info");
 
         } catch (error) {
-            // if (connectTimeRef.current) {
-            //     clearInterval(connectTimeRef.current);
-            // }
             setIsLoading(false);
             console.error("제출 중 오류:", error);
             showModal("제출 오류", "코드 실행 중 오류가 발생했습니다: " + error.message, "error");
             setExecutionResult("코드 실행 중 오류가 발생했습니다: " + error.message);
         } finally {
-            if (connectTimeRef.current) clearInterval(connectTimeRef.current);
-            // if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+            // 성공하든 실패하든 여기서 타이머를 멈춥니다.
+            if (timerInterval) clearInterval(timerInterval);
         }
     };
 
@@ -280,19 +278,10 @@ export default function CodingBattle() {
             clearInterval(intervalRef.current);
         };
     }, []);
-    useEffect(() => {
-
-        // useRef 값 초기화 (DOM이 마운트된 후에 접근)
-        
-        
-        if (languageRef.current) {
-            languageRef.current.value = "python"; // 예시 언어
-        }
-    }, []);
 
     // Progress bar and time display useEffect (domTimerRef 사용으로 수정)
     useEffect(() => {
-        const newWidth = (remainingTime / TOTAL_TIME_SECONDS) * 100;
+        const newWidth = (remainingTime / totalTimeSeconds) * 100;
         setProgressBarWidth(newWidth);
 
         const minutes = String(Math.floor(remainingTime / 60)).padStart(2, '0');
@@ -586,6 +575,48 @@ export default function CodingBattle() {
         }, true);
     }, []);
 
+
+    //roomId로 방의 정보를 가져오는 코드
+    useEffect(() => {
+        const fetchRoomData = async () => {
+            try {
+                const apiUrl = `${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`;
+                const response = await fetch(apiUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('✅ API 응답 데이터:', data);
+
+                // 응답 데이터에 timeLimit 값이 문자열로 있는지 확인합니다.("30분"의 string으로 반환되기 때문)
+                if (data && typeof data.timeLimit === 'string') {
+                    // parseInt를 사용해 문자열의 시작 부분에서 숫자만 추출합니다. (예: "30분" -> 30)
+                    const extractedTime = parseInt(data.timeLimit, 10);
+
+                    // 성공적으로 숫자를 추출했다면(NaN이 아니라면) 60(초)를 곱하여 상태를 업데이트합니다.
+                    if (!isNaN(extractedTime)) {
+                        setTotalTimeSeconds(extractedTime * 60);
+                        setRemainingTime(extractedTime * 60)
+                    } else {
+                        console.warn(`⚠️ timeLimit 값('${data.timeLimit}')에서 숫자를 추출할 수 없습니다.`);
+                    }
+                    } else {
+                    
+                    console.warn('⚠️ 응답 데이터에 유효한 timeLimit 값이 없습니다.');
+                }
+
+            } catch (error) {
+                console.error('❌ 데이터를 가져오는 중 오류 발생:', error);
+            }
+        };
+
+        fetchRoomData();
+        
+    }, []); 
+
+
     return (
         <div className={`min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans`}  onContextMenu={(e) => e.preventDefault()}>
             <header className="bg-slate-800 py-4 px-6 flex justify-between items-center">
@@ -606,7 +637,7 @@ export default function CodingBattle() {
                     <div className="flex justify-between w-64 text-sm mt-1">
                         {/* domTimerRef를 span 요소에 연결 */}
                         <span ref={domTimerRef} className="BR-countdown-time text-orange-400 font-bold">{formatTime(remainingTime)}</span>
-                        <span className="BR-total-time text-slate-400">제한시간: {formatTime(DISPLAY_TOTAL_TIME_SECONDS)}</span>
+                        <span className="BR-total-time text-slate-400">제한시간: {formatTime(totalTimeSeconds)}</span>
                     </div>
                 </div>
 
@@ -619,7 +650,7 @@ export default function CodingBattle() {
 
                     <div className="flex items-center">
                         <div className={`BR-player-avatar bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold ${isFeverTime ? 'fever-time' : ''}`}>나</div>
-                        <div className="ml-2 text-sm font-medium">{currentUser}</div>
+                        <div className="ml-2 text-sm font-medium">{userNickname}</div>
                     </div>
                 </div>
             </header>
@@ -746,7 +777,7 @@ export default function CodingBattle() {
                                     <div className="flex-1 h-full rounded-lg overflow-hidden">
                                         <Editor
                                             height="100%"
-                                            defaultLanguage="python"
+                                            defaultLanguage={userPreferredLanguage}
                                             defaultValue={defaultCode}
                                             theme="vs-dark"
                                             onMount={handleEditorDidMount} // onMount 핸들러 연결

@@ -57,7 +57,8 @@ function WaitingRoom() {
 
     // 현재 사용자 닉네임을 가져오고, 없으면 기본값으로 '게스트' 를 사용합니다.
     const currentUser = nickname || '게스트';
-
+    const [showCountdown, setShowCountdown] = useState(false);
+    const [countdownNumber, setCountdownNumber] = useState(null);
     {/*const playerData = {
         [currentUser]: {
             avatar: currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase(),
@@ -136,6 +137,14 @@ function WaitingRoom() {
             return;
         }
 
+        // 방장만 게임 시작 메시지 전송
+        sendMessage(roomId, {
+            roomId,
+            userId,
+            nickname: currentUser,
+            profileUrl: user?.profileUrl || '',
+            content: '잠시 후, 게임이 시작됩니다...',
+        });
         startGame(roomId);
     };
 
@@ -181,27 +190,27 @@ function WaitingRoom() {
 
     // 게임 시작 신호가 오면 카운트다운 후 게임 페이지로 이동
     useEffect(() => {
+
         if (gameStart) {
-            const countdownMessages = ['잠시 후, 게임이 시작됩니다...', '5', '4', '3', '2', '1'];
-            if (isCurrentUserHost) {
-                countdownMessages.forEach((msg, idx) => {
-                    setTimeout(() => {
-                        sendMessage(roomId, {
-                            roomId,
-                            userId,
-                            nickname: currentUser,
-                            profileUrl: user?.profileUrl || '',
-                            content: msg,
-                        });
-                    }, idx * 1000);
+            setShowCountdown(true);
+            setCountdownNumber(5);
+
+            const interval = setInterval(() => {
+                setCountdownNumber(prevNumber => {
+                    if (prevNumber > 1) {
+                        return prevNumber - 1;
+                    } else {
+                        clearInterval(interval);
+                        setShowCountdown(false);
+                        navigate(`/gamepage/${roomId}`);
+                        return null;
+                    }
                 });
-            }
-            const timer = setTimeout(() => {
-                navigate(`/gamepage/${roomId}`);
-            }, countdownMessages.length * 1000);
-            return () => clearTimeout(timer);
+            }, 1000);
+
+            return () => clearInterval(interval);
         }
-    }, [gameStart, isCurrentUserHost, sendMessage, roomId, userId, currentUser, user, navigate]);
+    }, [gameStart, roomId, navigate]);
 
 
     // 선택한 플레이어에게 방장 권한을 위임
@@ -355,8 +364,7 @@ function WaitingRoom() {
         userId: user.userId,
         avatarInitials:
             user.nickname.charAt(0).toUpperCase() + (user.nickname.charAt(1) || '').toUpperCase(),
-        tier: '다이아',
-        level: 'Lv.1',
+        tier: '골드',
         isReady: user.isReady,
         avatarColor: 'bg-blue-700',
         isHost: user.isHost,
@@ -588,6 +596,13 @@ function WaitingRoom() {
                     type={notification.type}
                     onClose={() => setNotification(null)}
                 />
+            )}
+            {showCountdown && (
+                <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50">
+                    <div className="text-white text-9xl font-bold animate-pulse">
+                        {countdownNumber > 0 ? countdownNumber : 'GO!'}
+                    </div>
+                </div>
             )}
         </div>
     );

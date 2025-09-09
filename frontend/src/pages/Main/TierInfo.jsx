@@ -70,39 +70,47 @@ export const MasterTierBadge = () => (
     </div>
 );
 
-
-function TierInfo() {
+// 여기가 수정된 TierInfo 컴포넌트입니다.
+function TierInfo({ className }) {
     return (
-        <div className="p-6 bg-gray-50 border-t">
-            <h3 className="text-lg font-bold text-gray-800 mb-3">티어 정보</h3>
-            <div className="space-y-2">
-                <div className="flex items-center">
-                    <BronzeTierBadge />
-                    <span className="text-sm text-gray-600">0 ~ 1000 레이팅</span>
-                </div>
-                <div className="flex items-center">
-                    <SilverTierBadge />
-                    <span className="text-sm text-gray-600">1001 ~ 1500 레이팅</span>
-                </div>
-                <div className="flex items-center">
-                    <GoldTierBadge />
-                    <span className="text-sm text-gray-600">1501 ~ 2000 레이팅</span>
-                </div>
-                <div className="flex items-center">
-                    <PlatinumTierBadge />
-                    <span className="text-sm text-gray-600">2001 ~ 2500 레이팅</span>
-                </div>
-                <div className="flex items-center">
-                    <DiamondTierBadge />
-                    <span className="text-sm text-gray-600">2501 ~ 3000 레이팅</span>
-                </div>
-                <div className="flex items-center">
-                    <MasterTierBadge />
-                    <span className="text-sm text-gray-600">3001+ 레이팅</span>
+        <div className={`bg-white rounded-xl shadow-md overflow-hidden ${className}`}>
+            {/* 헤더 */}
+            <div className="p-4 bg-gray-50 border-b">
+                <h3 className="text-lg font-bold text-gray-800">티어 정보</h3>
+            </div>
+
+            {/* 콘텐츠 */}
+            <div className="p-6">
+                <div className="space-y-2">
+                    <div className="flex items-center">
+                        <BronzeTierBadge />
+                        <span className="text-sm text-gray-600">0 ~ 1000 레이팅</span>
+                    </div>
+                    <div className="flex items-center">
+                        <SilverTierBadge />
+                        <span className="text-sm text-gray-600">1001 ~ 1500 레이팅</span>
+                    </div>
+                    <div className="flex items-center">
+                        <GoldTierBadge />
+                        <span className="text-sm text-gray-600">1501 ~ 2000 레이팅</span>
+                    </div>
+                    <div className="flex items-center">
+                        <PlatinumTierBadge />
+                        <span className="text-sm text-gray-600">2001 ~ 2500 레이팅</span>
+                    </div>
+                    <div className="flex items-center">
+                        <DiamondTierBadge />
+                        <span className="text-sm text-gray-600">2501 ~ 3000 레이팅</span>
+                    </div>
+                    <div className="flex items-center">
+                        <MasterTierBadge />
+                        <span className="text-sm text-gray-600">3001+ 레이팅</span>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
+
 
 export default TierInfo;
