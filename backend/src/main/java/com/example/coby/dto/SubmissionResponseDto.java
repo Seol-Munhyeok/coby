@@ -13,7 +13,6 @@ public class SubmissionResponseDto {
     @JsonProperty("submission_id")
     private Long submissionId;
 
-    @JsonProperty("result")
-    private String status;
+    private String result;
     private String details;
 }
