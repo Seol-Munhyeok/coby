@@ -11,5 +11,5 @@ public record RoomResultDto(
         Long roomId,
         Long userId,
         String nickname,
-        LocalDateTime finishedAt
+        LocalDateTime submittedAt
 ) {}
