@@ -84,6 +84,7 @@ public class SubmissionService {
             RoomResultDto winnerDto = RoomResultDto.builder()
                     .roomId(roomId)
                     .userId(userId)
+                    .submissionId(submissionId)
                     .nickname(submission.getUser().getNickname())
                     .finishedAt(LocalDateTime.now())
                     .build();
