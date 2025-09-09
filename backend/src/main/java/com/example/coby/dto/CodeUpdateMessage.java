@@ -11,5 +11,6 @@ public record CodeUpdateMessage(
         String userId,
         int lineCount,   // code_update 메시지에 주로 사용
         //String code,     // submit_code 또는 code_update에 코드 내용 포함 시 사용
-        String language  // submit_code에 주로 사용
+        String language,  // submit_code에 주로 사용,
+        String userNickname
 ) {}

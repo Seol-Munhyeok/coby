@@ -68,7 +68,7 @@ export default function CodingBattle() {
     // AuthContext에서 user 정보 가져오기
     const { user } = useAuth(); 
     const userNickname = user?.nickname || '게스트';
-    const userId = user?.id || 0
+    const userId = user?.id || 99
     const userPreferredLanguage = user?.preferredLanguage || 'python';
 
         
@@ -430,7 +430,8 @@ export default function CodingBattle() {
                 body: JSON.stringify({
                     type: "join_room",
                     roomId: roomId,
-                    userId: generatedUserId // <-- 생성된 ID 사용
+                    userId: generatedUserId, // <-- 생성된 ID 사용
+                    userNickname: userNickname
                 })
             });
 
@@ -461,7 +462,7 @@ export default function CodingBattle() {
                                 // 새로운 상대방이 방에 들어와서 코드를 업데이트한 경우 추가
                                 const newOpponent = {
                                     id: receivedMessage.userId,
-                                    name: `User ${receivedMessage.userId.substring(receivedMessage.userId.length - 4)}`,
+                                    name: receivedMessage.userNickname || receivedMessage.userId,
                                     avatarInitial: receivedMessage.userId.charAt(0).toUpperCase(),
                                     progress: "0%",
                                     lineCount: receivedMessage.lineCount || 0,
@@ -506,7 +507,7 @@ export default function CodingBattle() {
                         .slice(0, 3) // 최대 3명으로 제한
                         .map(p => ({
                             id: p.userId,
-                            name: p.userName || `User ${p.userId.substring(p.userId.length - 4)}`,
+                            name: p.userNickname || `User ${p.userId.substring(p.userId.length - 4)}`,
                             avatarInitial: p.userName ? p.userName.charAt(0).toUpperCase() : '?',
                             progress: `${(p.progress || 0).toFixed(0)}%`,
                             lineCount: p.lineCount || 0
@@ -555,6 +556,7 @@ export default function CodingBattle() {
                         roomId: roomId,
                         userId: myUserId,
                         lineCount: currentLineCount,
+                        userNickname : userNickname,
                         code: value, // 다른 클라이언트에 코드 내용을 보내 동기화할 수 있도록 포함
                     }),
                 });
