@@ -3,7 +3,7 @@ import './MainPage.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import axios from 'axios';
-import { useAuth } from '../AuthContext/AuthContext'; 
+import { useAuth } from '../AuthContext/AuthContext';
 import ToastNotification from '../../Common/components/ToastNotification';
 
 // 분리된 컴포넌트들 임포트
@@ -41,7 +41,7 @@ function MainPage() {
             setNotification({message: "방에서 강퇴되었습니다.", type: "success"});
             setTimeout(() => setNotification(null), 3000);
             navigate(location.pathname, { replace: true, state: {} });
-            
+
         }
     }, [location, navigate]);
 
