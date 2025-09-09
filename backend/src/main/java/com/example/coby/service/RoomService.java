@@ -238,6 +238,6 @@ public class RoomService {
 
     @Transactional
     public void finishRoom(Long roomId, Long winnerId) {
-        roomRepository.updateWinnerAndFinish(roomId, winnerId, LocalDateTime.now(), 2);
+        roomRepository.updateWinnerAndFinish(roomId, winnerId, LocalDateTime.now(), RoomStatus.RESULT);
     }
 }

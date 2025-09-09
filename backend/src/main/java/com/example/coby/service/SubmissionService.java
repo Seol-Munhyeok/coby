@@ -86,7 +86,7 @@ public class SubmissionService {
                     .userId(userId)
                     .submissionId(submissionId)
                     .nickname(submission.getUser().getNickname())
-                    .finishedAt(LocalDateTime.now())
+                    .submittedAt(LocalDateTime.now())
                     .build();
 
             messagingTemplate.convertAndSend("/topic/room/" + roomId + "/result", winnerDto);
