@@ -60,7 +60,9 @@ public class Room {
     @Column(nullable = false)
     private int maxCapacity = 4;          // ✅ DB에 존재하므로 필수 추가
 
+    @Column(nullable = true)
     private Long winnerId;
 
-    private LocalDateTime finishedAt;
+    @Column(nullable = true)
+    private LocalDateTime submittedAt;
 }

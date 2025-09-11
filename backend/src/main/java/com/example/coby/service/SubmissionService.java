@@ -72,13 +72,17 @@ public class SubmissionService {
                 resultDto.getResult());
 
         Room room = submission.getRoom();
-        if (room.getStatus() == RoomStatus.RESULT) {
-            return;
-        }
+//        if (room.getStatus() == RoomStatus.RESULT) {
+//            return;
+//        }
 
         if ("Accepted".equals(resultDto.getResult()) && room.getWinnerId() == null) {
             Long roomId = room.getId();
             Long userId = submission.getUser().getId();
+
+            log.info("승자 후보 감지: roomId={}, userId={}, nickname={}, submissionId={}",
+                    roomId, userId, submission.getUser().getNickname(), submissionId);
+
             roomService.finishRoom(roomId, userId);
 
             RoomResultDto winnerDto = RoomResultDto.builder()
@@ -86,8 +90,11 @@ public class SubmissionService {
                     .userId(userId)
                     .submissionId(submissionId)
                     .nickname(submission.getUser().getNickname())
-                    .finishedAt(LocalDateTime.now())
+                    .submittedAt(LocalDateTime.now())
                     .build();
+
+            log.info("승자 확정: roomId={}, winnerId={}, nickname={}, submissionId={}",
+                    roomId, userId, submission.getUser().getNickname(), submissionId);
 
             messagingTemplate.convertAndSend("/topic/room/" + roomId + "/result", winnerDto);
         }

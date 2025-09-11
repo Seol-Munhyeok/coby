@@ -1,6 +1,7 @@
 package com.example.coby.repository;
 
 import com.example.coby.entity.Room;
+import com.example.coby.entity.RoomStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,10 +16,10 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
     void updateCurrentPart(@Param("newCount") int newCount, @Param("roomId") Long roomId);
 
     @Modifying
-    @Query("update Room r set r.winnerId = :winnerId, r.finishedAt = :finishedAt, r.status = :status where r.id = :roomId")
+    @Query("update Room r set r.winnerId = :winnerId, r.submittedAt = :submittedAt, r.status = :status where r.id = :roomId")
     void updateWinnerAndFinish(@Param("roomId") Long roomId,
                                @Param("winnerId") Long winnerId,
-                               @Param("finishedAt") LocalDateTime finishedAt,
-                               @Param("status") int status);
+                               @Param("submittedAt") LocalDateTime submittedAt,
+                               @Param("status") RoomStatus status);
 
 }
