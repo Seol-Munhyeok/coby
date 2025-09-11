@@ -27,7 +27,7 @@ export default function CodingBattle() {
     const answerRef = useRef(null);
     const languageRef = useRef(null);
     const [myUserId, setMyUserId] = useState('');
-    
+
     const [currentLanguage, setCurrentLanguage] = useState('python');
     // 서버에서 받아오는 로딩창 변수
     const connectTimeRef = useRef(null);
@@ -59,19 +59,19 @@ export default function CodingBattle() {
 
     // Modal State for FullscreenPromptModal
     const [isFullscreenPromptOpen, setIsFullscreenPromptOpen] = useState(false);
-    
+
 
     // WebSocket 연결을 위한 ref
     //const wsRef = useRef(null);
     const stompClientRef = useRef(null);
 
     // AuthContext에서 user 정보 가져오기
-    const { user } = useAuth(); 
+    const { user } = useAuth();
     const userNickname = user?.nickname || '게스트';
     const userId = user?.id || 99
     const userPreferredLanguage = user?.preferredLanguage || 'python';
 
-        
+
     useEffect(() => {
         // useRef 값 초기화 (DOM이 마운트된 후에 접근)
         if (languageRef.current) {
@@ -80,7 +80,7 @@ export default function CodingBattle() {
         }
     }, [userPreferredLanguage]); // userPreferredLanguage가 변경될 때도 이 효과가 다시 실행됩니다.
 
-    
+
     console.log("id =" + userId)
 
 
@@ -282,6 +282,7 @@ export default function CodingBattle() {
 
     // Progress bar and time display useEffect (domTimerRef 사용으로 수정)
     useEffect(() => {
+        if (totalTimeSeconds === null || remainingTime === null) return; // 초기값이 null일 때 실행 방지
         const newWidth = (remainingTime / totalTimeSeconds) * 100;
         setProgressBarWidth(newWidth);
 
@@ -293,7 +294,7 @@ export default function CodingBattle() {
             domTimerRef.current.textContent = `${minutes}:${seconds}`;
 
         }
-    }, [remainingTime]);
+    }, [remainingTime, totalTimeSeconds]);
 
     // 언어 변경 핸들러
     const handleLanguageChange = () => {
@@ -317,6 +318,7 @@ export default function CodingBattle() {
 
     // Function to format time for display (e.g., 00:00:00 or 00:00)
     const formatTime = (totalSeconds) => {
+        if (totalSeconds === null) return "00:00"; // 초기값 null 처리
         const hours = Math.floor(totalSeconds / 3600);
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
@@ -411,7 +413,7 @@ export default function CodingBattle() {
         // 서버는 숫자 형태의 userId만 허용하므로 문자열로 변환
         const generatedUserId = userId ? String(userId) : Date.now().toString();
         setMyUserId(generatedUserId); // ID를 상태에 저장
-        
+
         const client = new Client({
             webSocketFactory: socketFactory,
             debug: (str) => {
@@ -517,6 +519,24 @@ export default function CodingBattle() {
                     console.log("Opponents state initialized/updated from room_participants:", newParticipants);
                 }
             });
+
+            // 승자 발생 메시지 구독
+            client.subscribe(`/topic/room/${roomId}/result`, (message) => {
+                const winnerMessage = JSON.parse(message.body);
+                console.log('🎉 승자 정보 수신:', winnerMessage);
+
+                // 승자 정보를 담아 모달을 띄웁니다.
+                showModal(
+                    "게임 종료!",
+                    `축하합니다! ${winnerMessage.nickname}님이 승리했습니다! 잠시 후 결과 페이지로 이동합니다.`,
+                    "info"
+                );
+
+                // 3초 후 결과 페이지로 이동
+                setTimeout(() => {
+                    navigate(`/resultpage/${roomId}`);
+                }, 3000);
+            });
         };
 
         client.onStompError = (frame) => {
@@ -537,7 +557,7 @@ export default function CodingBattle() {
                 console.log("STOMP 연결 해제됨");
             }
         };
-    }, [userId]);
+    }, [userId, roomId, userNickname, navigate]); // roomId, userNickname, navigate를 의존성 배열에 추가
 
     // Monaco Editor 내용 변경 시 서버로 업데이트 전송 (timerIdRef 사용으로 수정)
     const handleEditorChange = useCallback((value) => {
@@ -564,7 +584,7 @@ export default function CodingBattle() {
                 console.warn("STOMP 클라이언트가 연결되지 않았거나 사용자 ID가 설정되지 않아 코드 업데이트 메시지를 보낼 수 없습니다.");
             }
         }, 500); // 500ms 디바운스
-    }, [myUserId]);
+    }, [myUserId, roomId, userNickname]); // roomId와 userNickname도 의존성 배열에 추가
 
     // Monaco Editor 마운트 시 붙여넣기 방지 이벤트 리스너 추가
     const handleEditorDidMount = useCallback((editor, monacoInstance) => {
@@ -590,7 +610,7 @@ export default function CodingBattle() {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
+
                 const data = await response.json();
                 console.log('✅ API 응답 데이터:', data);
 
@@ -607,7 +627,7 @@ export default function CodingBattle() {
                         console.warn(`⚠️ timeLimit 값('${data.timeLimit}')에서 숫자를 추출할 수 없습니다.`);
                     }
                     } else {
-                    
+
                     console.warn('⚠️ 응답 데이터에 유효한 timeLimit 값이 없습니다.');
                 }
 
@@ -617,8 +637,8 @@ export default function CodingBattle() {
         };
 
         fetchRoomData();
-        
-    }, []); 
+
+    }, [roomId]);
 
 
     return (
@@ -825,7 +845,7 @@ export default function CodingBattle() {
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.027A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                                 </svg>
-                                                결과화면 이동하기   
+                                                결과화면 이동하기
                                             </button>
 
                                         </div>
