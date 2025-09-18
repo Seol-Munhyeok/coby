@@ -1,31 +1,51 @@
 package com.example.coby.service;
 
 import com.example.coby.dto.RoomResultDto;
-import com.example.coby.dto.SubmissionRequestDto;
 import com.example.coby.dto.SubmissionResponseDto;
-import com.example.coby.entity.*;
+import com.example.coby.dto.WinnerCodeDto;
+import com.example.coby.entity.Problem;
+import com.example.coby.entity.Room;
+import com.example.coby.entity.User;
+import com.example.coby.entity.submission;
 import com.example.coby.property.awsProperties;
-import com.example.coby.repository.SubmissionRepository;
 import com.example.coby.repository.ProblemRepository;
 import com.example.coby.repository.RoomRepository;
+import com.example.coby.repository.SubmissionRepository;
 import com.example.coby.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.async.AsyncResponseTransformer;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.retry.RetryMode;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+
 
 @Slf4j
 @Service
@@ -41,6 +61,69 @@ public class SubmissionService {
     private final awsProperties awsProperties;
     private final RoomService roomService;
     private final SimpMessagingTemplate messagingTemplate;
+    private static S3AsyncClient s3AsyncClient;
+
+    public static S3AsyncClient getAsyncClient() {
+        if (s3AsyncClient == null) {
+
+            SdkAsyncHttpClient httpClient = NettyNioAsyncHttpClient.builder()
+                    .maxConcurrency(50)  // Adjust as needed.
+                    .connectionTimeout(Duration.ofSeconds(60))  // Set the connection timeout.
+                    .readTimeout(Duration.ofSeconds(60))  // Set the read timeout.
+                    .writeTimeout(Duration.ofSeconds(60))  // Set the write timeout.
+                    .build();
+
+            ClientOverrideConfiguration overrideConfig = ClientOverrideConfiguration.builder()
+                    .apiCallTimeout(Duration.ofMinutes(2))  // Set the overall API call timeout.
+                    .apiCallAttemptTimeout(Duration.ofSeconds(90))  // Set the individual call attempt timeout.
+                    .retryStrategy(RetryMode.STANDARD)
+                    .build();
+
+            s3AsyncClient = S3AsyncClient.builder()
+                    .region(Region.AP_NORTHEAST_2)
+                    .httpClient(httpClient)
+                    .overrideConfiguration(overrideConfig)
+                    .build();
+        }
+        return s3AsyncClient;
+    }
+
+    public CompletableFuture<String> getObjectBytesAsync(String bucketName, String keyName) {
+        GetObjectRequest objectRequest = GetObjectRequest.builder()
+                .key(keyName)
+                .bucket(bucketName)
+                .build();
+
+        CompletableFuture<ResponseBytes<GetObjectResponse>> response = getAsyncClient().getObject(objectRequest, AsyncResponseTransformer.toBytes());
+        return response.thenApply(objectBytes -> {
+            try {
+                byte[] data = objectBytes.asByteArray();
+                String content = new String(data, StandardCharsets.UTF_8); // 파일 대신 문자열로 변환
+                log.info("Successfully obtained string from an S3 object");
+                return content;
+            } catch (Exception ex) {
+                throw new RuntimeException("Failed to convert object to string", ex);
+            }
+        }).whenComplete((resp, ex) -> {
+            if (ex != null) {
+                throw new RuntimeException("Failed to get object bytes from S3", ex);
+            }
+        });
+    }
+
+    public WinnerCodeDto getWinnerCode(Long id) {
+        submission submission = submissionRepository.getReferenceById(id);
+        String language = submission.getLanguage();
+        WinnerCodeDto winnerCodeDto = new WinnerCodeDto();
+        winnerCodeDto.setLanguage(language);
+        winnerCodeDto.setId(submission.getUser().getId());
+        String s3_path = submission.getS3CodePath();
+        String bucket = awsProperties.getS3().getBucket();
+
+        CompletableFuture<String> code = getObjectBytesAsync(bucket, s3_path);
+        winnerCodeDto.setCode(code.join());
+        return winnerCodeDto;
+    }
 
     @Transactional(readOnly = true)
     public SubmissionResponseDto getSubmissionDtoById(Long submissionId) {
@@ -83,7 +166,7 @@ public class SubmissionService {
             log.info("승자 후보 감지: roomId={}, userId={}, nickname={}, submissionId={}",
                     roomId, userId, submission.getUser().getNickname(), submissionId);
 
-            roomService.finishRoom(roomId, userId);
+            roomService.finishRoom(roomId, submissionId);
 
             RoomResultDto winnerDto = RoomResultDto.builder()
                     .roomId(roomId)

@@ -2,11 +2,9 @@ package com.example.coby.service;
 
 import com.example.coby.dto.CreateRoomRequest;
 import com.example.coby.dto.RoomUserResponse;
+import com.example.coby.dto.WinnerCodeDto;
 import com.example.coby.entity.*;
-import com.example.coby.repository.ProblemRepository;
-import com.example.coby.repository.RoomRepository;
-import com.example.coby.repository.RoomUserRepository;
-import com.example.coby.repository.UserRepository;
+import com.example.coby.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +23,7 @@ public class RoomService {
     private final RoomUserRepository roomUserRepository;
     private final UserRepository userRepository;
     private final ProblemRepository problemRepository;
+    private final SubmissionRepository submissionRepository;
 
     public List<Room> getRooms() {
         return roomRepository.findAll();
@@ -237,7 +236,7 @@ public class RoomService {
     }
 
     @Transactional
-    public void finishRoom(Long roomId, Long winnerId) {
-        roomRepository.updateWinnerAndFinish(roomId, winnerId, LocalDateTime.now(), RoomStatus.RESULT);
+    public void finishRoom(Long roomId, Long winId) {
+        roomRepository.updateWinnerAndFinish(roomId, winId, LocalDateTime.now(), RoomStatus.RESULT);
     }
 }
