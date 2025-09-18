@@ -3,6 +3,7 @@ package com.example.coby.controller;
 import com.example.coby.dto.JudgeRequest;
 import com.example.coby.dto.SubmissionRequestDto;
 import com.example.coby.dto.SubmissionResponseDto;
+import com.example.coby.dto.WinnerCodeDto;
 import com.example.coby.service.JudgeNotificationService;
 import com.example.coby.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,13 @@ public class SubmissionController {
     @Autowired
     private JudgeNotificationService judgeNotificationService;
     private final SubmissionService submissionService;
+
+    @GetMapping("/winnercode")
+    public ResponseEntity<WinnerCodeDto> winnerCode(Long Id) {
+        WinnerCodeDto winnerCodeDto;
+        winnerCodeDto = submissionService.getWinnerCode(Id);
+        return new ResponseEntity<>(winnerCodeDto, HttpStatus.OK);
+    }
 
     @GetMapping("/submissions/{id}")
     public ResponseEntity<SubmissionResponseDto> getSubmission(@PathVariable long id) {
