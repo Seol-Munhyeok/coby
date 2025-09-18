@@ -123,7 +123,6 @@ public class SubmissionService {
         CompletableFuture<String> code = getObjectBytesAsync(bucket, s3_path);
         winnerCodeDto.setCode(code.join());
         return winnerCodeDto;
-
     }
 
     @Transactional(readOnly = true)
@@ -167,7 +166,7 @@ public class SubmissionService {
             log.info("승자 후보 감지: roomId={}, userId={}, nickname={}, submissionId={}",
                     roomId, userId, submission.getUser().getNickname(), submissionId);
 
-            roomService.finishRoom(roomId, userId);
+            roomService.finishRoom(roomId, submissionId);
 
             RoomResultDto winnerDto = RoomResultDto.builder()
                     .roomId(roomId)

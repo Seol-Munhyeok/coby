@@ -4,6 +4,8 @@ import com.example.coby.dto.JudgeRequest;
 import com.example.coby.dto.SubmissionRequestDto;
 import com.example.coby.dto.SubmissionResponseDto;
 import com.example.coby.dto.WinnerCodeDto;
+import com.example.coby.entity.Room;
+import com.example.coby.repository.RoomRepository;
 import com.example.coby.service.JudgeNotificationService;
 import com.example.coby.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
@@ -15,28 +17,32 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/submissions")
 @RequiredArgsConstructor
 public class SubmissionController {
 
     @Autowired
     private JudgeNotificationService judgeNotificationService;
     private final SubmissionService submissionService;
+    @Autowired
+    private RoomRepository roomRepository;
 
-    @GetMapping("/winnercode")
-    public ResponseEntity<WinnerCodeDto> winnerCode(Long Id) {
+    @GetMapping("/winnercode/{roomId}")
+    public ResponseEntity<WinnerCodeDto> winnerCode(@PathVariable long roomId) {
         WinnerCodeDto winnerCodeDto;
-        winnerCodeDto = submissionService.getWinnerCode(Id);
+        Room room = roomRepository.getReferenceById(roomId);
+        Long SubmissionId = room.getWinnerId();
+        winnerCodeDto = submissionService.getWinnerCode(SubmissionId);
         return new ResponseEntity<>(winnerCodeDto, HttpStatus.OK);
     }
 
-    @GetMapping("/submissions/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<SubmissionResponseDto> getSubmission(@PathVariable long id) {
         SubmissionResponseDto submissionDto = submissionService.getSubmissionDtoById(id);
         return ResponseEntity.ok(submissionDto);
     }
 
-    @PostMapping("/submissions")
+    @PostMapping
     public ResponseEntity<?> createSubmission(@RequestBody SubmissionRequestDto requestDto){
         try{
             //s3에 파일저장
