@@ -98,7 +98,7 @@ function ResultRoom() {
                 setSubmittedAt(roomResponse.data.submittedAt);
 
                 const problemResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
-                const WinnerCode = await axios.get(`${process.env.REACT_APP_API_URL}/api/submission/winnercode/${roomId}`);
+                const WinnerCode = await axios.get(`${process.env.REACT_APP_API_URL}/api/submissions/winnercode/${roomId}`);
                 setCode(WinnerCode.data);
                 setProblem(problemResponse.data);
             } catch (err) {

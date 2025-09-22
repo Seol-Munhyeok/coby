@@ -203,11 +203,22 @@ public class RoomService {
         }
     }
 
+    @Transactional
+    public void deleteRoom(Long roomId) {
+        roomRepository.deleteById(roomId);
+    }
+
     public void removeUserFromRoom(String userId, String roomId) {
         try {
             Long rid = Long.parseLong(roomId);
             Long uid = Long.parseLong(userId);
             leaveRoom(rid, uid);
+            Room room = roomRepository.findById(rid).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+            int CurrnetCapacity = room.getCurrentCapacity();
+            if (CurrnetCapacity == 0) {
+                deleteRoom(rid);
+            }
+
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
