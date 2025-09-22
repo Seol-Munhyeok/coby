@@ -33,6 +33,11 @@ jobs:
           echo "export KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}" >> scripts/env.sh
           chmod +x scripts/env.sh
 
+      
+      - name: Create .env file from secrets
+        run: |
+          echo "REACT_APP_API_URL=${{ secrets.API_URL }}" >> frontend/.env
+
       - name: Zip source code
         run: zip -r source.zip .
 
