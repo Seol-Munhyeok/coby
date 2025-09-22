@@ -10,6 +10,16 @@ import { useAuth } from '../AuthContext/AuthContext';
 import PlayerCard from '../WaitingRoom/components/PlayerCard';
 import axios from 'axios';
 
+// --- ⬇️ 1. 점수를 티어로 변환하는 헬퍼 함수 추가 ⬇️ ---
+const getTierFromScore = (score) => {
+    if (score <= 1000) return '브론즈';
+    if (score <= 1500) return '실버';
+    if (score <= 2000) return '골드';
+    if (score <= 2500) return '플래티넘';
+    if (score <= 3000) return '다이아몬드';
+    return '마스터';
+};
+
 function ResultRoom() {
     const navigate = useNavigate();
     const { users, joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
@@ -60,6 +70,8 @@ function ResultRoom() {
     const [problem, setProblem] = useState(null);
     const [winnerId, setWinnerId] = useState(null);
     const [submittedAt, setSubmittedAt] = useState(null);
+
+    const [playerDetails, setPlayerDetails] = useState({}); //플레이어 상세 정보(점수 등)를 저장할 상태 
 
     // 점수 애니메이션 트리거 상태 추가
     const [triggerScoreAnimation, setTriggerScoreAnimation] = useState(false);
@@ -184,17 +196,68 @@ function ResultRoom() {
             return users.find(user => user.userId === userId);
         });
 
-    const currentPlayers = uniqueUsers.map((user, index) => ({
-        name: user.nickname,
-        userId: user.userId,
-        avatarInitials:
-            user.nickname.charAt(0).toUpperCase() + (user.nickname.charAt(1) || '').toUpperCase(),
-        tier: '골드',
-        avatarColor: 'bg-blue-700',
-        // 점수 데이터 추가 (예시)
-        oldScore: 1520, // 기존 점수
-        newScore: 1545 - (index * 5), // 새로 획득한 점수를 반영한 최종 점수
-    }));
+    // --- uniqueUsers 목록이 변경될 때마다 플레이어 정보를 API로 가져오는 useEffect ---
+    useEffect(() => {
+        const fetchPlayerDetails = async () => {
+            // 가져올 유저가 없으면 함수 종료
+            if (uniqueUsers.length === 0) return;
+
+            try {
+                // 각 유저의 정보를 가져오는 API 호출을 병렬로 처리
+                const promises = uniqueUsers.map(user =>
+                    axios.get(`${process.env.REACT_APP_API_URL}/api/users/${user.userId}`)
+                );
+                const responses = await Promise.all(promises);
+
+                // userId를 key로 갖는 객체로 데이터 가공
+                const details = {};
+                responses.forEach(res => {
+                    const playerData = res.data;
+                    // Null Safe: playerData와 id가 유효한지 확인
+                    if (playerData && playerData.id) {
+                        details[playerData.id] = playerData;
+                    }
+                });
+                
+                setPlayerDetails(details);
+
+            } catch (err) {
+                console.error("모든 플레이어의 정보를 가져오는 데 실패했습니다:", err);
+                // 에러 발생 시 기존 플레이어 정보 비우기
+                setPlayerDetails({});
+            }
+        };
+
+        fetchPlayerDetails();
+    }, [users]); // 'users' 배열이 변경될 때마다 실행
+
+
+        
+    const currentPlayers = uniqueUsers.map((player) => {
+        const isWinner = player.userId === winnerId;   // 승리자인지 확인
+
+        // playerDetails에 정보가 없거나, score 속성이 없을 경우 기본값 0을 사용합니다.
+        const baseScore = playerDetails[player.userId]?.score ?? 0;
+        
+        // 승리했다면 200점을 더하고, 아니라면 기존 점수를 유지합니다.
+        const finalScore = isWinner ? baseScore + 200 : baseScore;
+        const tier = getTierFromScore(finalScore);
+
+        return {
+            name: player.nickname,
+            userId: player.userId,
+            avatarInitials:
+                player.nickname.charAt(0).toUpperCase() + (player.nickname.charAt(1) || '').toUpperCase(),
+            tier: tier,
+            avatarColor: 'bg-blue-700', // 예시 데이터
+            
+            // [수정] 모든 플레이어의 시작 점수를 baseScore로 설정합니다.
+            // 이렇게 하면 승리한 모든 플레이어(finalScore가 baseScore와 다른)에게
+            // 점수 변경 애니메이션이 보이게 됩니다.
+            oldScore: baseScore,
+            newScore: finalScore,
+        };
+    });
 
     // 최대 참가자 수에 맞춰 빈 슬롯을 포함한 players 배열을 생성합니다.
     const totalSlots = maxParticipants;
@@ -362,9 +425,9 @@ function ResultRoom() {
                                         handlePlayerCardClick={player.isEmpty ? null : handlePlayerCardClick}
                                         showReadyStatus = {false}
                                         // [TODO] 애니메이션 props 전달
-                                        // oldScore={player.oldScore}
-                                        // newScore={player.newScore}
-                                        // startAnimation={triggerScoreAnimation}
+                                        oldScore={player.oldScore}
+                                        newScore={player.newScore}
+                                        startAnimation={triggerScoreAnimation}
                                     />
                                 ))}
                             </div>
