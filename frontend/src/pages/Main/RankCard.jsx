@@ -115,7 +115,7 @@ function RankCard({ rank, name, rating, wins, losses, tier, languageLogo }) {
                     {languageLogo && <LanguageLogoSvg type={languageLogo} />}
                 </div>
                 <div className="text-center mb-3">
-                    <div className="text-sm text-gray-500">레이팅</div>
+                    <div className="text-sm text-gray-500">점수</div>
                     <div className="text-xl font-bold">{rating.toLocaleString()}</div>
                 </div>
                 <div className="flex justify-between text-sm text-gray-500">
