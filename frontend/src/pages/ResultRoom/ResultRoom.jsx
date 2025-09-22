@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ResultRoom.css';
 import { useNavigate, useParams } from 'react-router-dom';
 import FloatingChat from '../../Common/components/FloatingChat';
@@ -58,6 +58,9 @@ function ResultRoom() {
     const [roomDetails, setRoomDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [problem, setProblem] = useState(null);
+    const [winnerId, setWinnerId] = useState(null);
+    const [submittedAt, setSubmittedAt] = useState(null);
+
     // 점수 애니메이션 트리거 상태 추가
     const [triggerScoreAnimation, setTriggerScoreAnimation] = useState(false);
 
@@ -89,21 +92,15 @@ function ResultRoom() {
     useEffect(() => {
         const fetchRoomAndProblemDetails = async () => {
             try {
-                const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms`);
-                const allRooms = response.data;
-                const currentRoom = allRooms.find(room => room.id.toString() === roomId);
+                const roomResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`);
+                setRoomDetails(roomResponse.data);
+                setWinnerId(roomResponse.data.winnerId);
+                setSubmittedAt(roomResponse.data.submittedAt);
+
                 const problemResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
                 const WinnerCode = await axios.get(`${process.env.REACT_APP_API_URL}/api/submission/winnercode/${roomId}`);
                 setCode(WinnerCode.data);
                 setProblem(problemResponse.data);
-
-                if (currentRoom) {
-                    setRoomDetails(currentRoom);
-                } else {
-                    setNotification({ message: "존재하지 않는 방입니다.", type: "error" });
-                    setTimeout(() => setNotification(null), 3000);
-                    navigate('/mainpage');
-                }
             } catch (err) {
                 console.error("방 정보를 가져오는 데 실패했습니다:", err);
                 setNotification({ message: "방 정보를 불러올 수 없습니다.", type: "error" });
@@ -341,7 +338,17 @@ function ResultRoom() {
                 </header>
 
                 {/* Main Content: 3단 구조로 변경 */}
-                <main className="flex-1 p-6 flex justify-center">
+                <main className="flex-1 p-6 flex flex-col items-center">
+                    {(winnerId || submittedAt) && (
+                        <div className="mb-4 text-center text-white">
+                            {winnerId && <p className="text-xl font-bold">Winner ID: {winnerId}</p>}
+                            {submittedAt && (
+                                <p className="text-sm text-gray-400">
+                                    Submitted at: {new Date(submittedAt).toLocaleString()}
+                                </p>
+                            )}
+                        </div>
+                    )}
                     <div className="w-full flex flex-row gap-6">
 
                         {/* 왼쪽 열: 플레이어 카드 */}
