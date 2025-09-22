@@ -3,7 +3,9 @@ package com.example.coby.controller;
 import com.example.coby.dto.*;
 import com.example.coby.entity.Problem;
 import com.example.coby.entity.Room;
+import com.example.coby.repository.SubmissionRepository;
 import com.example.coby.service.RoomService;
+import com.example.coby.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,8 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
+    private final SubmissionService submissionService;
+    private final SubmissionRepository submissionRepository;
 
     @GetMapping
     public List<RoomResponse> getRooms() {

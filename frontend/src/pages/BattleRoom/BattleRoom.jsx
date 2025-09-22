@@ -211,10 +211,7 @@ export default function CodingBattle() {
             );
             setExecutionResult(
                 <>
-                    코드가 성공적으로 제출되었습니다.<br />
-                    결과: {result.result || '정보 없음'}<br />
-                    평균 실행 시간: {result.avg_time || '정보 없음'} 초<br />
-                    평균 메모리 사용: {result.avg_memory || '정보 없음'} MB
+                    {result.details}
                 </>,
                 "info");
 

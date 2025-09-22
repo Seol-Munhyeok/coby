@@ -26,6 +26,7 @@ function ResultRoom() {
     const closeCodeModal = () => setIsCodeModalOpen(false);
 
     // 제출된 코드를 상수로 관리
+    const [Code,setCode] = useState("NULL")
     const codeContent = `
     1
     2
@@ -92,6 +93,8 @@ function ResultRoom() {
                 const allRooms = response.data;
                 const currentRoom = allRooms.find(room => room.id.toString() === roomId);
                 const problemResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
+                const WinnerCode = await axios.get(`${process.env.REACT_APP_API_URL}/api/submission/winnercode/${roomId}`);
+                setCode(WinnerCode.data);
                 setProblem(problemResponse.data);
 
                 if (currentRoom) {
@@ -389,7 +392,7 @@ function ResultRoom() {
                                     <div className="bg-gray-100 p-2 rounded-lg"><div>테스트 : 0/10</div></div>
                                     <div className="bg-gray-100 p-2 rounded-lg"><div>제출 시간 : 00:00</div></div>
                                 </div>
-                                <div className="code-block p-4 text-sm flex-1"><pre><code>{codeContent}</code></pre></div>
+                                <div className="code-block p-4 text-sm flex-1"><pre><code>{code?.code || "승리자가 없습니다."}</code></pre></div>
                             </div>
                         </div>
 
