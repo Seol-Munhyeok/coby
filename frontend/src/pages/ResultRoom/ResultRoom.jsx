@@ -399,7 +399,7 @@ function ResultRoom() {
                                     <div className="bg-gray-100 p-2 rounded-lg"><div>테스트 : 0/10</div></div>
                                     <div className="bg-gray-100 p-2 rounded-lg"><div>제출 시간 : 00:00</div></div>
                                 </div>
-                                <div className="code-block p-4 text-sm flex-1"><pre><code>{code?.code || "승리자가 없습니다."}</code></pre></div>
+                                <div className="code-block p-4 text-sm flex-1"><pre><code>{Code?.code || "승리자가 없습니다."}</code></pre></div>
                             </div>
                         </div>
 
@@ -453,7 +453,7 @@ function ResultRoom() {
                         <div className="code-modal-content" onClick={(e) => e.stopPropagation()}>
                             <button onClick={closeCodeModal} className="code-modal-close-btn">&times;</button>
                             <div className="code-modal-code-block">
-                                <pre><code>{codeContent}</code></pre>
+                                <pre><code>{Code?.code || "승리자가 없습니다."}</code></pre>
                             </div>
                         </div>
                     </div>
