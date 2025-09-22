@@ -214,8 +214,8 @@ public class RoomService {
             Long uid = Long.parseLong(userId);
             leaveRoom(rid, uid);
             Room room = roomRepository.findById(rid).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
-            int CurrnetCapacity = room.getCurrentCapacity();
-            if (CurrnetCapacity == 0) {
+            int CurrnetPart = room.getCurrentPart();
+            if (CurrnetPart == 0) {
                 deleteRoom(rid);
             }
 
