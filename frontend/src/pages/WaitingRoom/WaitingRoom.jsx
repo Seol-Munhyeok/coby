@@ -314,16 +314,6 @@ function WaitingRoom() {
         }
     }, [forcedOut, navigate, resetForcedOut]);
 
-    // 컴포넌트 언마운트 또는 방 변경 시 자동으로 방을 나감
-    useEffect(() => {
-        return () => {
-            if (!hasLeft) {
-                // 사용자가 직접 나가기 버튼을 누르지 않은 경우에만 서버에 퇴장을 알림
-                leaveRoom(roomId, userId);
-            }
-        };
-    }, [roomId, userId, leaveRoom, hasLeft]);
-
     // 시스템 메시지를 토스트로 표시
     useEffect(() => {
         if (systemMessage) {
