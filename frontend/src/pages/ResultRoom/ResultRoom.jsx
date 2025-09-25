@@ -181,12 +181,6 @@ function ResultRoom() {
         }
     };
 
-
-    // 로딩 중이거나 방 정보가 없을 때 로딩 화면을 표시
-    if (loading || !roomDetails) {
-        return <div className="flex justify-center items-center h-screen bg-gray-900 text-white text-2xl">로딩 중...</div>;
-    }
-
     // 방 정보가 로드된 후에만 maxParticipants를 사용
     const maxParticipants = roomDetails.maxParticipants;
 
@@ -231,6 +225,12 @@ function ResultRoom() {
         fetchPlayerDetails();
     }, [users]); // 'users' 배열이 변경될 때마다 실행
 
+
+    
+    // 로딩 중이거나 방 정보가 없을 때 로딩 화면을 표시
+    if (loading || !roomDetails) {
+        return <div className="flex justify-center items-center h-screen bg-gray-900 text-white text-2xl">로딩 중...</div>;
+    }
 
         
     const currentPlayers = uniqueUsers.map((player) => {
