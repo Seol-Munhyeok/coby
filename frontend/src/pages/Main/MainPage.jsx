@@ -3,7 +3,7 @@ import './MainPage.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import axios from 'axios';
-import { useAuth } from '../AuthContext/AuthContext'; 
+import { useAuth } from '../AuthContext/AuthContext';
 import ToastNotification from '../../Common/components/ToastNotification';
 
 // 분리된 컴포넌트들 임포트
@@ -16,6 +16,7 @@ import RecentMatches from './RecentMatches';
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
     const [rooms, setRooms] = useState([]);
+    const [rankings, setRankings] = useState([]); // 랭킹 정보를 저장할 state 추가
     const userIconButtonRef = useRef(null);
     const [isUserMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef(null);
@@ -41,12 +42,13 @@ function MainPage() {
             setNotification({message: "방에서 강퇴되었습니다.", type: "success"});
             setTimeout(() => setNotification(null), 3000);
             navigate(location.pathname, { replace: true, state: {} });
-            
+
         }
     }, [location, navigate]);
 
     useEffect(() => {
         fetchRooms();
+        fetchRankings(); // 컴포넌트가 마운트될 때 랭킹 정보를 가져오도록 호출
     }, []);
 
     const fetchRooms = async () => {
@@ -55,6 +57,17 @@ function MainPage() {
             setRooms(response.data);
         } catch (error) {
             console.error('Error fetching rooms:', error);
+        }
+    };
+
+    // 랭킹 정보를 가져오는 함수 추가
+    const fetchRankings = async () => {
+        try {
+            // API는 rating 기준으로 내림차순 정렬된 사용자 목록을 반환한다고 가정
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/rankings`);
+            setRankings(response.data);
+        } catch (error) {
+            console.error('Error fetching rankings:', error);
         }
     };
 
@@ -185,33 +198,27 @@ function MainPage() {
 
                             <div className="p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <RankCard
-                                        rank={2}
-                                        name="랭킹2"
-                                        rating={0}
-                                        wins={0}
-                                        losses={0}
-                                        tier="다이아몬드"
-                                        languageLogo="java"
-                                    />
-                                    <RankCard
-                                        rank={1}
-                                        name="랭킹1"
-                                        rating={0}
-                                        wins={0}
-                                        losses={0}
-                                        tier="마스터"
-                                        languageLogo="cpp"
-                                    />
-                                    <RankCard
-                                        rank={3}
-                                        name="랭킹3"
-                                        rating={0}
-                                        wins={0}
-                                        losses={0}
-                                        tier="플래티넘"
-                                        languageLogo="python"
-                                    />
+                                    {/* API로부터 받아온 랭킹 데이터 상위 3명을 동적으로 렌더링 */}
+                                    {/* Null-safe 처리: rankings 배열이 존재하고 비어있지 않은 경우에만 렌더링 */}
+                                    {Array.isArray(rankings) && rankings.length > 0 ? (
+                                        rankings.slice(0, 3).map((player, index) => (
+                                            <RankCard
+                                            key={player.nickName ?? index}
+                                            rank={index + 1}
+                                            name={player.nickName ?? '이름없음'}
+                                            rating={player.tierPoint ?? 0}
+                                            wins={player.wins ?? 0}          // 서버에서 제공하지 않으면 0으로
+                                            losses={player.losses ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                            tier={player.tier?.name ?? '브론즈'}
+                                            languageLogo={player?.mainLanguage ?? 'python'}          // API에서 안주니 기본값으로 고정
+                                            />
+                                        ))
+                                        ) : (
+                                        <p className="text-gray-500 col-span-3 text-center">
+                                            랭킹 정보가 없습니다.
+                                        </p>
+                                        )}
+
                                 </div>
                             </div>
                         </div>
