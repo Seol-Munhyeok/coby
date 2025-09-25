@@ -54,7 +54,6 @@ public class User {
     @JoinColumn(name = "tier_id")
     private Tier tier;
 
-
     private Integer tierPoint;
 
     public static User createSocialUser(String nickname, String email, String provider, String providerId, Tier tier) {
