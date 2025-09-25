@@ -34,20 +34,20 @@ function PlayerCard({
   player, 
   handlePlayerCardClick, 
   showReadyStatus = true,
-  // --- 애니메이션을 위한 props 추가 ---
-  oldScore,
-  newScore,
+  // --- 애니메이션을 위한 props 수정 ---
+  tierPoint,
+  isWinner = false,
   startAnimation = false 
 }) {
   // --- 애니메이션 상태 관리 ---
   const [animationStep, setAnimationStep] = useState('idle'); // 'idle', 'gain', 'countUp', 'done'
-  const [displayScore, setDisplayScore] = useState(oldScore);
+  const [displayScore, setDisplayScore] = useState(tierPoint);
 
-  const scoreGain = newScore - oldScore;
+  const scoreGain = 200; // 승리 시 획득 점수는 200점으로 고정
 
   useEffect(() => {
-    // startAnimation prop이 true가 되면 애니메이션 시작
-    if (startAnimation && !player.isEmpty) {
+    // startAnimation prop이 true이고, 승리자일 때만 애니메이션 시작
+    if (startAnimation && !player.isEmpty && isWinner) {
       // 1. 점수 획득(+N) 애니메이션 시작
       setAnimationStep('gain');
       
@@ -55,6 +55,9 @@ function PlayerCard({
       setTimeout(() => {
         setAnimationStep('countUp');
         
+        const oldScore = tierPoint;
+        const newScore = tierPoint + scoreGain;
+
         // 점수 카운트업 애니메이션
         let currentScore = oldScore;
         const increment = Math.ceil(scoreGain / 50); // 50프레임에 걸쳐 증가
@@ -76,7 +79,7 @@ function PlayerCard({
         }, 20); // 약 20ms 간격으로 업데이트
       }, 1000);
     }
-  }, [startAnimation, player.isEmpty, oldScore, newScore, scoreGain]);
+  }, [startAnimation, player.isEmpty, isWinner, tierPoint, scoreGain]);
 
 
   if (player.isEmpty) {
@@ -112,21 +115,24 @@ function PlayerCard({
       <div className="flex items-center mt-1 h-6">
         {renderTierBadge(player.tier)}
       </div>
-      {/* --- 점수 애니메이션 UI --- */}
-      <div className="score-animation-container">
-        {/* "+N" 텍스트 애니메이션 */}
-        {animationStep === 'gain' && (
-          <div className="score-gain">
-            +{scoreGain}
-          </div>
-        )}
-        {/* 점수 카운트업 및 페이드 아웃 */}
-        {(animationStep === 'countUp' || animationStep === 'done') && (
-           <div className={`score-display ${animationStep === 'countUp' ? 'visible' : ''}`}>
-             {displayScore}점
-           </div>
-        )}
-      </div>
+      {/* --- 점수 애니메이션 UI (승리자에게만 보임) --- */}
+      {isWinner && (
+        <div className="score-animation-container">
+          
+          {/* "+N" 텍스트 애니메이션 */}
+          {animationStep === 'gain' && (
+            <div className="score-gain">
+              +{scoreGain}
+            </div>
+          )}
+          {/* 점수 카운트업 및 페이드 아웃 */}
+          {(animationStep === 'countUp' || animationStep === 'done') && (
+            <div className={`score-display ${animationStep === 'countUp' ? 'visible' : ''}`}>
+              {displayScore}점
+            </div>
+          )}
+        </div>
+      )}
 
       {/* showReadyStatus가 true일 때만 아래 div 블록이 렌더링됩니다. */}
       {showReadyStatus && (

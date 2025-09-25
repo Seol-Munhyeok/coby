@@ -37,39 +37,13 @@ function ResultRoom() {
 
     // 제출된 코드를 상수로 관리
     const [Code,setCode] = useState("NULL")
-    const codeContent = `
-    1
-    2
-    3
-    4
-    5
-    6
-    7
-    8
-    9
-    10
-    11
-    12
-    13
-    14
-    15
-    16
-    17
-    18
-    19
-    20
-    21
-    22
-    23
-    24
-  `;
 
     // 방 정보 상태와 로딩 상태를 관리합니다.
     const [roomDetails, setRoomDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [problem, setProblem] = useState(null);
-    const [winnerId, setWinnerId] = useState(null);
-    const [submittedAt, setSubmittedAt] = useState(null);
+    const [winnerId, setWinnerId] = useState(null); //[TODO] 이런 반환 없음 (129번 merge : GPT 복붙이었음)
+    const [submittedAt, setSubmittedAt] = useState(null); //[TODO] 이런 반환 없음 (129번 merge : GPT 복붙이었음)
 
     const [playerDetails, setPlayerDetails] = useState({}); //플레이어 상세 정보(점수 등)를 저장할 상태 
 
@@ -107,7 +81,7 @@ function ResultRoom() {
                 // 필수적인 방 정보와 문제 정보를 먼저 요청합니다.
                 const roomResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`);
                 setRoomDetails(roomResponse.data);
-                setWinnerId(roomResponse.data.winnerId);
+                setWinnerId(roomResponse.data.winnerId); 
                 setSubmittedAt(roomResponse.data.submittedAt);
 
                 const problemResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
@@ -186,8 +160,6 @@ function ResultRoom() {
         }
     };
 
-    // 방 정보가 로드된 후에만 maxParticipants를 사용
-    const maxParticipants = roomDetails.maxParticipants;
 
     // 웹소켓 users 배열에서 중복을 제거합니다.
     const uniqueUsers = Array.from(new Set(users.map(user => user.userId)))
@@ -239,12 +211,15 @@ function ResultRoom() {
 
         
     const currentPlayers = uniqueUsers.map((player) => {
-        const isWinner = player.userId === winnerId;   // 승리자인지 확인
+        // winnerId를 숫자로 변환하여 비교합니다.
+        const isWinner = player.userId === parseInt(winnerId, 10);
+        console.log("winnerId", winnerId)
 
-        // playerDetails에 정보가 없거나, score 속성이 없을 경우 기본값 0을 사용합니다.
-        const baseScore = playerDetails[player.userId]?.score ?? 0;
+
+        // playerDetails에 정보가 없거나, tierPoint 속성이 없을 경우 기본값 0을 사용합니다.
+        const baseScore = playerDetails[player.userId]?.tierPoint ?? 0;
         
-        // 승리했다면 200점을 더하고, 아니라면 기존 점수를 유지합니다.
+        // 최종 점수는 티어 계산에만 사용합니다.
         const finalScore = isWinner ? baseScore + 200 : baseScore;
         const tier = getTierFromScore(finalScore);
 
@@ -256,16 +231,14 @@ function ResultRoom() {
             tier: tier,
             avatarColor: 'bg-blue-700', // 예시 데이터
             
-            // [수정] 모든 플레이어의 시작 점수를 baseScore로 설정합니다.
-            // 이렇게 하면 승리한 모든 플레이어(finalScore가 baseScore와 다른)에게
-            // 점수 변경 애니메이션이 보이게 됩니다.
-            oldScore: baseScore,
-            newScore: finalScore,
+            // PlayerCard에 tierPoint(기존 점수)와 isWinner(승리 여부)를 전달합니다.
+            tierPoint: baseScore,
+            isWinner: isWinner,
         };
     });
 
     // 최대 참가자 수에 맞춰 빈 슬롯을 포함한 players 배열을 생성합니다.
-    const totalSlots = maxParticipants;
+    const totalSlots = roomDetails?.maxParticipants || 0;
     const players = Array.from({length: totalSlots}, (_, index) => {
         if (currentPlayers[index]) {
             return currentPlayers[index];
@@ -428,10 +401,10 @@ function ResultRoom() {
                                         key={player.name}
                                         player={player}
                                         handlePlayerCardClick={player.isEmpty ? null : handlePlayerCardClick}
-                                        showReadyStatus = {false}
-                                        // [TODO] 애니메이션 props 전달
-                                        oldScore={player.oldScore}
-                                        newScore={player.newScore}
+                                        showReadyStatus={false}
+                                        // 애니메이션 props 전달 (수정)
+                                        tierPoint={player.tierPoint}
+                                        isWinner={player.isWinner}
                                         startAnimation={triggerScoreAnimation}
                                     />
                                 ))}
