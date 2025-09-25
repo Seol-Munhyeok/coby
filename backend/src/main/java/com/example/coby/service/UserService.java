@@ -1,8 +1,6 @@
 package com.example.coby.service;
 
-import com.example.coby.dto.ChangeNicknameRequest;
-import com.example.coby.dto.ChangeNicknameResponse;
-import com.example.coby.dto.NicknameCheckResponse;
+import com.example.coby.dto.*;
 import com.example.coby.entity.User;
 import com.example.coby.repository.UserRepository;
 import com.example.coby.security.CustomOAuth2User;
@@ -11,12 +9,44 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Order;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+
+    public List<RankingDto> Rankings() {
+        List<User> users = userRepository.findAll(Sort.by(Order.desc("tierPoint")));
+        return users.stream()
+                .map(RankingDto::fromEntity)
+                .toList();
+    }
+
+    public UserProfileResponse getUserProfile(long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 사용자가 존재하지 않습니다."));
+
+        return new UserProfileResponse(
+                user.getId(),
+                user.getNickname(),
+                user.getEmail(),
+                user.getSsoProvider(),
+                user.getProviderId(),
+                user.getPreferredLanguage(),
+                user.getReportCount(),
+                user.getTotalGame(),
+                user.getWinGame(),
+                user.getTierPoint(),
+                user.getTier() != null ? user.getTier().getName() : null,
+                user.getTier() != null ? user.getTier().getImageUrl() : null
+        );
+    }
 
     public NicknameCheckResponse checkNickname(String nickname) {
         boolean exists = userRepository.existsByNickname(nickname);
