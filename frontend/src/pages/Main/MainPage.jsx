@@ -64,7 +64,7 @@ function MainPage() {
     const fetchRankings = async () => {
         try {
             // API는 rating 기준으로 내림차순 정렬된 사용자 목록을 반환한다고 가정
-            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rankings`);
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/rankings`);
             setRankings(response.data);
         } catch (error) {
             console.error('Error fetching rankings:', error);
@@ -200,22 +200,25 @@ function MainPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     {/* API로부터 받아온 랭킹 데이터 상위 3명을 동적으로 렌더링 */}
                                     {/* Null-safe 처리: rankings 배열이 존재하고 비어있지 않은 경우에만 렌더링 */}
-                                    {rankings && rankings.length > 0 ? (
+                                    {Array.isArray(rankings) && rankings.length > 0 ? (
                                         rankings.slice(0, 3).map((player, index) => (
                                             <RankCard
-                                                key={player?.id ?? index} // player.id가 없을 경우 index를 fallback key로 사용
-                                                rank={index + 1}
-                                                name={player?.name ?? '이름없음'}
-                                                rating={player?.rating ?? 0}
-                                                wins={player?.wins ?? 0}
-                                                losses={player?.losses ?? 0}
-                                                tier={player?.tier ?? '브론즈'}
-                                                languageLogo={player?.mainLanguage ?? 'python'}
+                                            key={player.nickName ?? index}
+                                            rank={index + 1}
+                                            name={player.nickName ?? '이름없음'}
+                                            rating={player.tierPoint ?? 0}
+                                            wins={player.wins ?? 0}          // 서버에서 제공하지 않으면 0으로
+                                            losses={player.losses ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                            tier={player.tier?.name ?? '브론즈'}
+                                            languageLogo={player?.mainLanguage ?? 'python'}          // API에서 안주니 기본값으로 고정
                                             />
                                         ))
-                                    ) : (
-                                        <p className="text-gray-500 col-span-3 text-center">랭킹 정보가 없습니다.</p>
-                                    )}
+                                        ) : (
+                                        <p className="text-gray-500 col-span-3 text-center">
+                                            랭킹 정보가 없습니다.
+                                        </p>
+                                        )}
+
                                 </div>
                             </div>
                         </div>
