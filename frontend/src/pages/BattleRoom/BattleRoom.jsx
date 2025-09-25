@@ -329,6 +329,79 @@ export default function CodingBattle() {
         }
     };
 
+    /*// 전체 화면 요청 함수
+    const requestFullScreen = () => {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch((e) => {
+          console.warn("전체 화면 모드 요청 실패:", e);
+          // 에러가 발생해도 FullscreenPromptModal은 닫히지 않도록 합니다.
+        });
+      } else {
+        console.log("현재 브라우저는 전체 화면 모드를 지원하지 않습니다.");
+        // 지원하지 않는 경우 사용자에게 알림을 줄 수도 있습니다.
+        showModal("알림", "현재 브라우저는 전체 화면 모드를 지원하지 않습니다.", "info");
+      }
+    };
+
+    // 전체 화면 상태 모니터링 및 Modal 띄우기
+    useEffect(() => {
+      const handleFullscreenChange = () => {
+        if (document.fullscreenElement) {
+          // 전체 화면 모드 진입 시 Modal 닫기
+          setIsFullscreenPromptOpen(false);
+        } else {
+          // 전체 화면 모드 종료 시 Modal 다시 띄우기
+          setIsFullscreenPromptOpen(true);
+        }
+      };
+
+      // 컴포넌트 마운트 시 전체 화면이 아니라면 Modal 띄우기
+      if (!document.fullscreenElement) {
+        setIsFullscreenPromptOpen(true);
+      }
+
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // For Safari
+      document.addEventListener('mozfullscreenchange', handleFullscreenChange);   // For Firefox
+      document.addEventListener('MSFullscreenChange', handleFullscreenChange);     // For IE/Edge
+
+      return () => {
+        document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+      };
+    }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
+  *//*
+  // 부정행위 감지를 위한 useEffect
+  useEffect(() => {
+
+    const handleBlur = () => {
+      // 현재 창에서 포커스가 없어졌을 때
+      // Alt+Tab 등으로 다른 애플리케이션으로 이동하는 경우
+      // document.hidden이 false일 때만 실행하여 중복 경고 방지
+      if (!document.hidden) {
+        setWarningCount(prevCount => {
+          const newCount = prevCount + 1;
+          if (newCount >= MAX_WARNINGS) {
+            setCheatingDetected(true);
+            showModal("부정행위 감지", "부정행위가 3회 이상 감지되어 더 이상 코드를 제출할 수 없습니다.", "error");
+          } else {
+            showModal("경고!", `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
+          }
+          return newCount;
+        });
+      }
+    };
+
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [warningCount, cheatingDetected]); // warningCount와 cheatingDetected를 의존성 배열에 추가
+*/
+
     // WebSocket 초기화 및 이벤트 핸들링
     useEffect(() => {
         const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws/vs`);

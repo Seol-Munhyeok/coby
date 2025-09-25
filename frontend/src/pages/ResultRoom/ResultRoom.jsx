@@ -104,16 +104,27 @@ function ResultRoom() {
     useEffect(() => {
         const fetchRoomAndProblemDetails = async () => {
             try {
+                // 필수적인 방 정보와 문제 정보를 먼저 요청합니다.
                 const roomResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`);
                 setRoomDetails(roomResponse.data);
                 setWinnerId(roomResponse.data.winnerId);
                 setSubmittedAt(roomResponse.data.submittedAt);
 
                 const problemResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
-                const WinnerCode = await axios.get(`${process.env.REACT_APP_API_URL}/api/submissions/winnercode/${roomId}`);
-                setCode(WinnerCode.data);
                 setProblem(problemResponse.data);
+
+                // 승리자 코드는 필수가 아닐 수 있으므로 별도의 try-catch로 처리합니다.
+                try {
+                    const WinnerCode = await axios.get(`${process.env.REACT_APP_API_URL}/api/submissions/winnercode/${roomId}`);
+                    setCode(WinnerCode.data);
+                } catch (winnerCodeError) {
+                    console.warn("승리자 코드를 불러오는 데 실패했습니다. 아직 승리자가 없을 수 있습니다.", winnerCodeError);
+                    // 승리자 코드가 없을 경우, 사용자에게 안내 메시지를 표시합니다.
+                    setCode({ code: "아직 승리자가 결정되지 않았습니다." });
+                }
+
             } catch (err) {
+                // 이 catch 블록은 이제 방 존재 여부 등 정말 치명적인 에러가 발생했을 때만 실행됩니다.
                 console.error("방 정보를 가져오는 데 실패했습니다:", err);
                 setNotification({ message: "방 정보를 불러올 수 없습니다.", type: "error" });
                 setTimeout(() => setNotification(null), 3000);
@@ -133,12 +144,6 @@ function ResultRoom() {
             joinRoom(roomId, { userId, nickname: currentUser, profileUrl: '' });
         }
     }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId]);
-
-    useEffect(() => {
-        return () => {
-            leaveRoom(roomId, userId);
-        };
-    }, [roomId, userId, leaveRoom]);
 
     // 방 정보를 모두 불러온 후, 2초 뒤에 애니메이션 시작
     useEffect(() => {
