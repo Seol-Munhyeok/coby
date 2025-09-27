@@ -110,18 +110,48 @@ public class SubmissionService {
             }
         });
     }
+    public WinnerCodeDto getWinnerCode(Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room ID를 찾을 수 없습니다: " + roomId));
 
-    public WinnerCodeDto getWinnerCode(Long id) {
-        submission submission = submissionRepository.getReferenceById(id);
+        Long winnerUserId = room.getWinnerId();
+        if (winnerUserId == null) {
+            throw new IllegalArgumentException("해당 방에 승자가 기록되지 않았습니다.");
+        }
+
+        submission winningSubmission = submissionRepository.findTopByRoomIdAndUserIdAndStatusOrderByCreatedAtDesc(
+                roomId, winnerUserId, "Accepted"
+        ).orElseThrow(() -> new IllegalArgumentException("승자의 최종 제출 코드를 찾을 수 없습니다."));
+
+        Long winningSubmissionId = winningSubmission.getId();
+
+        return getWinnerCode(winningSubmissionId); // 👈 (1번에서 만든 헬퍼 메서드 호출)
+    }
+    private WinnerCodeDto getCodeFromSubmissionId(Long submissionId) {
+        submission submission = submissionRepository.getReferenceById(submissionId);
+
+        String s3_path = submission.getS3CodePath();
+        if (s3_path == null || s3_path.isEmpty()) {
+            throw new IllegalArgumentException("Submission ID " + submissionId + "의 S3 경로가 누락되었습니다.");
+        }
+
         String language = submission.getLanguage();
         WinnerCodeDto winnerCodeDto = new WinnerCodeDto();
         winnerCodeDto.setLanguage(language);
         winnerCodeDto.setId(submission.getUser().getId());
-        String s3_path = submission.getS3CodePath();
+
         String bucket = awsProperties.getS3().getBucket();
 
         CompletableFuture<String> code = getObjectBytesAsync(bucket, s3_path);
-        winnerCodeDto.setCode(code.join());
+
+        try {
+            winnerCodeDto.setCode(code.join());
+        } catch (Exception e) {
+            log.error("S3 코드 조회 실패 (ID {}): {}", submissionId, e.getMessage(), e);
+            winnerCodeDto.setCode("Error: S3에서 파일을 찾을 수 없습니다. (권한/경로 오류)");
+            return winnerCodeDto;
+        }
+
         return winnerCodeDto;
     }
 
@@ -166,7 +196,7 @@ public class SubmissionService {
             log.info("승자 후보 감지: roomId={}, userId={}, nickname={}, submissionId={}",
                     roomId, userId, submission.getUser().getNickname(), submissionId);
 
-            roomService.finishRoom(roomId, submissionId);
+            roomService.finishRoom(roomId, userId);
 
             RoomResultDto winnerDto = RoomResultDto.builder()
                     .roomId(roomId)
