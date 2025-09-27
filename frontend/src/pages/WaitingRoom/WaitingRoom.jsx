@@ -118,7 +118,7 @@ function WaitingRoom() {
 
 
     // 방장이 게임 시작 버튼을 눌렀을 때 실행되는 함수
-    const enterRoomBtn1 = () => {
+    const enterRoomBtn1 = async () => {
         if (!isCurrentUserHost) {
             setNotification({message: "방장만 게임을 시작할 수 있습니다.", type: "error"});
             setTimeout(() => setNotification(null), 3000);
@@ -136,7 +136,25 @@ function WaitingRoom() {
             setTimeout(() => setNotification(null), 3000);
             return;
         }
+        try {
+            const response = await axios.post(
+                `${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/start`,
+                {}, // POST 요청이지만 body는 비워둡니다.
+                { withCredentials: true }
+            );
 
+            if (response.status !== 200) {
+                throw new Error("상태 변경 실패");
+            }
+
+            console.log("✅ 백엔드 상태: IN_PROGRESS로 변경 완료.");
+
+        } catch (error) {
+            console.error("게임 시작 API 호출 오류:", error);
+            setNotification({message: "게임 시작 중 서버 오류가 발생했습니다. (DB 상태 변경 실패)", type: "error"});
+            setTimeout(() => setNotification(null), 3000);
+            return; // API 호출 실패 시 WebSocket 메시지 전송을 중단
+        }
         // 방장만 게임 시작 메시지 전송
         sendMessage(roomId, {
             roomId,
