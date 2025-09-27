@@ -44,8 +44,7 @@ function ResultRoom() {
     const [problem, setProblem] = useState(null);
     const [winnerId, setWinnerId] = useState(null); //[TODO] 이런 반환 없음 (129번 merge : GPT 복붙이었음)
     const [submittedAt, setSubmittedAt] = useState(null); //[TODO] 이런 반환 없음 (129번 merge : GPT 복붙이었음)
-
-    const [playerDetails, setPlayerDetails] = useState({}); //플레이어 상세 정보(점수 등)를 저장할 상태 
+    const [playerDetails, setPlayerDetails] = useState({}); //플레이어 상세 정보(점수 등)를 저장할 상태
 
     // 점수 애니메이션 트리거 상태 추가
     const [triggerScoreAnimation, setTriggerScoreAnimation] = useState(false);
