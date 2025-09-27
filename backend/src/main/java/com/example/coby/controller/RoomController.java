@@ -96,4 +96,9 @@ public class RoomController {
         }
         return ResponseEntity.ok().build();
     }
+    @PostMapping("/{id}/start")
+    public ResponseEntity<Void> startGame(@PathVariable Long id) {
+        roomService.startGame(id);
+        return ResponseEntity.ok().build();
+    }
 }

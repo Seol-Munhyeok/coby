@@ -12,6 +12,7 @@ import com.example.coby.dto.CodeUpdateMessage;
 import com.example.coby.dto.RoomParticipant;
 import com.example.coby.dto.RoomParticipantsMessage;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+import com.example.coby.service.RoomService;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +22,8 @@ public class Battleroomcontroller {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
-
+    @Autowired
+    private com.example.coby.service.RoomService roomService;
     private final Map<String, Map<String, RoomParticipant>> rooms = new ConcurrentHashMap<>();
     private final Map<String, String> sessionToRoom = new ConcurrentHashMap<>();
     private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
@@ -88,7 +90,7 @@ public class Battleroomcontroller {
                 participants.remove(userId);
                 return participants;
             });
-
+            roomService.removeUserFromRoom(userId, roomId);
             RoomParticipantsMessage msg = RoomParticipantsMessage.builder()
                     .type("room_participants")
                     .roomId(roomId)

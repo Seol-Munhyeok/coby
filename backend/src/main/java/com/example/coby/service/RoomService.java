@@ -118,7 +118,17 @@ public class RoomService {
 
         return room;
     }
+    @Transactional
+    public void startGame(Long roomId) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("게임을 시작할 방을 찾을 수 없습니다."));
 
+        room.setStatus(RoomStatus.IN_PROGRESS);
+
+        roomRepository.save(room);
+
+        log.info("방 {}의 게임 상태가 IN_PROGRESS로 변경되었습니다. (방 삭제 방어 활성화)", roomId);
+    }
 
     @Transactional
     public Room leaveRoom(Long roomId, Long userId) {
@@ -212,16 +222,34 @@ public class RoomService {
         try {
             Long rid = Long.parseLong(roomId);
             Long uid = Long.parseLong(userId);
-            leaveRoom(rid, uid);
-            Room room = roomRepository.findById(rid).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
-            int CurrnetPart = room.getCurrentPart();
-            if (CurrnetPart == 0) {
-                deleteRoom(rid);
+
+            Room room = leaveRoom(rid, uid);
+
+
+            if (room == null) {
+
+                return;
+            }
+
+            int currentPart = room.getCurrentPart();
+            RoomStatus status = room.getStatus(); // RoomStatus를 가져옵니다.
+
+
+            if (currentPart == 0) {
+                if (status != null && status == RoomStatus.WAITING) {
+                    deleteRoom(rid);
+                    log.info("대기방({})에 남은 참가자가 없어 삭제되었습니다.", rid);
+                } else {
+                    log.warn("게임 중 또는 결과 상태인 방({})에서 모든 참가자가 이탈했지만 방을 유지합니다.", rid);
+                    // TODO: 필요하다면 여기서 게임 종료/승자 결정 로직을 호출할 수 있습니다.
+                }
             }
 
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
+        // leaveRoom이 Room을 반환하므로, 기존의 findById와 orElseThrow 로직을 제거하고 leaveRoom의 반환값을 사용했습니다.
+        // 기존 코드의 orElseThrow는 leaveRoom이 실행된 직후 DB 상태를 반영하지 못할 수 있습니다.
     }
 
     @Transactional
