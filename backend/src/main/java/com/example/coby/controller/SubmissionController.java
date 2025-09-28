@@ -31,8 +31,8 @@ public class SubmissionController {
     public ResponseEntity<WinnerCodeDto> winnerCode(@PathVariable long roomId) {
         WinnerCodeDto winnerCodeDto;
         Room room = roomRepository.getReferenceById(roomId);
-        Long SubmissionId = room.getWinnerId();
-        winnerCodeDto = submissionService.getWinnerCode(SubmissionId);
+        Long UserId = room.getWinnerId();
+        winnerCodeDto = submissionService.getWinnerCode(UserId,roomId);
         return new ResponseEntity<>(winnerCodeDto, HttpStatus.OK);
     }
 

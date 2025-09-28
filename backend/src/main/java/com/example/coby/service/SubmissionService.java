@@ -111,8 +111,8 @@ public class SubmissionService {
         });
     }
 
-    public WinnerCodeDto getWinnerCode(Long id) {
-        submission submission = submissionRepository.getReferenceById(id);
+    public WinnerCodeDto getWinnerCode(Long userId,Long roomId) {
+        submission submission = submissionRepository.findByroodIdanduserId(userId,roomId);
         String language = submission.getLanguage();
         WinnerCodeDto winnerCodeDto = new WinnerCodeDto();
         winnerCodeDto.setLanguage(language);
