@@ -112,7 +112,8 @@ public class SubmissionService {
     }
 
     public WinnerCodeDto getWinnerCode(Long userId,Long roomId) {
-        submission submission = submissionRepository.findByroodIdanduserId(userId,roomId);
+        submission submission = submissionRepository.findByUser_IdAndRoom_Id(userId, roomId)
+                .orElseThrow(() -> new RuntimeException("제출 기록이 없습니다."));
         String language = submission.getLanguage();
         WinnerCodeDto winnerCodeDto = new WinnerCodeDto();
         winnerCodeDto.setLanguage(language);
