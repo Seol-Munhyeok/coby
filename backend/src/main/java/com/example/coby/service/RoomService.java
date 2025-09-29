@@ -215,6 +215,17 @@ public class RoomService {
 
     @Transactional
     public void deleteRoom(Long roomId) {
+        // 1. 이 방을 참조하는 모든 Submission을 찾습니다.
+        List<submission> submissions = submissionRepository.findAllByRoomId(roomId);
+
+        // 2. 각 Submission의 room 참조를 null로 설정하여 연관 관계를 끊습니다.
+        for (submission submission : submissions) {
+            submission.setRoom(null);
+        }
+        submissionRepository.saveAll(submissions); // 변경된 내용 저장
+
+        // 3. 연관 관계가 끊어졌으므로 방을 안전하게 삭제합니다.
+        // Room과 RoomUser는 Cascade 설정에 의해 함께 삭제됩니다.
         roomRepository.deleteById(roomId);
     }
 
@@ -224,24 +235,20 @@ public class RoomService {
             Long rid = Long.parseLong(roomId);
             Long uid = Long.parseLong(userId);
 
-            Room room = leaveRoom(rid, uid);
+            leaveRoom(rid, uid);
 
-            if (room == null) return;
+            Room room = roomRepository.findById(rid).orElse(null);
 
-            int currentPart = room.getCurrentPart();
-            RoomStatus status = room.getStatus();
-
-            if (currentPart == 0 && status != RoomStatus.IN_PROGRESS) {
+            // leaveRoom 후에도 room이 여전히 존재하고, 현재 인원이 0인지 확인
+            if (room != null && room.getCurrentPart() == 0) {
                 deleteRoom(rid);
-                log.info("결과/대기방({})에 참가자가 없어 삭제되었습니다. 상태: {}", rid, status);
-            } else if (status == RoomStatus.IN_PROGRESS) {
-                log.warn("게임 중인 방({})에서 모든 참가자가 이탈했지만 방을 유지합니다.", rid);
             }
 
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
     }
+
 
     @Transactional
     public void delegateHost(Long roomId, Long newHostId) {
