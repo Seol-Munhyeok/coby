@@ -221,21 +221,14 @@ public class RoomService {
     @Transactional
     public void removeUserFromRoom(String userId, String roomId) {
         try {
+            //대전방에서도 사용자가 0이되면 방이 제거되어야함
             Long rid = Long.parseLong(roomId);
             Long uid = Long.parseLong(userId);
-
-            Room room = leaveRoom(rid, uid);
-
-            if (room == null) return;
-
-            int currentPart = room.getCurrentPart();
-            RoomStatus status = room.getStatus();
-
-            if (currentPart == 0 && status != RoomStatus.IN_PROGRESS) {
+            leaveRoom(rid, uid);
+            Room room = roomRepository.findById(rid).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
+            int CurrnetPart = room.getCurrentPart();
+            if (CurrnetPart == 0) {
                 deleteRoom(rid);
-                log.info("결과/대기방({})에 참가자가 없어 삭제되었습니다. 상태: {}", rid, status);
-            } else if (status == RoomStatus.IN_PROGRESS) {
-                log.warn("게임 중인 방({})에서 모든 참가자가 이탈했지만 방을 유지합니다.", rid);
             }
 
         } catch (NumberFormatException e) {

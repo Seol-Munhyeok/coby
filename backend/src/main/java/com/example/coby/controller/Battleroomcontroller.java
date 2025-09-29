@@ -90,7 +90,7 @@ public class Battleroomcontroller {
                 participants.remove(userId);
                 return participants;
             });
-            roomService.removeUserFromRoom(userId, roomId);
+            // roomService.removeUserFromRoom(userId, roomId); 이 코드 때문에 방을 나가도 인원이 남아있게 되었음
             RoomParticipantsMessage msg = RoomParticipantsMessage.builder()
                     .type("room_participants")
                     .roomId(roomId)
