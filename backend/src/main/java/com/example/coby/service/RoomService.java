@@ -224,8 +224,10 @@ public class RoomService {
         }
         submissionRepository.saveAll(submissions); // 변경된 내용 저장
 
-        // 3. 연관 관계가 끊어졌으므로 방을 안전하게 삭제합니다.
-        // Room과 RoomUser는 Cascade 설정에 의해 함께 삭제됩니다.
+        // 3. 이 방에 속한 모든 RoomUser를 삭제합니다.
+        roomUserRepository.deleteAllByRoomId(roomId);
+
+        // 4. 연관 관계가 끊어졌으므로 방을 안전하게 삭제합니다.
         roomRepository.deleteById(roomId);
     }
 
