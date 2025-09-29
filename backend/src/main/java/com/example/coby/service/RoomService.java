@@ -215,19 +215,32 @@ public class RoomService {
 
     @Transactional
     public void deleteRoom(Long roomId) {
+        // 1. 이 방을 참조하는 모든 Submission을 찾습니다.
+        List<submission> submissions = submissionRepository.findAllByRoomId(roomId);
+
+        // 2. 각 Submission의 room 참조를 null로 설정하여 연관 관계를 끊습니다.
+        for (submission submission : submissions) {
+            submission.setRoom(null);
+        }
+        submissionRepository.saveAll(submissions); // 변경된 내용 저장
+
+        // 3. 연관 관계가 끊어졌으므로 방을 안전하게 삭제합니다.
+        // Room과 RoomUser는 Cascade 설정에 의해 함께 삭제됩니다.
         roomRepository.deleteById(roomId);
     }
 
     @Transactional
     public void removeUserFromRoom(String userId, String roomId) {
         try {
-            //대전방에서도 사용자가 0이되면 방이 제거되어야함
             Long rid = Long.parseLong(roomId);
             Long uid = Long.parseLong(userId);
+
             leaveRoom(rid, uid);
-            Room room = roomRepository.findById(rid).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 방입니다."));
-            int CurrnetPart = room.getCurrentPart();
-            if (CurrnetPart == 0) {
+
+            Room room = roomRepository.findById(rid).orElse(null);
+
+            // leaveRoom 후에도 room이 여전히 존재하고, 현재 인원이 0인지 확인
+            if (room != null && room.getCurrentPart() == 0) {
                 deleteRoom(rid);
             }
 
@@ -235,6 +248,7 @@ public class RoomService {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
     }
+
 
     @Transactional
     public void delegateHost(Long roomId, Long newHostId) {
