@@ -29,12 +29,25 @@ function RoomList({ rooms, enterRoomBtn, fetchRooms }) {
 
             <div className="p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredRooms.map((room) => ( // 필터링된 방 목록 사용
-                        <div key={room.id} className="main-room-card main-glass-effect backdrop-filter backdrop-blur-md bg-white/70 rounded-xl overflow-hidden border border-gray-300">
+                    {filteredRooms.map((room) => {
+                        const isFull = room.currentPart >= room.maxParticipants;
+                        const isInProgressOrFinished = room.status !== 'WAITING';
+                        const isDisabled = isFull || isInProgressOrFinished;
+
+                        let buttonText = '입장하기';
+                        if (isFull) {
+                            buttonText = '정원 초과';
+                        } else if (room.status === 'IN_PROGRESS') {
+                            buttonText = '게임 진행 중';
+                        } else if (room.status === 'RESULT') {
+                            buttonText = '게임 종료됨';
+                        }
+                        // 필터링된 방 목록 사용
+                        return( <div key={room.id} className="main-room-card main-glass-effect backdrop-filter backdrop-blur-md bg-white/70 rounded-xl overflow-hidden border border-gray-300">
                             <div className="main-gradient-bg px-4 py-3 flex justify-between items-center">
                                 <h3 className="font-bold text-black">{room.roomName}</h3>
                                 <span className={`text-xs px-2 py-1 rounded-full ${room.status === 0 ? 'bg-green-500/20 text-green-700' : 'bg-yellow-500/20 text-yellow-700'}`}>
-                                    {room.status === 0 ? '대기중' : '진행중'}
+                                    {room.status === 'WAITING' ? '대기중' : room.status === 'IN_PROGRESS' ? '진행중' : '결과 대기'}
                                 </span>
                             </div>
                             <div className="p-4">
@@ -56,12 +69,19 @@ function RoomList({ rooms, enterRoomBtn, fetchRooms }) {
                                         </span>
                                     )}
                                 </div>
-                                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition" onClick={() => enterRoomBtn(room.id)}>
-                                    입장하기
+                                <button className={`w-full py-2 rounded-lg transition ${isDisabled
+                                    ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700 text-white' 
+                                }`}
+                                        onClick={() => enterRoomBtn(room.id)}
+                                        disabled={isDisabled}
+                                >
+                                    {buttonText}
                                 </button>
                             </div>
                         </div>
-                    ))}
+                    );
+                    })}
                 </div>
             </div>
         </div>
