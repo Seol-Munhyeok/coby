@@ -531,7 +531,11 @@ export default function CodingBattle() {
 
                 // 3초 후 결과 페이지로 이동
                 setTimeout(() => {
-                    navigate(`/resultpage/${roomId}`);
+                    navigate(`/resultpage/${roomId}`, {
+                        state: {
+                            winnerSubmissionId: winnerMessage.submissionId
+                        }
+                    });
                 }, 3000);
             });
         };

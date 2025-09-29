@@ -111,8 +111,9 @@ public class SubmissionService {
         });
     }
 
-    public WinnerCodeDto getWinnerCode(Long id) {
-        submission submission = submissionRepository.getReferenceById(id);
+    public WinnerCodeDto getWinnerCode(Long SubmissionId) {
+        submission submission = submissionRepository.findById(SubmissionId)
+                .orElseThrow(() -> new RuntimeException("제출 기록이 없습니다."));
         String language = submission.getLanguage();
         WinnerCodeDto winnerCodeDto = new WinnerCodeDto();
         winnerCodeDto.setLanguage(language);
