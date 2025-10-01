@@ -400,14 +400,12 @@ function ResultRoom() {
                                     />
                                 ))}
                             </div>
-
-                            {/* 버튼들이 있던 자리는 비워짐 */}
                         </div>
 
                         <div className="w-1/2">
                             <div className="result-card p-6 flex flex-col" style={{ height: '600px', overflowY: 'auto' }}>
                                 <h3 className="text-xl font-bold mb-4">문제: {problem?.title || '문제 정보를 불러올 수 없습니다.'}</h3>
-                                <div className="text-gray-300 space-y-4">
+                                <div className="space-y-4">
                                     <p className="whitespace-pre-wrap">{problem?.content || '문제 내용이 없습니다.'}</p>
                                 </div>
                             </div>
@@ -417,7 +415,9 @@ function ResultRoom() {
                         <div className="w-1/2">
                             <div className="result-card p-6 flex flex-col" style={{ height: '600px', overflowY: 'auto' }}>
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-xl font-bold">제출 코드</h3>
+                                    <h3 className="text-xl font-bold">
+                                        제출 코드{Code?.language && ` (${Code.language})`}
+                                    </h3>
                                     {/* 크게 보기 버튼 추가 */}
                                     <button onClick={openCodeModal} className="text-gray-400 hover:text-white" title="크게 보기">
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
