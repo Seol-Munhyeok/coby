@@ -42,8 +42,7 @@ function ResultRoom() {
     const [roomDetails, setRoomDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [problem, setProblem] = useState(null);
-    const [winnerId, setWinnerId] = useState(null); //[TODO] 이런 반환 없음 (129번 merge : GPT 복붙이었음)
-    const [submittedAt, setSubmittedAt] = useState(null); //[TODO] 이런 반환 없음 (129번 merge : GPT 복붙이었음)
+    const winnerId = Code?.id ?? 0;
     const [playerDetails, setPlayerDetails] = useState({}); //플레이어 상세 정보(점수 등)를 저장할 상태
 
     // 점수 애니메이션 트리거 상태 추가
@@ -80,8 +79,6 @@ function ResultRoom() {
                 // 필수적인 방 정보와 문제 정보를 먼저 요청합니다.
                 const roomResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`);
                 setRoomDetails(roomResponse.data);
-                setWinnerId(roomResponse.data.winnerId); 
-                setSubmittedAt(roomResponse.data.submittedAt);
 
                 const problemResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/problem`);
                 setProblem(problemResponse.data);
@@ -379,14 +376,9 @@ function ResultRoom() {
 
                 {/* Main Content: 3단 구조로 변경 */}
                 <main className="flex-1 p-6 flex flex-col items-center">
-                    {(winnerId || submittedAt) && (
+                    {winnerId && (
                         <div className="mb-4 text-center text-white">
-                            {winnerId && <p className="text-xl font-bold">Winner ID: {winnerId}</p>}
-                            {submittedAt && (
-                                <p className="text-sm text-gray-400">
-                                    Submitted at: {new Date(submittedAt).toLocaleString()}
-                                </p>
-                            )}
+                            <p className="text-xl font-bold">Winner ID: {winnerId}</p>
                         </div>
                     )}
                     <div className="w-full flex flex-row gap-6">
