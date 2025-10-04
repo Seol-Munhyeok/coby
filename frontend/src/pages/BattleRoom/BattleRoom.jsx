@@ -329,7 +329,7 @@ export default function CodingBattle() {
         }
     };
 
-    /*// 전체 화면 요청 함수
+
     const requestFullScreen = () => {
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch((e) => {
@@ -372,7 +372,7 @@ export default function CodingBattle() {
         document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
       };
     }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
-  *//*
+
   // 부정행위 감지를 위한 useEffect
   useEffect(() => {
 
@@ -400,7 +400,7 @@ export default function CodingBattle() {
       window.removeEventListener('blur', handleBlur);
     };
   }, [warningCount, cheatingDetected]); // warningCount와 cheatingDetected를 의존성 배열에 추가
-*/
+
 
     // WebSocket 초기화 및 이벤트 핸들링
     useEffect(() => {
@@ -590,7 +590,11 @@ export default function CodingBattle() {
     // Monaco Editor 마운트 시 붙여넣기 방지 이벤트 리스너 추가
     const handleEditorDidMount = useCallback((editor, monacoInstance) => {
         editorRef.current = editor;
-
+        /*
+        editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyV, () => {
+            showModal("경고", "코드 에디터에 붙여넣기 기능을 사용할 수 없습니다. (Monaco Command Block)", "warning");
+        });
+        */
         editor.getContainerDomNode().addEventListener('paste', (event) => {
             console.log('Monaco Editor 컨테이너에서 paste 이벤트 감지');
             event.preventDefault();
@@ -907,8 +911,8 @@ export default function CodingBattle() {
 
             <FullscreenPromptModal
                 isOpen={isFullscreenPromptOpen}
-                //onClose={() => setIsFullscreenPromptOpen(false)}
-                // onEnterFullscreen={requestFullScreen}
+                onClose={() => setIsFullscreenPromptOpen(false)}
+                onEnterFullscreen={requestFullScreen}
             />
         </div>
     );

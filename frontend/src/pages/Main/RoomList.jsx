@@ -42,11 +42,25 @@ function RoomList({ rooms, enterRoomBtn, fetchRooms }) {
                         } else if (room.status === 'RESULT') {
                             buttonText = '게임 종료됨';
                         }
+                        let statusColorClass = '';
+                        switch (room.status) {
+                            case 'WAITING':
+                                statusColorClass = 'bg-green-100 text-green-700';
+                                break;
+                            case 'IN_PROGRESS':
+                                statusColorClass = 'bg-red-100 text-red-700';
+                                break;
+                            case 'RESULT':
+                                statusColorClass = 'bg-gray-200 text-gray-700';
+                                break;
+                            default:
+                                statusColorClass = 'bg-yellow-100 text-yellow-700';
+                        }
                         // 필터링된 방 목록 사용
                         return( <div key={room.id} className="main-room-card main-glass-effect backdrop-filter backdrop-blur-md bg-white/70 rounded-xl overflow-hidden border border-gray-300">
                             <div className="main-gradient-bg px-4 py-3 flex justify-between items-center">
                                 <h3 className="font-bold text-black">{room.roomName}</h3>
-                                <span className={`text-xs px-2 py-1 rounded-full ${room.status === 0 ? 'bg-green-500/20 text-green-700' : 'bg-yellow-500/20 text-yellow-700'}`}>
+                                <span className={`text-xs px-2 py-1 rounded-full ${statusColorClass}`}>
                                     {room.status === 'WAITING' ? '대기중' : room.status === 'IN_PROGRESS' ? '진행중' : '결과 대기'}
                                 </span>
                             </div>

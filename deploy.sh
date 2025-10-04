@@ -5,7 +5,7 @@ set -e
 JAR_NAME="coby-0.0.1-SNAPSHOT.jar"
 EC2_USER="ubuntu"
 EC2_HOST="54.180.197.9"
-EC2_KEY_PATH="~/projects/Capstone/coby_bastion.pem"
+EC2_KEY_PATH="/d/coby_bastion.pem"
 REACT_API_URL="http://54.180.197.9:8080"
 
 # === 로그 출력 함수 ===

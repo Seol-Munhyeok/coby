@@ -12,9 +12,11 @@ import TierInfo from './TierInfo';
 import RankCard from './RankCard';
 import RoomList from './RoomList';
 import RecentMatches from './RecentMatches';
+import RankingList from './RankingList'; // 랭킹 모달 컴포넌트 임포트
 
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
+    const [isRankingModalOpen, setRankingModalOpen] = useState(false); // 랭킹 모달 상태 관리
     const [rooms, setRooms] = useState([]);
     const [rankings, setRankings] = useState([]); // 랭킹 정보를 저장할 state 추가
     const userIconButtonRef = useRef(null);
@@ -50,6 +52,23 @@ function MainPage() {
         fetchRooms();
         fetchRankings(); // 컴포넌트가 마운트될 때 랭킹 정보를 가져오도록 호출
     }, []);
+
+    // 랭킹 모달의 상태에 따라 body 스크롤을 제어하는 useEffect
+    useEffect(() => {
+        // 모달이 열려 있으면 배경 스크롤을 막습니다.
+        if (isRankingModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            // 모달이 닫히면 배경 스크롤을 다시 허용합니다.
+            document.body.style.overflow = 'auto';
+        }
+
+        // 컴포넌트가 언마운트될 때를 대비하여 cleanup 함수에서 스크롤을 복원합니다.
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [isRankingModalOpen]); // isRankingModalOpen 값이 변경될 때마다 이 effect를 실행합니다.
+
 
     const fetchRooms = async () => {
         try {
@@ -115,10 +134,6 @@ function MainPage() {
 
     const enterloginBtn = () => {
         navigate('/');
-    };
-
-    const enterMainBtn =() =>{
-        navigate('/mainpage')
     };
 
     useEffect(() => {
@@ -191,7 +206,7 @@ function MainPage() {
                         <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
                             <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-gray-800">랭킹 TOP 3</h2>
-                                <button type="button" className="text-blue-500 hover:text-blue-700 text-sm" onClick={enterMainBtn}>
+                                <button type="button" className="text-blue-500 hover:text-blue-700 text-sm" onClick={() => setRankingModalOpen(true)}>
                                     <i className="fas fa-user mr-2"></i> 전체 랭킹 보기
                                 </button>
                             </div>
@@ -207,10 +222,10 @@ function MainPage() {
                                             rank={index + 1}
                                             name={player.nickName ?? '이름없음'}
                                             rating={player.tierPoint ?? 0}
-                                            wins={player.wins ?? 0}          // 서버에서 제공하지 않으면 0으로
-                                            losses={player.losses ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                            wins={player.winGame ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                            losses={player.totalGame !== undefined && player.winGame !== undefined ? player.totalGame - player.winGame : 0}
                                             tier={player.tier?.name ?? '브론즈'}
-                                            languageLogo={player?.mainLanguage ?? 'python'}          // API에서 안주니 기본값으로 고정
+                                            languageLogo={player?.preferredLanguage ?? 'python'}         // API에서 안주니 기본값으로 고정
                                             />
                                         ))
                                         ) : (
@@ -257,6 +272,14 @@ function MainPage() {
                     </div>
                 </div>
             </main>
+
+            {/* 랭킹 모달 렌더링 */}
+            <RankingList
+                showModal={isRankingModalOpen}
+                onClose={() => setRankingModalOpen(false)}
+                rankings={rankings}
+            />
+
             <RoomSettingsModal
                 showModal={isCreateModalOpen}
                 onClose={closeCreateRoomModel}
