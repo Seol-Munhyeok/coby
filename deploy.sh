@@ -5,7 +5,8 @@ set -e
 JAR_NAME="coby-0.0.1-SNAPSHOT.jar"
 EC2_USER="ubuntu"
 EC2_HOST="54.180.197.9"
-EC2_KEY_PATH="~/projects/Capstone/coby_bastion.pem"
+# ❗❗ 수정 완료: 당신이 제공한 경로로 변경됨 ❗❗
+EC2_KEY_PATH="/Users/ojonghyeon/Desktop/coby_bastion.pem"
 REACT_API_URL="http://54.180.197.9:8080"
 
 # === 로그 출력 함수 ===
@@ -29,8 +30,7 @@ fi
 # === [2] React 빌드 및 복사 ===
 echo "📦 [1/4] React 빌드 시작..."
 cd frontend || exit
-export PATH="/c/nodejs:$PATH"
-
+# ❗❗ 수정 완료: Mac 환경에 맞게 PATH를 제거함. 'npm'이 전역으로 사용 가능할 것으로 예상 ❗❗
 if [ ! -d "node_modules" ]; then
   echo "📦 의존성 설치 중..."
   npm install
@@ -47,7 +47,8 @@ cd ..
 # === [3] Spring Boot 빌드 ===
 echo "🛠️ [2/4] Spring Boot JAR 빌드 중..."
 cd backend || exit
-export JAVA_HOME="/c/Program Files/Java/jdk-17"
+# ❗❗ 수정 완료: 당신이 제공한 경로로 변경됨 ❗❗
+export JAVA_HOME="/opt/homebrew/Cellar/openjdk@17/17.0.15/libexec/openjdk.jdk/Contents/Home"
 export PATH="$JAVA_HOME/bin:$PATH"
 ./gradlew clean build -x test
 cd ..
