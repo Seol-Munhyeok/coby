@@ -16,15 +16,29 @@ public class RankingDto {
     private Tier tier;
     private Integer tierPoint;
     private String email;
+    private Integer winGame;
+    private Integer totalGame;
+    private String preferredLanguage;
 
-    public RankingDto(String nickName, Tier tier, Integer tierPoint, String email) {
+    public RankingDto(String nickName, Tier tier, Integer tierPoint, String email, Integer winGame, Integer totalGame, String preferredLanguage) {
         this.nickName = nickName;
         this.tier = tier;
         this.tierPoint = tierPoint;
         this.email = email;
+        this.winGame = winGame;
+        this.totalGame = totalGame;
+        this.preferredLanguage = preferredLanguage;
     }
 
     public static RankingDto fromEntity(User user) {
-        return new RankingDto(user.getNickname(),user.getTier(),user.getTierPoint(),user.getEmail());
+        return new RankingDto(
+                user.getNickname(),
+                user.getTier(),
+                user.getTierPoint(),
+                user.getEmail(),
+                user.getWinGame(),
+                user.getTotalGame(),
+                user.getPreferredLanguage()
+        );
     }
 }
