@@ -6,7 +6,7 @@ import com.example.coby.dto.WinnerCodeDto;
 import com.example.coby.entity.Problem;
 import com.example.coby.entity.Room;
 import com.example.coby.entity.User;
-import com.example.coby.entity.submission;
+import com.example.coby.entity.Submission;
 import com.example.coby.property.awsProperties;
 import com.example.coby.repository.ProblemRepository;
 import com.example.coby.repository.RoomRepository;
@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.awspring.cloud.sqs.annotation.SqsListener;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -35,11 +34,7 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -112,7 +107,7 @@ public class SubmissionService {
     }
 
     public WinnerCodeDto getWinnerCode(Long SubmissionId) {
-        submission submission = submissionRepository.findById(SubmissionId)
+        Submission submission = submissionRepository.findById(SubmissionId)
                 .orElseThrow(() -> new RuntimeException("제출 기록이 없습니다."));
         String language = submission.getLanguage();
         WinnerCodeDto winnerCodeDto = new WinnerCodeDto();
@@ -128,13 +123,13 @@ public class SubmissionService {
 
     @Transactional(readOnly = true)
     public SubmissionResponseDto getSubmissionDtoById(Long submissionId) {
-        submission submission = submissionRepository.findById(submissionId)
+        Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 ID의 Submission을 찾을 수 없습니다: " + submissionId));
         System.out.println("🔥 확인 중인 제출: " + submission);
         return convertToDto(submission);
     }
 
-    private SubmissionResponseDto convertToDto(submission sub){
+    private SubmissionResponseDto convertToDto(Submission sub){
         return SubmissionResponseDto.builder()
                 .submissionId(sub.getId())
                 .result(sub.getStatus())
@@ -147,7 +142,7 @@ public class SubmissionService {
     public void updateSubmissionStatus(SubmissionResponseDto resultDto){
         log.info("result-queue로부터 메시지를 받았습니다: {}", resultDto);
         Long submissionId = resultDto.getSubmissionId();
-        submission submission = submissionRepository.findById(submissionId)
+        Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(EntityNotFoundException::new);
         submission.setStatus(resultDto.getResult());
         submission.setDetails(resultDto.getDetails());
@@ -216,7 +211,7 @@ public class SubmissionService {
         Room room = roomRepository.findById(roomId).
                 orElseThrow(() -> new IllegalArgumentException("Invalid room ID: "+ roomId));
 
-        submission sub = new submission();
+        Submission sub = new Submission();
         sub.setLanguage(language);
         sub.setProblem(problem);
         sub.setRoom(room);
@@ -224,7 +219,7 @@ public class SubmissionService {
         sub.setStatus("Pending");
         sub.setS3CodePath(source_path);
 
-        submission savedCode = submissionRepository.save(sub);
+        Submission savedCode = submissionRepository.save(sub);
         Long submissionId = savedCode.getId();
 
         return submissionId;

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Map;
 import java.util.Random;
@@ -28,6 +29,7 @@ public class RoomService {
     private final UserRepository userRepository;
     private final ProblemRepository problemRepository;
     private final SubmissionRepository submissionRepository;
+    private final TransactionTemplate transactionTemplate;
 
     private final ScheduledExecutorService roomDeletionScheduler = Executors.newSingleThreadScheduledExecutor();
     private final Map<Long, ScheduledFuture<?>> pendingRoomDeletionTasks = new ConcurrentHashMap<>();
@@ -98,34 +100,54 @@ public class RoomService {
         return room.getProblem();
     }
 
-    @Transactional
+
     public Room joinRoom(Long roomId, Long userId) {
-        Room room = roomRepository.findById(roomId).orElse(null);
-        if (room == null) return null;
+        return transactionTemplate.execute(status -> {
+            Room room = roomRepository.findById(roomId).orElse(null);
+            if (room == null) return null;
 
-        RoomUserId id = new RoomUserId(roomId, userId);
-        if (roomUserRepository.existsById(id)) {
+            RoomUserId id = new RoomUserId(roomId, userId);
+            if (roomUserRepository.existsById(id)) {
+                // 이미 방에 있는 경우에도 삭제예약은 커밋 이후 취소
+                org.springframework.transaction.support.TransactionSynchronizationManager
+                        .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                            @Override public void afterCommit() {
+                                cancelScheduledRoomDeletion(roomId);
+                            }
+                        });
+                return room;
+            }
+
+            if (room.getCurrentPart() < room.getMaxParticipants()) {
+                // 호스트 판단은 DB 카운트 기반
+                boolean isFirst = roomUserRepository.countByRoomId(roomId) == 0;
+
+                RoomUser roomUser = RoomUser.builder()
+                        .roomId(roomId)
+                        .userId(userId)
+                        .isHost(isFirst)
+                        .isReady(false)
+                        .build();
+                roomUserRepository.save(roomUser);
+
+                long newCount = roomUserRepository.countByRoomId(roomId);
+                room.setCurrentPart((int) newCount);
+                roomRepository.save(room);
+
+                // 예약취소는 커밋 이후 실행 (부분실패/롤백 시 부작용 방지)
+                org.springframework.transaction.support.TransactionSynchronizationManager
+                        .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                            @Override public void afterCommit() {
+                                cancelScheduledRoomDeletion(roomId);
+                            }
+                        });
+            }
+
             return room;
-        }
-
-        if (room.getCurrentPart() < room.getMaxParticipants()) {
-            RoomUser roomUser = RoomUser.builder()
-                    .roomId(roomId)
-                    .userId(userId)
-                    .isHost(roomUserRepository.findByRoomId(roomId).isEmpty())
-                    .isReady(false)
-                    .build();
-            roomUserRepository.save(roomUser);
-
-            // Room_user 테이블의 실제 레코드 수를 기반으로 current_part 업데이트
-            long newCount = roomUserRepository.countByRoomId(roomId);
-            room.setCurrentPart((int) newCount);
-            roomRepository.save(room);
-            cancelScheduledRoomDeletion(roomId);
-        }
-
-        return room;
+        });
     }
+
+
     @Transactional
     public void startGame(Long roomId) {
         Room room = roomRepository.findById(roomId)
@@ -222,23 +244,24 @@ public class RoomService {
         }
     }
 
-    @Transactional
     public void deleteRoom(Long roomId) {
         cancelScheduledRoomDeletion(roomId);
-        // 1. 이 방을 참조하는 모든 Submission을 찾습니다.
-        List<submission> submissions = submissionRepository.findAllByRoomId(roomId);
+        transactionTemplate.executeWithoutResult(status -> {
+            // 1. 이 방을 참조하는 모든 Submission을 찾습니다.
+            List<Submission> submissions = submissionRepository.findAllByRoomId(roomId);
 
-        // 2. 각 Submission의 room 참조를 null로 설정하여 연관 관계를 끊습니다.
-        for (submission submission : submissions) {
-            submission.setRoom(null);
-        }
-        submissionRepository.saveAll(submissions); // 변경된 내용 저장
+            // 2. 각 Submission의 room 참조를 null로 설정하여 연관 관계를 끊습니다.
+            for (Submission submission : submissions) {
+                submission.setRoom(null);
+            }
+            submissionRepository.saveAll(submissions); // 변경된 내용 저장
 
-        // 3. 이 방에 속한 모든 RoomUser를 삭제합니다.
-        roomUserRepository.deleteAllByRoomId(roomId);
+            // 3. 이 방에 속한 모든 RoomUser를 삭제합니다.
+            roomUserRepository.deleteAllByRoomId(roomId);
 
-        // 4. 연관 관계가 끊어졌으므로 방을 안전하게 삭제합니다.
-        roomRepository.deleteById(roomId);
+            // 4. 연관 관계가 끊어졌으므로 방을 안전하게 삭제합니다.
+            roomRepository.deleteById(roomId);
+        });
     }
 
     @Transactional
@@ -273,8 +296,8 @@ public class RoomService {
 
         ScheduledFuture<?> future = roomDeletionScheduler.schedule(() -> {
             try {
-                Room lastestRoom = roomRepository.findById(roomId).orElse(null);
-                if (lastestRoom != null && lastestRoom.getCurrentPart() == 0) {
+                Room latestRoom = roomRepository.findById(roomId).orElse(null);
+                if (latestRoom != null && latestRoom.getCurrentPart() == 0) {
                     deleteRoom(roomId);
                 }
             } finally {
