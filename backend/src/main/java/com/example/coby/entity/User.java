@@ -81,6 +81,25 @@ public class User {
         this.preferredLanguage = language;
     }
 
+    public void incrementTotalGame() {
+        if (this.totalGame == null) {
+            this.totalGame = 0;
+        }
+        this.totalGame += 1;
+    }
 
+    public void incrementWinGame() {
+        if (this.winGame == null) {
+            this.winGame = 0;
+        }
+        this.winGame += 1;
+    }
+
+    public void addTierPoints(int additionalPoints) {
+        if (this.tierPoint == null) {
+            this.tierPoint = 0;
+        }
+        this.tierPoint = Math.max(0, this.tierPoint + additionalPoints);
+    }
 }
 
