@@ -2,28 +2,35 @@ package com.example.coby.service;
 
 import com.example.coby.dto.CreateRoomRequest;
 import com.example.coby.dto.RoomUserResponse;
-import com.example.coby.dto.WinnerCodeDto;
 import com.example.coby.entity.*;
 import com.example.coby.repository.*;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 import java.util.Random;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class RoomService {
 
+    private static final long ROOM_DELETION_DELAY_SECONDS = 5L;
     private final RoomRepository roomRepository;
     private final RoomUserRepository roomUserRepository;
     private final UserRepository userRepository;
     private final ProblemRepository problemRepository;
     private final SubmissionRepository submissionRepository;
+
+    private final ScheduledExecutorService roomDeletionScheduler = Executors.newSingleThreadScheduledExecutor();
+    private final Map<Long, ScheduledFuture<?>> pendingRoomDeletionTasks = new ConcurrentHashMap<>();
 
     public List<Room> getRooms() {
         return roomRepository.findAll();
@@ -114,6 +121,7 @@ public class RoomService {
             long newCount = roomUserRepository.countByRoomId(roomId);
             room.setCurrentPart((int) newCount);
             roomRepository.save(room);
+            cancelScheduledRoomDeletion(roomId);
         }
 
         return room;
@@ -175,6 +183,7 @@ public class RoomService {
                 long newCount = roomUserRepository.countByRoomId(rid);
                 room.setCurrentPart((int) newCount);
                 roomRepository.save(room);
+                cancelScheduledRoomDeletion(rid);
             }
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 사용자 ID 또는 방 ID: userId={}, roomId={}", userId, roomId);
@@ -215,6 +224,7 @@ public class RoomService {
 
     @Transactional
     public void deleteRoom(Long roomId) {
+        cancelScheduledRoomDeletion(roomId);
         // 1. 이 방을 참조하는 모든 Submission을 찾습니다.
         List<submission> submissions = submissionRepository.findAllByRoomId(roomId);
 
@@ -242,13 +252,49 @@ public class RoomService {
             Room room = roomRepository.findById(rid).orElse(null);
 
             // leaveRoom 후에도 room이 여전히 존재하고, 현재 인원이 0인지 확인
-            if (room != null && room.getCurrentPart() == 0) {
-                deleteRoom(rid);
+            if (room != null) {
+                if (room.getCurrentPart() == 0) {
+                    scheduleRoomDeletionIfEmpty(rid);
+                } else {
+                    cancelScheduledRoomDeletion(rid);
+                }
             }
 
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
+    }
+
+    private void scheduleRoomDeletionIfEmpty(Long roomId) {
+        ScheduledFuture<?> existingTask = pendingRoomDeletionTasks.remove(roomId);
+        if (existingTask != null) {
+            existingTask.cancel(false);
+        }
+
+        ScheduledFuture<?> future = roomDeletionScheduler.schedule(() -> {
+            try {
+                Room lastestRoom = roomRepository.findById(roomId).orElse(null);
+                if (lastestRoom != null && lastestRoom.getCurrentPart() == 0) {
+                    deleteRoom(roomId);
+                }
+            } finally {
+                pendingRoomDeletionTasks.remove(roomId);
+            }
+        }, ROOM_DELETION_DELAY_SECONDS, TimeUnit.SECONDS);
+
+        pendingRoomDeletionTasks.put(roomId, future);
+    }
+
+    private void cancelScheduledRoomDeletion(Long roomId) {
+        ScheduledFuture<?> scheduledFuture = pendingRoomDeletionTasks.remove(roomId);
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(false);
+        }
+    }
+
+    @PreDestroy
+    public void shutdownScheduler() {
+        roomDeletionScheduler.shutdownNow();
     }
 
 
