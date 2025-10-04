@@ -16,7 +16,11 @@ import java.util.Random;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.LinkedHashSet;
 
 @Slf4j
 @Service
@@ -29,6 +33,7 @@ public class RoomService {
     private final UserRepository userRepository;
     private final ProblemRepository problemRepository;
     private final SubmissionRepository submissionRepository;
+    private final TierRepository tierRepository;
     private final TransactionTemplate transactionTemplate;
 
     private final ScheduledExecutorService roomDeletionScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -346,5 +351,63 @@ public class RoomService {
     @Transactional
     public void finishRoom(Long roomId, Long winId) {
         roomRepository.updateWinnerAndFinish(roomId, winId, LocalDateTime.now(), RoomStatus.RESULT);
+
+        // winId에서 승리자의 userId를 가져옴
+        Submission winningSubmission = submissionRepository.findById(winId)
+                .orElseThrow(() -> new IllegalArgumentException("제출 기록을 찾을 수 없습니다: " + winId));
+        Long winnerUserId = winningSubmission.getUser().getId();
+
+        // roomId에 해당하는 room의 참가자를 가져옴
+        List<RoomUser> participants = roomUserRepository.findByRoomId(roomId);
+        Set<Long> participantIds = participants.stream()
+                .map(RoomUser::getUserId)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        Map<Long, User> usersById = userRepository.findAllById(participantIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        participantIds.forEach(participantId -> {
+            User user = usersById.get(participantId);
+            if (user == null) {
+                log.warn("방 참가자를 찾을 수 없습니다. roomId={}, userId={}", roomId, participantId);
+                return;
+            }
+
+            user.incrementTotalGame();
+
+            if (participantId.equals(winnerUserId)) {
+                user.incrementWinGame();
+                user.addTierPoints(200);
+                Tier resolvedTier = resolveTier(user.getTierPoint());
+                if (resolvedTier != null) {
+                    user.setTier(resolvedTier);
+                }
+            }
+        });
+
+        userRepository.saveAll(usersById.values());
+    }
+
+    private Tier resolveTier(int tierPoint) {
+        String tierName;
+        if (tierPoint <= 1000) {
+            tierName = "브론즈";
+        } else if (tierPoint <= 1500) {
+            tierName = "실버";
+        } else if (tierPoint <= 2000) {
+            tierName = "골드";
+        } else if (tierPoint <= 2500) {
+            tierName = "플래티넘";
+        } else if (tierPoint <= 3000) {
+            tierName = "다이아몬드";
+        } else {
+            tierName = "마스터";
+        }
+
+        return tierRepository.findByName(tierName)
+                .orElseGet(() -> {
+                    log.warn("티어 정보를 찾을 수 없습니다: {}", tierName);
+                    return null;
+                });
     }
 }
