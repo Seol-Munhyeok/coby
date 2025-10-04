@@ -22,7 +22,7 @@ const getTierFromScore = (score) => {
 
 function ResultRoom() {
     const navigate = useNavigate();
-    const { users, joinRoom, leaveRoom, isConnected, error, joinedRoomId } = useWebSocket();
+    const { users, joinRoom, leaveRoom, isConnected, error, joinedRoomId, requestRestart, sendVote, restartModal, votes } = useWebSocket();
     const [notification, setNotification] = useState(null);
     const { roomId } = useParams();
     const { user } = useAuth();
@@ -45,6 +45,9 @@ function ResultRoom() {
     const winnerId = Code?.id ?? 0;
     const [playerDetails, setPlayerDetails] = useState({}); //플레이어 상세 정보(점수 등)를 저장할 상태
 
+    // 재시작 관련 타이머
+    const [restartTimer, setRestartTimer] = useState(10);
+
     // 점수 애니메이션 트리거 상태 추가
     const [triggerScoreAnimation, setTriggerScoreAnimation] = useState(false);
 
@@ -57,6 +60,48 @@ function ResultRoom() {
         handlePlayerCardClick,
         setShowContextMenu,
     } = useContextMenu();
+
+    useEffect(() => {
+        if (restartModal && restartTimer === 0) {
+            sendVote(roomId, userId, false);
+        }
+    }, [restartTimer, restartModal, roomId, userId, sendVote]);
+
+    useEffect(() => {
+        const handleNavigateToMain = () => {
+            navigate('/mainpage');
+        };
+
+        const handleNavigateToWaitingRoom = (event) => {
+            const { roomId: newRoomId } = event.detail;
+            console.log('새 방으로 이동:', newRoomId);
+            navigate(`/waitingRoom/${newRoomId}?userId=${event.detail.userId}`);
+        };
+
+        window.addEventListener('navigateToMain', handleNavigateToMain);
+        window.addEventListener('navigateToWaitingRoom', handleNavigateToWaitingRoom);
+
+        return () => {
+            window.removeEventListener('navigateToMain', handleNavigateToMain);
+            window.removeEventListener('navigateToWaitingRoom', handleNavigateToWaitingRoom);
+        };
+    }, [navigate]);
+
+    useEffect(() => {
+        if (restartModal) {
+            setRestartTimer(10); // 새로 열릴 때 10초로 리셋
+            const interval = setInterval(() => {
+                setRestartTimer((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(interval);
+        }
+    }, [restartModal]);
 
 
     // WebSocket 연결 상태에 따라 Toast 알림을 표시
@@ -140,20 +185,37 @@ function ResultRoom() {
             alert('방 정보가 없어 재대결을 시작할 수 없습니다.');
             return;
         }
-
         try {
-            // 새로운 API를 호출하여 기존 방의 문제만 변경합니다.
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/change-problem`);
+            // Backend API 호출
+            await axios.post(
+                `${process.env.REACT_APP_API_URL}/api/rooms/restart/${roomId}`,
+                { userId: userId }
+            );
 
-            alert('새로운 문제로 재대결을 시작합니다.');
-
-            // 기존 방 ID를 사용해 대기실로 이동 (새로운 문제를 다시 불러오게 됨)
-            navigate(`/waitingRoom/${roomId}`);
-
+            // WebSocket으로 재시작 요청
+            requestRestart(roomId, userId);
         } catch (error) {
-            console.error('재대결 문제 변경 중 오류 발생:', error);
-            alert('재대결 문제 변경 중 오류가 발생했습니다.');
+            console.error('재대결 요청 실패:', error);
+            alert('재대결 요청 중 오류가 발생했습니다.');
         }
+        // if (!roomDetails) {
+        //     alert('방 정보가 없어 재대결을 시작할 수 없습니다.');
+        //     return;
+        // }
+        //
+        // try {
+        //     // 새로운 API를 호출하여 기존 방의 문제만 변경합니다.
+        //     await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/change-problem`);
+        //
+        //     alert('새로운 문제로 재대결을 시작합니다.');
+        //
+        //     // 기존 방 ID를 사용해 대기실로 이동 (새로운 문제를 다시 불러오게 됨)
+        //     navigate(`/waitingRoom/${roomId}`);
+        //
+        // } catch (error) {
+        //     console.error('재대결 문제 변경 중 오류 발생:', error);
+        //     alert('재대결 문제 변경 중 오류가 발생했습니다.');
+        // }
     };
 
 
@@ -453,6 +515,44 @@ function ResultRoom() {
                         onClose={() => setNotification(null)}
                     />
                 )}
+
+                {restartModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                        <div className="bg-white p-6 rounded-lg">
+                            <h2 className="text-xl font-bold mb-4">재대결 하시겠습니까?</h2>
+                            <p className="mb-4 text-red-600 font-semibold">남은 시간: {restartTimer}초</p>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => sendVote(roomId, userId, true)}
+                                    className="px-4 py-2 bg-blue-500 text-white rounded"
+                                >
+                                    수락
+                                </button>
+                                <button
+                                    onClick={() => sendVote(roomId, userId, false)}
+                                    className="px-4 py-2 bg-gray-500 text-white rounded"
+                                >
+                                    거절
+                                </button>
+                            </div>
+                            <div className="mt-4">
+                                {Object.entries(votes).map(([uid, join]) => {
+                                    const user = users.find(u => u.userId === Number(uid));
+                                    const displayName = user?.nickname || `사용자 ${uid}`;
+                                    return (
+                                        <p key={uid} className="text-sm">
+                                            {displayName}: <span className={join ? "text-green-600" : "text-red-600"}>
+                    {join ? "✓ 수락" : "✗ 거부"}
+                </span>
+                                        </p>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+
 
                 {/* Context Menu 추가 */}
                 {showContextMenu && selectedPlayer && (

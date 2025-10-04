@@ -4,6 +4,7 @@ import com.example.coby.dto.*;
 import com.example.coby.entity.Problem;
 import com.example.coby.entity.Room;
 import com.example.coby.repository.SubmissionRepository;
+import com.example.coby.service.RestartService;
 import com.example.coby.service.RoomService;
 import com.example.coby.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -21,6 +24,7 @@ public class RoomController {
     private final RoomService roomService;
     private final SubmissionService submissionService;
     private final SubmissionRepository submissionRepository;
+    private final RestartService restartService;
 
     @GetMapping
     public List<RoomResponse> getRooms() {
@@ -53,6 +57,29 @@ public class RoomController {
         }
         return ResponseEntity.ok(ProblemResponse.from(problem));
     }
+
+    @PostMapping("/restart/{roomId}")
+    public ResponseEntity<Map<String, Object>> requestRestart(
+            @PathVariable Long roomId,
+            @RequestBody Map<String, Long> request) {
+
+        try {
+            Long userId = request.get("userId");
+            restartService.initiateRestart(roomId, userId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "재시작 투표가 시작되었습니다.");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @PostMapping("/{id}/change-problem")
     public ResponseEntity<RoomResponse> changeRoomProblem(@PathVariable Long id) {
         Room updatedRoom = roomService.changeRoomProblem(id);
