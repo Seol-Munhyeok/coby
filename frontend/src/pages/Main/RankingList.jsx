@@ -1,5 +1,5 @@
 import React from 'react';
-
+// TierInfo.jsx 파일에서 실제 뱃지 컴포넌트들을 가져옵니다.
 import {
     BronzeTierBadge,
     SilverTierBadge,
@@ -8,10 +8,6 @@ import {
     DiamondTierBadge,
     MasterTierBadge
 } from './TierInfo'; 
-
-
-// Unranked 뱃지는 TierInfo.jsx에 없으므로, 간단하게 정의해줍니다.
-const UnrankedBadge = () => (<div className="inline-block bg-gray-100 text-gray-500 font-bold px-3 py-1 rounded-full text-sm">Unranked</div>);
 
 
 // 헬퍼 함수: 점수에 따라 티어 이름 반환
@@ -33,7 +29,7 @@ const renderTierBadge = (tier) => {
     case '플래티넘': return <PlatinumTierBadge />;
     case '다이아몬드': return <DiamondTierBadge />;
     case '마스터': return <MasterTierBadge />;
-    default: return <UnrankedBadge />;
+    default: return <GoldTierBadge />;
   }
 };
 
@@ -112,6 +108,11 @@ function RankingList({ showModal, onClose, rankings }) {
                                 {processedRankings && processedRankings.length > 0 ? (
                                     processedRankings.map((player) => {
                                         const tierName = getTierFromScore(player.tierPoint ?? 0);
+                                        
+                                        // "패" 계산식을 totalGames - wins 로 변경
+                                        const wins = player.wins ?? 0;
+                                        const totalGames = player.totalGames ?? 0;
+                                        const losses = totalGames - wins;
 
                                         return (
                                             <tr 
@@ -125,17 +126,15 @@ function RankingList({ showModal, onClose, rankings }) {
                                                     {player.rank > 3 ? player.rank : ''}
                                                 </td>
                                                 <td className="p-4 font-semibold text-gray-900">{player.nickName ?? '이름없음'}</td>
-                                                
-                                                {/* 실제 뱃지 컴포넌트가 렌더링되는 부분 */}
                                                 <td className="p-4">
                                                     {renderTierBadge(tierName)}
                                                 </td>
-                                                
                                                 <td className="p-4 text-center font-mono text-blue-600 font-bold">{player.tierPoint ?? 0}</td>
                                                 <td className="p-4 text-center font-mono">
-                                                    <span className="font-bold text-green-600">{player.wins ?? 0}</span>
+                                                    <span className="font-bold text-green-600">{wins}</span>
                                                     <span className="mx-1 text-gray-400">/</span>
-                                                    <span className="font-bold text-red-600">{player.losses ?? 0}</span>
+                                                    {/* 계산된 패배 횟수 사용 (음수 방지) */}
+                                                    <span className="font-bold text-red-600">{losses < 0 ? 0 : losses}</span>
                                                 </td>
                                             </tr>
                                         );
