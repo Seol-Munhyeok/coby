@@ -4,26 +4,20 @@ import com.example.coby.dto.RoomUserResponse;
 import com.example.coby.dto.WsMessageDto;
 import com.example.coby.service.ChatService;
 import com.example.coby.service.RoomService;
+import com.example.coby.service.RestartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.websocket.WsPongMessage;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.socket.*;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
-import com.fasterxml.jackson.databind.ObjectMapper; // ObjectMapper 임포트
-import com.fasterxml.jackson.core.JsonProcessingException; // JsonProcessingException 임포트
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Controller
@@ -33,6 +27,7 @@ public class WebSocketController {
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
     private final RoomService roomService;
+    private final RestartService restartService;
 
     private final Map<String, String> sessionToRoom = new ConcurrentHashMap<>();
     private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
@@ -42,10 +37,73 @@ public class WebSocketController {
      * 채팅 메시지를 수신하여 해당 방의 모든 클라이언트에게 전송(브로드캐스팅)합니다.
      * 클라이언트가 `/pub/room/{roomId}/chat` 경로로 메시지를 발행하면 이 메소드가 호출됩니다.
      */
+
+    /**
+     * 재시작 요청을 처리합니다.
+     * 방장이 아니어도 재시작을 요청할 수 있습니다.
+     */
+    @MessageMapping("/room/{roomId}/restart")
+    public void handleRestart(@DestinationVariable String roomId,
+                              WsMessageDto message,
+                              SimpMessageHeaderAccessor headerAccessor) {
+        String requesterId = sessionToUser.get(headerAccessor.getSessionId());
+        try {
+            Long rid = Long.parseLong(roomId);
+            Long reqId = requesterId != null ? Long.parseLong(requesterId) : null;
+
+            if (reqId == null) {
+                log.warn("유효하지 않은 재시작 요청: sessionId={}", headerAccessor.getSessionId());
+                return;
+            }
+
+            if (message.userId() != null && !message.userId().equals(String.valueOf(reqId))) {
+                log.warn("사용자 ID 불일치. session={}, message={}", reqId, message.userId());
+                return;
+            }
+
+            log.info("방 [{}]에서 사용자 {}가 재시작 요청", roomId, reqId);
+            restartService.initiateRestart(rid, reqId);
+
+        } catch (NumberFormatException e) {
+            log.warn("올바르지 않은 ID: roomId={}, userId={}", roomId, requesterId);
+        } catch (IllegalStateException e) {
+            log.warn("재시작 요청 실패: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 재시작 투표를 처리합니다.
+     */
+    @MessageMapping("/room/{roomId}/vote")
+    public void handleVote(@DestinationVariable String roomId,
+                           WsMessageDto message,
+                           SimpMessageHeaderAccessor headerAccessor) {
+        String voterId = sessionToUser.get(headerAccessor.getSessionId());
+        try {
+            Long rid = Long.parseLong(roomId);
+            Long vid = voterId != null ? Long.parseLong(voterId) : null;
+
+            if (vid == null) {
+                log.warn("유효하지 않은 투표: sessionId={}", headerAccessor.getSessionId());
+                return;
+            }
+
+            boolean join = Boolean.TRUE.equals(message.isJoin());
+            log.info("방 [{}]에서 사용자 {}가 투표: join={}", roomId, vid, join);
+
+            restartService.processVote(rid, vid, join);
+
+        } catch (NumberFormatException e) {
+            log.warn("올바르지 않은 ID: roomId={}, userId={}", roomId, voterId);
+        } catch (IllegalStateException e) {
+            log.warn("투표 처리 실패: {}", e.getMessage());
+        }
+    }
+
     @MessageMapping("/room/{roomId}/chat")
     public void handleChatMessage(@DestinationVariable String roomId,
                              WsMessageDto message,
-                             SimpMessageHeaderAccessor headerAccessor) {
+                                  @SuppressWarnings("unused") SimpMessageHeaderAccessor headerAccessor) {
         if (!"Chat".equalsIgnoreCase(message.type())) {
             return;
         }
@@ -168,13 +226,12 @@ public class WebSocketController {
             log.warn("올바르지 않은 ID: roomId={}, userId={}", roomId, message.userId());
         }
     }
-
     /**
      * 방장이 게임 시작을 요청했을 때, 방 전체에 게임 시작을 알립니다.
      */
     @MessageMapping("/room/{roomId}/start")
     public void handleStartGame(@DestinationVariable String roomId,
-                                WsMessageDto message,
+                                @SuppressWarnings("unused") WsMessageDto message,
                                 SimpMessageHeaderAccessor headerAccessor) {
         String requesterId = sessionToUser.get(headerAccessor.getSessionId());
         try {

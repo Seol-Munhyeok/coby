@@ -16,5 +16,8 @@ public record WsMessageDto(
         Boolean isReady,
         Boolean isHost,
         String content,
+        Boolean isJoin,  // 재시작 투표용
+        Long newRoomId,  // 새 방 ID
+        Boolean success, // 재시작 성공 여부
         List<RoomUserResponse> users
 ) {}

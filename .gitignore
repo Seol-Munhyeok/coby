@@ -44,7 +44,7 @@ out/
 
 # IntelliJ config
 *.xml
-
+*.sh
 **/.env.idea/
 backend/.env
 *.pem
