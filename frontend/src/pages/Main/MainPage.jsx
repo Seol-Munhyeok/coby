@@ -222,10 +222,10 @@ function MainPage() {
                                             rank={index + 1}
                                             name={player.nickName ?? '이름없음'}
                                             rating={player.tierPoint ?? 0}
-                                            wins={player.wins ?? 0}          // 서버에서 제공하지 않으면 0으로
-                                            losses={player.losses ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                            wins={player.winGame ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                            losses={player.totalGame !== undefined && player.winGame !== undefined ? player.totalGame - player.winGame : 0}
                                             tier={player.tier?.name ?? '브론즈'}
-                                            languageLogo={player?.mainLanguage ?? 'python'}          // API에서 안주니 기본값으로 고정
+                                            languageLogo={player?.preferredLanguage ?? 'python'}         // API에서 안주니 기본값으로 고정
                                             />
                                         ))
                                         ) : (

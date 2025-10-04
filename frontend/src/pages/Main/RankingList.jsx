@@ -110,8 +110,8 @@ function RankingList({ showModal, onClose, rankings }) {
                                         const tierName = getTierFromScore(player.tierPoint ?? 0);
                                         
                                         // "패" 계산식을 totalGames - wins 로 변경
-                                        const wins = player.wins ?? 0;
-                                        const totalGames = player.totalGames ?? 0;
+                                        const wins = player.winGame ?? 0;
+                                        const totalGames = player.totalGame ?? 0;
                                         const losses = totalGames - wins;
 
                                         return (
