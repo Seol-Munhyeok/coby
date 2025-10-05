@@ -186,36 +186,18 @@ function ResultRoom() {
             return;
         }
         try {
-            // Backend API 호출
+            // 백엔드에 재시작 요청 API를 호출합니다.
             await axios.post(
                 `${process.env.REACT_APP_API_URL}/api/rooms/restart/${roomId}`,
                 { userId: userId }
             );
 
-            // WebSocket으로 재시작 요청
+            // WebSocket으로 다른 클라이언트에게 재시작 요청을 알립니다.
             requestRestart(roomId, userId);
         } catch (error) {
             console.error('재대결 요청 실패:', error);
             alert('재대결 요청 중 오류가 발생했습니다.');
         }
-        // if (!roomDetails) {
-        //     alert('방 정보가 없어 재대결을 시작할 수 없습니다.');
-        //     return;
-        // }
-        //
-        // try {
-        //     // 새로운 API를 호출하여 기존 방의 문제만 변경합니다.
-        //     await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/change-problem`);
-        //
-        //     alert('새로운 문제로 재대결을 시작합니다.');
-        //
-        //     // 기존 방 ID를 사용해 대기실로 이동 (새로운 문제를 다시 불러오게 됨)
-        //     navigate(`/waitingRoom/${roomId}`);
-        //
-        // } catch (error) {
-        //     console.error('재대결 문제 변경 중 오류 발생:', error);
-        //     alert('재대결 문제 변경 중 오류가 발생했습니다.');
-        // }
     };
 
 
