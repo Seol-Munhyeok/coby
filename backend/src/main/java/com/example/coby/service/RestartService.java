@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 public class RestartService {
 
     private final RoomService roomService;
+    private final RoomRepository roomRepository;
     private final RoomUserRepository roomUserRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -113,6 +114,10 @@ public class RestartService {
                 resultMessage.put("newRoomId", newRoomId);
 
                 log.info("재시작 성공! 새 방 ID: {}", newRoomId);
+
+                // 이전 방과 관련된 모든 정보를 안전하게 삭제
+                roomService.deleteRoom(roomId);
+                log.info("이전 방 ID: {} 정보가 삭제되었습니다.", roomId);
 
             } else {
                 // 거부자가 있는 경우
