@@ -389,24 +389,11 @@ public class RoomService {
     }
 
     private Tier resolveTier(int tierPoint) {
-        String tierName;
-        if (tierPoint <= 1000) {
-            tierName = "브론즈";
-        } else if (tierPoint <= 1500) {
-            tierName = "실버";
-        } else if (tierPoint <= 2000) {
-            tierName = "골드";
-        } else if (tierPoint <= 2500) {
-            tierName = "플래티넘";
-        } else if (tierPoint <= 3000) {
-            tierName = "다이아몬드";
-        } else {
-            tierName = "마스터";
-        }
-
-        return tierRepository.findByName(tierName)
+        return tierRepository
+                .findFirstByPointMinLessThanEqualAndPointMaxGreaterThanEqual(tierPoint, tierPoint)
+                .or(() -> tierRepository.findFirstByPointMinLessThanEqualOrderByPointMinDesc(tierPoint))
                 .orElseGet(() -> {
-                    log.warn("티어 정보를 찾을 수 없습니다: {}", tierName);
+                    log.warn("티어 정보를 찾을 수 없습니다: tierPoint={}", tierPoint);
                     return null;
                 });
     }
