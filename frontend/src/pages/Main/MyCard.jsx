@@ -1,7 +1,8 @@
-import React, { use, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../AuthContext/AuthContext';
 import './MainPage.css';
 import { PythonLogo, JavaLogo, CppLogo } from '../../Common/components/LanguageCards';
+import { DEFAULT_TIER_NAME, TierBadge } from './TierInfo';
 
 function MyCard() {
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
@@ -17,38 +18,12 @@ function MyCard() {
     const totalGame = user?.totalGame || 0;         //총 게임 수
     const winGame = user?.winGame || 0;             //승리 게임 수
     const tierPoints = user?.tierPoint || 0;        //티어 포인트
-    // const tierName = user?.tierName || '골드';    // 삭제: tierPoints에 따라 결정하도록 변경
-    const tierImageUrl = user?.tierImageUrl || '';  //티어 이미지 경로
+    const tierName = user?.tierName || DEFAULT_TIER_NAME;    // 삭제: tierPoints에 따라 결정하도록 변경
     
     const loseGame = totalGame - winGame            //패배 게임 수 
 
     // 승률 계산 (totalGame이 0이 아닐 경우에만 계산) | 소수점 둘째 자리까지 표시
     const winRate = totalGame > 0 ? ((winGame / totalGame) * 100).toFixed(2) : 0;
-    
-    // tierPoints에 따라 tierName을 반환하는 함수
-    const getTierName = (points) => {
-        if (points <= 1000) return '브론즈';
-        if (points <= 1500) return '실버';
-        if (points <= 2000) return '골드';
-        if (points <= 2500) return '플래티넘';
-        if (points <= 3000) return '다이아몬드';
-        return '마스터';
-    };
-
-    const tierName = getTierName(tierPoints); // tierName 결정
-
-    // 👇 추가: tierName에 따라 CSS 클래스를 반환하는 함수
-    const getTierClass = (name) => {
-        switch (name) {
-            case '브론즈': return 'main-tier-bronze';
-            case '실버': return 'main-tier-silver';
-            case '골드': return 'main-tier-gold';
-            case '플래티넘': return 'main-tier-platinum';
-            case '다이아몬드': return 'main-tier-diamond';
-            case '마스터': return 'main-tier-master';
-            default: return 'main-tier-gold';
-        }
-    };
     
     // 별 생성 함수
     const createStars = () => {
@@ -134,12 +109,7 @@ function MyCard() {
                                 <div className="p-4 flex justify-between items-center">
                                     <div className="text-xl font-bold text-blue-800">{preferredLanguage}</div>
                                     {/* className과 tierName을 동적으로 변경 */}
-                                    <div className={`main-tier-badge ${getTierClass(tierName)}`}>
-                                        <svg className="main-tier-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
-                                        </svg>
-                                        {tierName}
-                                    </div>
+                                    <TierBadge tierName={tierName}/>
                                 </div>
                                 {renderLogo()}
                                 <div className="p-4 mt-auto">
@@ -158,12 +128,7 @@ function MyCard() {
                                     <div className="flex justify-between items-center">
                                         <span className="text-white">티어</span>
                                         {/* className과 tierName을 동적으로 변경 */}
-                                        <div className={`main-tier-badge ${getTierClass(tierName)}`}>
-                                            <svg className="main-tier-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
-                                            </svg>
-                                            {tierName}
-                                        </div>
+                                        <TierBadge tierName={tierName} />
                                     </div>
                                 </div>
 

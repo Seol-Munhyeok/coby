@@ -1,5 +1,36 @@
 import React from 'react';
 
+export const DEFAULT_TIER_NAME = '브론즈';
+const DEFAULT_TIER_CLASS = 'main-tier-bronze';
+
+const TIER_CLASS_MAP = {
+    '브론즈': 'main-tier-bronze',
+    '실버': 'main-tier-silver',
+    '골드': 'main-tier-gold',
+    '플래티넘': 'main-tier-platinum',
+    '다이아몬드': 'main-tier-diamond',
+    '마스터': 'main-tier-master',
+};
+
+
+// 공용 티어 뱃지 컴포넌트
+export const TierBadge = ({ tierName }) => {
+    const resolvedTierName = tierName ?? DEFAULT_TIER_NAME;
+    const tierClassName = TIER_CLASS_MAP[resolvedTierName] ?? DEFAULT_TIER_CLASS;
+    const mergedClassName = [`main-tier-badge`, tierClassName].filter(Boolean).join(' ');
+
+    return (
+        <div className={mergedClassName}>
+            <svg className="main-tier-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="currentColor" />
+            </svg>
+            {resolvedTierName}
+        </div>
+    );
+};
+
+
+
 // 각 티어의 디자인만 담당하는 함수들
 export const BronzeTierBadge = () => (
     <div className="main-tier-badge main-tier-bronze mr-2">
@@ -73,7 +104,7 @@ export const MasterTierBadge = () => (
 // 여기가 수정된 TierInfo 컴포넌트입니다.
 function TierInfo({ className }) {
     return (
-        <div className={`bg-white rounded-xl shadow-md overflow-hidden ${className}`}>
+        <div className={`bg-white rounded-xl shadow-md overflow-hidden`}>
             {/* 헤더 */}
             <div className="p-4 bg-gray-50 border-b">
                 <h3 className="text-lg font-bold text-gray-800">티어 정보</h3>

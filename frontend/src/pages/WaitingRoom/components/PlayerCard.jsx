@@ -8,27 +8,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import '../WaitingRoom.css';
-import {
-  BronzeTierBadge,
-  SilverTierBadge,
-  GoldTierBadge,
-  PlatinumTierBadge,
-  DiamondTierBadge,
-  MasterTierBadge
-} from '../../Main/TierInfo';
-
-// 헬퍼 함수: 티어에 맞는 뱃지 반환
-const renderTierBadge = (tier) => {
-  switch (tier) {
-    case '브론즈': return <BronzeTierBadge />;
-    case '실버': return <SilverTierBadge />;
-    case '골드': return <GoldTierBadge />;
-    case '플래티넘': return <PlatinumTierBadge />;
-    case '다이아몬드': return <DiamondTierBadge />;
-    case '마스터': return <MasterTierBadge />;
-    default: return <GoldTierBadge />;
-  }
-};
+import { DEFAULT_TIER_NAME, TierBadge } from '../../Main/TierInfo';
 
 function PlayerCard({ 
   player, 
@@ -55,8 +35,8 @@ function PlayerCard({
       setTimeout(() => {
         setAnimationStep('countUp');
         
-        const oldScore = tierPoint;
-        const newScore = tierPoint + scoreGain;
+        const oldScore = Math.max(0, tierPoint - scoreGain); //0 미만으로 떨어지지 않게
+        const newScore = tierPoint;
 
         // 점수 카운트업 애니메이션
         let currentScore = oldScore;
@@ -113,7 +93,9 @@ function PlayerCard({
       </div>
       <h3 className="font-medium  text-center">{player.name}</h3>
       <div className="flex items-center mt-1 h-6">
-        {renderTierBadge(player.tier)}
+        <TierBadge
+          tierName={player.tierName ?? player.tier ?? DEFAULT_TIER_NAME}
+        />
       </div>
       {/* --- 점수 애니메이션 UI (승리자에게만 보임) --- */}
       {isWinner && (
