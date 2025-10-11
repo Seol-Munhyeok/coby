@@ -535,3 +535,48 @@
     border: 1px solid #e5e7eb; /* gray-200 */
 }
 
+/* 랭킹 탭 1,2,3등 타이포그래피 카드 스타일 */
+.top-ranker-card {
+    position: relative;
+    background-color: white;
+    border-radius: 1.25rem; /* 20px */
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    overflow: hidden;
+    height: 12rem; /* 192px -> 3등 기본 높이 */
+    transition: all 0.3s ease;
+}
+
+/* 2등 높이 */
+.top-ranker-card.rank-card-2 {
+    height: 13rem; /* 208px */
+}
+
+/* 1등 높이 */
+.top-ranker-card.rank-card-1 {
+    height: 14rem; /* 224px */
+}
+
+
+.top-ranker-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.rank-border {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+}
+
+.rank-border.rank-1 {
+    background-color: #fbbf24; /* amber-400 */
+}
+.rank-border.rank-2 {
+    background-color: #d1d5db; /* gray-300 */
+}
+.rank-border.rank-3 {
+    background-color: #f97316; /* orange-500 */
+}
+

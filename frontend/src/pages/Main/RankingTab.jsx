@@ -2,40 +2,25 @@ import React from 'react';
 import { DEFAULT_TIER_NAME, TierBadge } from './TierInfo';
 
 /**
- * 랭킹 1, 2, 3위를 위한 특별 디자인 카드
+ * 랭킹 1, 2, 3위를 위한 새로운 타이포그래피 디자인 카드
  */
 const TopRankerCard = ({ player, rank }) => {
-    const rankStyles = {
-        1: {
-            bg: 'bg-gradient-to-br from-amber-300 to-yellow-500',
-            shadow: 'shadow-yellow-400/50',
-            icon: '🥇',
-            textColor: 'text-yellow-900',
-        },
-        2: {
-            bg: 'bg-gradient-to-br from-slate-300 to-gray-500',
-            shadow: 'shadow-gray-400/50',
-            icon: '🥈',
-            textColor: 'text-gray-800',
-        },
-        3: {
-            bg: 'bg-gradient-to-br from-orange-400 to-amber-600',
-            shadow: 'shadow-orange-400/50',
-            icon: '🥉',
-            textColor: 'text-orange-900',
-        },
-    };
-
-    const style = rankStyles[rank];
+    // 순위에 따라 높이를 조절하는 클래스를 동적으로 추가합니다.
+    const rankHeightClass = `rank-card-${rank}`;
 
     return (
-        <div className={`p-6 rounded-2xl ${style.bg} shadow-xl ${style.shadow} flex flex-col items-center text-center transform hover:-translate-y-2 transition-transform duration-300`}>
-            <div className="text-5xl mb-2">{style.icon}</div>
-            <div className={`text-2xl font-bold ${style.textColor}`}>{player.nickName ?? '이름없음'}</div>
-            <div className={`text-sm font-semibold ${style.textColor} opacity-80 mb-4`}>
-                {player.tierPoint ?? 0} 점
+        <div className={`top-ranker-card ${rankHeightClass}`}>
+            <div className={`rank-border rank-${rank}`}></div>
+            <div className="relative z-10 flex flex-col items-center justify-center h-full">
+                <p className="font-bold text-3xl text-gray-800">{player.nickName ?? '이름없음'}</p>
+                <p className="text-lg text-gray-500">Score {player.tierPoint ?? 0}</p>
             </div>
-            <TierBadge tierName={player.tier?.name ?? DEFAULT_TIER_NAME} />
+            <div 
+                className="absolute inset-0 flex items-center justify-center text-gray-200 font-bold pointer-events-none"
+                style={{ fontSize: '12rem', lineHeight: '1' }}
+            >
+                {rank}
+            </div>
         </div>
     );
 };
@@ -62,21 +47,21 @@ function RankingTab({ rankings }) {
 
     return (
         <div className="space-y-10">
-            {/* 1, 2, 3등 */}
+            {/* 1, 2, 3등 (2, 1, 3 순서로 배치하고 높이를 다르게 설정) */}
             <div>
-                <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">명예의 전당</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {top3.map((player, index) => (
-                        <TopRankerCard key={player.nickName ?? index} player={player} rank={index + 1} />
-                    ))}
+                {/* items-end를 추가하여 박스를 하단 정렬합니다. */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:items-end">
+                    {/* 2nd Place */}
+                    {top3[1] && <TopRankerCard player={top3[1]} rank={2} />}
+                    {/* 1st Place */}
+                    {top3[0] && <TopRankerCard player={top3[0]} rank={1} />}
+                    {/* 3rd Place */}
+                    {top3[2] && <TopRankerCard player={top3[2]} rank={3} />}
                 </div>
             </div>
 
             {/* 4~10등 및 11등 이하 */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                <div className="p-4 bg-gray-50 border-b">
-                     <h2 className="text-xl font-bold text-gray-800">전체 순위</h2>
-                </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
                         <thead className="bg-gray-100">
@@ -115,3 +100,4 @@ function RankingTab({ rankings }) {
 }
 
 export default RankingTab;
+
