@@ -1,37 +1,5 @@
 import React from 'react';
-// TierInfo.jsx 파일에서 실제 뱃지 컴포넌트들을 가져옵니다.
-import {
-    BronzeTierBadge,
-    SilverTierBadge,
-    GoldTierBadge,
-    PlatinumTierBadge,
-    DiamondTierBadge,
-    MasterTierBadge
-} from './TierInfo'; 
-
-
-// 헬퍼 함수: 점수에 따라 티어 이름 반환
-const getTierFromScore = (score) => {
-    if (score <= 1000) return '브론즈';
-    if (score <= 1500) return '실버';
-    if (score <= 2000) return '골드';
-    if (score <= 2500) return '플래티넘';
-    if (score <= 3000) return '다이아몬드';
-    return '마스터';
-};
-
-// 헬퍼 함수: 티어에 맞는 뱃지 컴포넌트 반환
-const renderTierBadge = (tier) => {
-  switch (tier) {
-    case '브론즈': return <BronzeTierBadge />;
-    case '실버': return <SilverTierBadge />;
-    case '골드': return <GoldTierBadge />;
-    case '플래티넘': return <PlatinumTierBadge />;
-    case '다이아몬드': return <DiamondTierBadge />;
-    case '마스터': return <MasterTierBadge />;
-    default: return <GoldTierBadge />;
-  }
-};
+import { DEFAULT_TIER_NAME, TierBadge } from './TierInfo';
 
 
 function RankingList({ showModal, onClose, rankings }) {
@@ -107,7 +75,7 @@ function RankingList({ showModal, onClose, rankings }) {
                             <tbody className="divide-y divide-sky-200">
                                 {processedRankings && processedRankings.length > 0 ? (
                                     processedRankings.map((player) => {
-                                        const tierName = getTierFromScore(player.tierPoint ?? 0);
+                                        const tierName = player.tier?.name ?? DEFAULT_TIER_NAME;
                                         
                                         // "패" 계산식을 totalGames - wins 로 변경
                                         const wins = player.winGame ?? 0;
@@ -127,7 +95,7 @@ function RankingList({ showModal, onClose, rankings }) {
                                                 </td>
                                                 <td className="p-4 font-semibold text-gray-900">{player.nickName ?? '이름없음'}</td>
                                                 <td className="p-4">
-                                                    {renderTierBadge(tierName)}
+                                                    <TierBadge tierName={tierName} />
                                                 </td>
                                                 <td className="p-4 text-center font-mono text-blue-600 font-bold">{player.tierPoint ?? 0}</td>
                                                 <td className="p-4 text-center font-mono">

@@ -9,16 +9,7 @@ import ToastNotification from '../../Common/components/ToastNotification';
 import { useAuth } from '../AuthContext/AuthContext';
 import PlayerCard from '../WaitingRoom/components/PlayerCard';
 import axios from 'axios';
-
-// --- ⬇️ 1. 점수를 티어로 변환하는 헬퍼 함수 추가 ⬇️ ---
-const getTierFromScore = (score) => {
-    if (score <= 1000) return '브론즈';
-    if (score <= 1500) return '실버';
-    if (score <= 2000) return '골드';
-    if (score <= 2500) return '플래티넘';
-    if (score <= 3000) return '다이아몬드';
-    return '마스터';
-};
+import { DEFAULT_TIER_NAME } from '../Main/TierInfo';
 
 function ResultRoom() {
     const navigate = useNavigate();
@@ -253,26 +244,19 @@ function ResultRoom() {
     const currentPlayers = uniqueUsers.map((player) => {
         // winnerId를 숫자로 변환하여 비교합니다.
         const isWinner = player.userId === parseInt(winnerId, 10);
-        console.log("winnerId", winnerId)
+        const details = playerDetails[player.userId] ?? {};
 
-
-        // playerDetails에 정보가 없거나, tierPoint 속성이 없을 경우 기본값 0을 사용합니다.
-        const baseScore = playerDetails[player.userId]?.tierPoint ?? 0;
-        
-        // 최종 점수는 티어 계산에만 사용합니다.
-        const finalScore = isWinner ? baseScore + 200 : baseScore;
-        const tier = getTierFromScore(finalScore);
+        const tierPoint = details.tierPoint ?? 0;
+        const tierName = details.tierName ?? DEFAULT_TIER_NAME;
 
         return {
             name: player.nickname,
             userId: player.userId,
             avatarInitials:
                 player.nickname.charAt(0).toUpperCase() + (player.nickname.charAt(1) || '').toUpperCase(),
-            tier: tier,
+            tierName: tierName,
             avatarColor: 'bg-blue-700', // 예시 데이터
-            
-            // PlayerCard에 tierPoint(기존 점수)와 isWinner(승리 여부)를 전달합니다.
-            tierPoint: baseScore,
+            tierPoint: tierPoint,
             isWinner: isWinner,
         };
     });
