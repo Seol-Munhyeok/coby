@@ -302,18 +302,6 @@ function MainPage() {
                     </div>
                 </div>
             </div>
-
-            {/* Footer */}
-            <footer className="bg-gray-800 text-white py-8 mt-auto">
-                <div className="container mx-auto px-4">
-                    <div className="flex flex-col md:flex-row justify-between">
-                        <div className="mb-6 md:mb-0">
-                            <h2 className="logo-text text-2xl mb-4">COBY</h2>
-                            <p className="text-gray-400 text-sm">Coding Online Battle With You</p>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 }
