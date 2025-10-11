@@ -7,8 +7,7 @@ import { useAuth } from '../AuthContext/AuthContext';
 import ToastNotification from '../../Common/components/ToastNotification';
 
 // 분리된 컴포넌트들 임포트
-import MyCard from './MyCard';
-import TierInfo from './TierInfo';
+import ProfileCard from './ProfileCard'; // MyCard 대신 ProfileCard를 임포트
 import RankCard from './RankCard';
 import RoomList from './RoomList';
 import RecentMatches from './RecentMatches';
@@ -198,9 +197,7 @@ function MainPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
                         {/* Left Section - My Card & Tier Info */}
                         <div className="lg:col-span-1 space-y-8">
-                            <MyCard />
-                            <TierInfo />
-                            <RecentMatches/> {/* 최근 전적 UI 삽입 */}
+                            <ProfileCard />
                         </div>
 
                         {/* Right Section - Fragment Area */}
@@ -365,3 +362,5 @@ function MainPage() {
 }
 
 export default MainPage;
+
+
