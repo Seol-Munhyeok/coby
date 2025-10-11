@@ -10,7 +10,6 @@ import ToastNotification from '../../Common/components/ToastNotification';
 import ProfileCard from './ProfileCard'; // MyCard 대신 ProfileCard를 임포트
 import RankCard from './RankCard';
 import RoomList from './RoomList';
-import RecentMatches from './RecentMatches';
 import RankingList from './RankingList'; // 랭킹 모달 컴포넌트 임포트
 
 function MainPage() {
@@ -25,7 +24,7 @@ function MainPage() {
     const location = useLocation();
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
-    const [activeTab, setActiveTab] = useState('game'); // 프래그먼트 탭 상태
+    const [activeTab, setActiveTab] = useState('game'); // 현재 활성화된 탭 상태
 
 
     const [newRoomSettings, setNewRoomSettings] = useState({
@@ -192,7 +191,6 @@ function MainPage() {
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8 flex-grow">
-                {/* 메인 컨테이너 */}
                 <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-full">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
                         {/* Left Section - My Card & Tier Info */}
@@ -202,8 +200,8 @@ function MainPage() {
 
                         {/* Right Section - Fragment Area */}
                         <div className="lg:col-span-3">
-                            {/* Tab Navigation */}
-                            <div className="flex mb-6 border-b border-gray-200">
+                            {/* Tab Buttons */}
+                            <div className="flex border-b mb-6">
                                 <button onClick={() => setActiveTab('game')} className={`tab-button ${activeTab === 'game' ? 'active' : ''}`}>
                                     <i className="fas fa-gamepad"></i>
                                     <span className="tab-text">게임</span>
@@ -212,16 +210,16 @@ function MainPage() {
                                     <i className="fas fa-trophy"></i>
                                     <span className="tab-text">랭킹</span>
                                 </button>
-                                <button onClick={() => setActiveTab('myInfo')} className={`tab-button ${activeTab === 'myInfo' ? 'active' : ''}`}>
+                                <button onClick={() => setActiveTab('my-info')} className={`tab-button ${activeTab === 'my-info' ? 'active' : ''}`}>
                                     <i className="fas fa-user"></i>
                                     <span className="tab-text">내 정보</span>
                                 </button>
                             </div>
 
-                            {/* Tab Content */}
+                            {/* Conditional Content based on activeTab */}
                             <div>
                                 {activeTab === 'game' && (
-                                    <>
+                                    <div>
                                         {/* Ranking TOP 3 */}
                                         <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
                                             <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
@@ -233,30 +231,34 @@ function MainPage() {
 
                                             <div className="p-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                    {/* API로부터 받아온 랭킹 데이터 상위 3명을 동적으로 렌더링 */}
+                                                    {/* Null-safe 처리: rankings 배열이 존재하고 비어있지 않은 경우에만 렌더링 */}
                                                     {Array.isArray(rankings) && rankings.length > 0 ? (
                                                         rankings.slice(0, 3).map((player, index) => (
                                                             <RankCard
-                                                                key={player.nickName ?? index}
-                                                                rank={index + 1}
-                                                                name={player.nickName ?? '이름없음'}
-                                                                rating={player.tierPoint ?? 0}
-                                                                wins={player.winGame ?? 0}
-                                                                losses={player.totalGame !== undefined && player.winGame !== undefined ? player.totalGame - player.winGame : 0}
-                                                                tier={player.tier?.name ?? '브론즈'}
-                                                                languageLogo={player?.preferredLanguage ?? 'python'}
+                                                            key={player.nickName ?? index}
+                                                            rank={index + 1}
+                                                            name={player.nickName ?? '이름없음'}
+                                                            rating={player.tierPoint ?? 0}
+                                                            wins={player.winGame ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                                            losses={player.totalGame !== undefined && player.winGame !== undefined ? player.totalGame - player.winGame : 0}
+                                                            tier={player.tier?.name ?? '브론즈'}
+                                                            languageLogo={player?.preferredLanguage ?? 'python'}         // API에서 안주니 기본값으로 고정
                                                             />
                                                         ))
-                                                    ) : (
+                                                        ) : (
                                                         <p className="text-gray-500 col-span-3 text-center">
                                                             랭킹 정보가 없습니다.
                                                         </p>
-                                                    )}
+                                                        )}
+
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Game Participation Section */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                            {/* Quick Game Join */}
                                             <div className="bg-white rounded-xl shadow-md overflow-hidden">
                                                 <div className="p-4 bg-blue-500 text-white">
                                                     <h2 className="text-xl font-bold">빠른 게임 참가</h2>
@@ -268,6 +270,8 @@ function MainPage() {
                                                     </button>
                                                 </div>
                                             </div>
+
+                                            {/* Create Room */}
                                             <div className="bg-white rounded-xl shadow-md overflow-hidden">
                                                 <div className="p-4 bg-purple-500 text-white">
                                                     <h2 className="text-xl font-bold">방 생성</h2>
@@ -283,18 +287,20 @@ function MainPage() {
 
                                         {/* Available Rooms List */}
                                         <RoomList rooms={rooms} enterRoomBtn={enterRoomBtn} fetchRooms={fetchRooms} />
-                                    </>
-                                )}
-                                {activeTab === 'ranking' && (
-                                    <div className="p-4 bg-gray-50 rounded-lg">
-                                        <h2 className="text-xl font-bold">랭킹 정보</h2>
-                                        {/* 랭킹 콘텐츠가 여기에 표시됩니다. */}
                                     </div>
                                 )}
-                                {activeTab === 'myInfo' && (
-                                    <div className="p-4 bg-gray-50 rounded-lg">
-                                        <h2 className="text-xl font-bold">내 정보</h2>
-                                        {/* 내 정보 콘텐츠가 여기에 표시됩니다. */}
+                                {activeTab === 'ranking' && (
+                                    <div>
+                                        {/* Placeholder for Ranking content */}
+                                        <h2 className="text-2xl font-bold">랭킹</h2>
+                                        <p>전체 랭킹 정보가 여기에 표시됩니다.</p>
+                                    </div>
+                                )}
+                                {activeTab === 'my-info' && (
+                                    <div>
+                                        {/* Placeholder for My Info content */}
+                                        <h2 className="text-2xl font-bold">내 정보</h2>
+                                        <p>상세한 내 정보가 여기에 표시됩니다.</p>
                                     </div>
                                 )}
                             </div>
@@ -362,5 +368,4 @@ function MainPage() {
 }
 
 export default MainPage;
-
 

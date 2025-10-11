@@ -341,9 +341,8 @@
 .profile-card-silver .language-logo-container svg,
 .profile-card-gold .language-logo-container svg,
 .profile-card-platinum .language-logo-container svg {
-    filter: none;
+    filter: brightness(0); /* 로고가 잘 보이도록 검은색 단색으로 변경 */
 }
-
 
 .info-button {
     margin-top: 1rem; /* 16px */
@@ -406,6 +405,4 @@
     margin-left: 0.5rem; /* 8px */
     visibility: visible;
 }
-
-
 
