@@ -6,8 +6,10 @@ import './MainPage.css';
 
 /**
  * 사용자 정보를 보여주는 새로운 프로필 카드 컴포넌트
+ * @param {object} props
+ * @param {function} props.onOpenInfoModal - 정보 모달을 여는 함수
  */
-function ProfileCard() {
+function ProfileCard({ onOpenInfoModal }) {
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
 
     // 사용자 정보가 없을 경우 기본값 설정
@@ -50,16 +52,14 @@ function ProfileCard() {
         }
     };
     
-    // 정보 버튼 클릭 시 호출될 함수 (현재는 콘솔에 로그만 출력)
+    // 정보 버튼 클릭 시 'coby' 탭으로 모달을 열도록 호출
     const handleInfoButtonClick = () => {
-        console.log("'COBY가 처음인가요?' 버튼 클릭됨");
-        // 추후 정보 모달을 여는 기능이 추가될 예정입니다.
+        onOpenInfoModal('coby');
     };
     
-    // 티어 뱃지 클릭 시 호출될 함수 (현재는 콘솔에 로그만 출력)
+    // 티어 뱃지 클릭 시 'tier' 탭으로 모달을 열도록 호출
     const handleTierBadgeClick = () => {
-        console.log("티어 뱃지 클릭됨");
-        // 추후 정보 모달의 '티어' 탭을 여는 기능이 추가될 예정입니다.
+        onOpenInfoModal('tier');
     };
 
     return (

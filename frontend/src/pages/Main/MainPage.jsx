@@ -11,6 +11,7 @@ import ProfileCard from './ProfileCard'; // MyCard 대신 ProfileCard를 임포�
 import RankCard from './RankCard';
 import RoomList from './RoomList';
 import RankingList from './RankingList'; // 랭킹 모달 컴포넌트 임포트
+import InfoModal from './InfoModal'; // 정보 모달 컴포넌트 임포트
 
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
@@ -25,6 +26,10 @@ function MainPage() {
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
     const [activeTab, setActiveTab] = useState('game'); // 현재 활성화된 탭 상태
+    
+    // 정보 모달 상태 관리
+    const [isInfoModalOpen, setInfoModalOpen] = useState(false);
+    const [initialModalTab, setInitialModalTab] = useState('coby'); // 모달의 초기 탭 상태
 
 
     const [newRoomSettings, setNewRoomSettings] = useState({
@@ -55,7 +60,7 @@ function MainPage() {
     // 랭킹 모달의 상태에 따라 body 스크롤을 제어하는 useEffect
     useEffect(() => {
         // 모달이 열려 있으면 배경 스크롤을 막습니다.
-        if (isRankingModalOpen) {
+        if (isRankingModalOpen || isInfoModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
             // 모달이 닫히면 배경 스크롤을 다시 허용합니다.
@@ -66,7 +71,7 @@ function MainPage() {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [isRankingModalOpen]); // isRankingModalOpen 값이 변경될 때마다 이 effect를 실행합니다.
+    }, [isRankingModalOpen, isInfoModalOpen]); // 모달 상태가 변경될 때마다 이 effect를 실행합니다.
 
 
     const fetchRooms = async () => {
@@ -159,6 +164,17 @@ function MainPage() {
         setUserMenuOpen(prev => !prev);
     };
 
+    // 정보 모달을 여는 핸들러
+    const handleOpenInfoModal = (tab = 'coby') => {
+        setInitialModalTab(tab);
+        setInfoModalOpen(true);
+    };
+    
+    // 정보 모달을 닫는 핸들러
+    const handleCloseInfoModal = () => {
+        setInfoModalOpen(false);
+    };
+
     return (
         <div className="main-body min-h-screen bg-gray-100 flex flex-col">
             {/* Header */}
@@ -193,9 +209,9 @@ function MainPage() {
             <main className="container mx-auto px-4 py-8 flex-grow">
                 <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-full">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
-                        {/* Left Section - My Card & Tier Info */}
+                        {/* Left Section - Profile Card */}
                         <div className="lg:col-span-1 space-y-8">
-                            <ProfileCard />
+                            <ProfileCard onOpenInfoModal={handleOpenInfoModal} />
                         </div>
 
                         {/* Right Section - Fragment Area */}
@@ -231,8 +247,6 @@ function MainPage() {
 
                                             <div className="p-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                    {/* API로부터 받아온 랭킹 데이터 상위 3명을 동적으로 렌더링 */}
-                                                    {/* Null-safe 처리: rankings 배열이 존재하고 비어있지 않은 경우에만 렌더링 */}
                                                     {Array.isArray(rankings) && rankings.length > 0 ? (
                                                         rankings.slice(0, 3).map((player, index) => (
                                                             <RankCard
@@ -240,10 +254,10 @@ function MainPage() {
                                                             rank={index + 1}
                                                             name={player.nickName ?? '이름없음'}
                                                             rating={player.tierPoint ?? 0}
-                                                            wins={player.winGame ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                                            wins={player.winGame ?? 0}
                                                             losses={player.totalGame !== undefined && player.winGame !== undefined ? player.totalGame - player.winGame : 0}
                                                             tier={player.tier?.name ?? '브론즈'}
-                                                            languageLogo={player?.preferredLanguage ?? 'python'}         // API에서 안주니 기본값으로 고정
+                                                            languageLogo={player?.preferredLanguage ?? 'python'}
                                                             />
                                                         ))
                                                         ) : (
@@ -258,7 +272,6 @@ function MainPage() {
 
                                         {/* Game Participation Section */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                            {/* Quick Game Join */}
                                             <div className="bg-white rounded-xl shadow-md overflow-hidden">
                                                 <div className="p-4 bg-blue-500 text-white">
                                                     <h2 className="text-xl font-bold">빠른 게임 참가</h2>
@@ -271,7 +284,6 @@ function MainPage() {
                                                 </div>
                                             </div>
 
-                                            {/* Create Room */}
                                             <div className="bg-white rounded-xl shadow-md overflow-hidden">
                                                 <div className="p-4 bg-purple-500 text-white">
                                                     <h2 className="text-xl font-bold">방 생성</h2>
@@ -291,14 +303,12 @@ function MainPage() {
                                 )}
                                 {activeTab === 'ranking' && (
                                     <div>
-                                        {/* Placeholder for Ranking content */}
                                         <h2 className="text-2xl font-bold">랭킹</h2>
                                         <p>전체 랭킹 정보가 여기에 표시됩니다.</p>
                                     </div>
                                 )}
                                 {activeTab === 'my-info' && (
                                     <div>
-                                        {/* Placeholder for My Info content */}
                                         <h2 className="text-2xl font-bold">내 정보</h2>
                                         <p>상세한 내 정보가 여기에 표시됩니다.</p>
                                     </div>
@@ -309,13 +319,12 @@ function MainPage() {
                 </div>
             </main>
 
-            {/* 랭킹 모달 렌더링 */}
+            {/* Modals */}
             <RankingList
                 showModal={isRankingModalOpen}
                 onClose={() => setRankingModalOpen(false)}
                 rankings={rankings}
             />
-
             <RoomSettingsModal
                 showModal={isCreateModalOpen}
                 onClose={closeCreateRoomModel}
@@ -323,6 +332,12 @@ function MainPage() {
                 initialSettings={newRoomSettings}
                 currentParticipantsCount={0}
             />
+            <InfoModal 
+                isOpen={isInfoModalOpen} 
+                onClose={handleCloseInfoModal} 
+                initialTab={initialModalTab} 
+            />
+
             {notification && (
                 <ToastNotification
                     message={notification.message}
