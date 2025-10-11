@@ -191,84 +191,87 @@ function MainPage() {
             </header>
 
             {/* Main Content */}
-            <main className="container mx-auto px-4 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Section - My Card & Tier Info */}
-                    <div className="lg:col-span-1 space-y-8">
-                        <MyCard />
-                        <TierInfo />
-                        <RecentMatches/> {/* 최근 전적 UI 삽입 */}
-                    </div>
-
-                    {/* Right Section - Ranking and Game Participation */}
-                    <div className="lg:col-span-2">
-                        {/* Ranking TOP 3 */}
-                        <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-                            <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
-                                <h2 className="text-xl font-bold text-gray-800">랭킹 TOP 3</h2>
-                                <button type="button" className="text-blue-500 hover:text-blue-700 text-sm" onClick={() => setRankingModalOpen(true)}>
-                                    <i className="fas fa-user mr-2"></i> 전체 랭킹 보기
-                                </button>
-                            </div>
-
-                            <div className="p-6">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    {/* API로부터 받아온 랭킹 데이터 상위 3명을 동적으로 렌더링 */}
-                                    {/* Null-safe 처리: rankings 배열이 존재하고 비어있지 않은 경우에만 렌더링 */}
-                                    {Array.isArray(rankings) && rankings.length > 0 ? (
-                                        rankings.slice(0, 3).map((player, index) => (
-                                            <RankCard
-                                            key={player.nickName ?? index}
-                                            rank={index + 1}
-                                            name={player.nickName ?? '이름없음'}
-                                            rating={player.tierPoint ?? 0}
-                                            wins={player.winGame ?? 0}      // 서버에서 제공하지 않으면 0으로
-                                            losses={player.totalGame !== undefined && player.winGame !== undefined ? player.totalGame - player.winGame : 0}
-                                            tier={player.tier?.name ?? '브론즈'}
-                                            languageLogo={player?.preferredLanguage ?? 'python'}         // API에서 안주니 기본값으로 고정
-                                            />
-                                        ))
-                                        ) : (
-                                        <p className="text-gray-500 col-span-3 text-center">
-                                            랭킹 정보가 없습니다.
-                                        </p>
-                                        )}
-
-                                </div>
-                            </div>
+            <main className="container mx-auto px-4 py-8 flex-grow">
+                {/* 메인 컨테이너 */}
+                <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-full">
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
+                        {/* Left Section - My Card & Tier Info */}
+                        <div className="lg:col-span-1 space-y-8">
+                            <MyCard />
+                            <TierInfo />
+                            <RecentMatches/> {/* 최근 전적 UI 삽입 */}
                         </div>
 
-                        {/* Game Participation Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            {/* Quick Game Join */}
-                            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                                <div className="p-4 bg-blue-500 text-white">
-                                    <h2 className="text-xl font-bold">빠른 게임 참가</h2>
-                                </div>
-                                <div className="p-6">
-                                    <p className="text-gray-600 mb-6">실력이 비슷한 상대와 바로 대결을 시작합니다.</p>
-                                    <button className="btn-action w-full py-4 px-6 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center" onClick={enterRoomBtn}>
-                                        <i className="fas fa-bolt mr-2"></i> 빠른 게임 시작
+                        {/* Right Section - Ranking and Game Participation */}
+                        <div className="lg:col-span-3">
+                            {/* Ranking TOP 3 */}
+                            <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+                                <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                                    <h2 className="text-xl font-bold text-gray-800">랭킹 TOP 3</h2>
+                                    <button type="button" className="text-blue-500 hover:text-blue-700 text-sm" onClick={() => setRankingModalOpen(true)}>
+                                        <i className="fas fa-user mr-2"></i> 전체 랭킹 보기
                                     </button>
+                                </div>
+
+                                <div className="p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {/* API로부터 받아온 랭킹 데이터 상위 3명을 동적으로 렌더링 */}
+                                        {/* Null-safe 처리: rankings 배열이 존재하고 비어있지 않은 경우에만 렌더링 */}
+                                        {Array.isArray(rankings) && rankings.length > 0 ? (
+                                            rankings.slice(0, 3).map((player, index) => (
+                                                <RankCard
+                                                key={player.nickName ?? index}
+                                                rank={index + 1}
+                                                name={player.nickName ?? '이름없음'}
+                                                rating={player.tierPoint ?? 0}
+                                                wins={player.winGame ?? 0}      // 서버에서 제공하지 않으면 0으로
+                                                losses={player.totalGame !== undefined && player.winGame !== undefined ? player.totalGame - player.winGame : 0}
+                                                tier={player.tier?.name ?? '브론즈'}
+                                                languageLogo={player?.preferredLanguage ?? 'python'}         // API에서 안주니 기본값으로 고정
+                                                />
+                                            ))
+                                            ) : (
+                                            <p className="text-gray-500 col-span-3 text-center">
+                                                랭킹 정보가 없습니다.
+                                            </p>
+                                            )}
+
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Create Room */}
-                            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                                <div className="p-4 bg-purple-500 text-white">
-                                    <h2 className="text-xl font-bold">방 생성</h2>
+                            {/* Game Participation Section */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                                {/* Quick Game Join */}
+                                <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                                    <div className="p-4 bg-blue-500 text-white">
+                                        <h2 className="text-xl font-bold">빠른 게임 참가</h2>
+                                    </div>
+                                    <div className="p-6">
+                                        <p className="text-gray-600 mb-6">실력이 비슷한 상대와 바로 대결을 시작합니다.</p>
+                                        <button className="btn-action w-full py-4 px-6 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center" onClick={enterRoomBtn}>
+                                            <i className="fas fa-bolt mr-2"></i> 빠른 게임 시작
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="p-6">
-                                    <p className="text-gray-600 mb-6">나만의 게임 방을 만들고 친구를 초대하세요.</p>
-                                    <button className="btn-action w-full py-4 px-6 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center" onClick={() => showRoomSettingsModal(true)}>
-                                        <i className="fas fa-plus-circle mr-2"></i> 새 방 만들기
-                                    </button>
+
+                                {/* Create Room */}
+                                <div className="bg-white rounded-xl shadow-md overflow-hidden">
+                                    <div className="p-4 bg-purple-500 text-white">
+                                        <h2 className="text-xl font-bold">방 생성</h2>
+                                    </div>
+                                    <div className="p-6">
+                                        <p className="text-gray-600 mb-6">나만의 게임 방을 만들고 친구를 초대하세요.</p>
+                                        <button className="btn-action w-full py-4 px-6 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center" onClick={() => showRoomSettingsModal(true)}>
+                                            <i className="fas fa-plus-circle mr-2"></i> 새 방 만들기
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
+
+                            {/* Available Rooms List */}
+                            <RoomList rooms={rooms} enterRoomBtn={enterRoomBtn} fetchRooms={fetchRooms} />
                         </div>
-
-                        {/* Available Rooms List */}
-                        <RoomList rooms={rooms} enterRoomBtn={enterRoomBtn} fetchRooms={fetchRooms} />
                     </div>
                 </div>
             </main>
@@ -317,7 +320,7 @@ function MainPage() {
             </div>
 
             {/* Footer */}
-            <footer className="bg-gray-800 text-white py-8 mt-12">
+            <footer className="bg-gray-800 text-white py-8 mt-auto">
                 <div className="container mx-auto px-4">
                     <div className="flex flex-col md:flex-row justify-between">
                         <div className="mb-6 md:mb-0">
