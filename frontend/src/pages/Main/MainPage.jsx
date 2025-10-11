@@ -7,11 +7,12 @@ import { useAuth } from '../AuthContext/AuthContext';
 import ToastNotification from '../../Common/components/ToastNotification';
 
 // 분리된 컴포넌트들 임포트
-import ProfileCard from './ProfileCard'; // MyCard 대신 ProfileCard를 임포트
-import RankCard from './RankCard';
-import RoomList from './RoomList';
-import RankingList from './RankingList'; // 랭킹 모달 컴포넌트 임포트
-import InfoModal from './InfoModal'; // 정보 모달 컴포넌트 임포트
+import ProfileCard from './ProfileCard';
+import RankingList from './RankingList';
+import InfoModal from './InfoModal';
+import GameTab from './GameTab'; // 게임 탭 컴포넌트
+import RankingTab from './RankingTab'; // 랭킹 탭 컴포넌트
+import MyInfoTab from './MyInfoTab'; // 내 정보 탭 컴포넌트
 
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
@@ -235,83 +236,18 @@ function MainPage() {
                             {/* Conditional Content based on activeTab */}
                             <div>
                                 {activeTab === 'game' && (
-                                    <div>
-                                        {/* Ranking TOP 3 */}
-                                        <div className="bg-white rounded-xl shadow-md overflow-hidden mb-8">
-                                            <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
-                                                <h2 className="text-xl font-bold text-gray-800">랭킹 TOP 3</h2>
-                                                <button type="button" className="text-blue-500 hover:text-blue-700 text-sm" onClick={() => setRankingModalOpen(true)}>
-                                                    <i className="fas fa-user mr-2"></i> 전체 랭킹 보기
-                                                </button>
-                                            </div>
-
-                                            <div className="p-6">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                    {Array.isArray(rankings) && rankings.length > 0 ? (
-                                                        rankings.slice(0, 3).map((player, index) => (
-                                                            <RankCard
-                                                            key={player.nickName ?? index}
-                                                            rank={index + 1}
-                                                            name={player.nickName ?? '이름없음'}
-                                                            rating={player.tierPoint ?? 0}
-                                                            wins={player.winGame ?? 0}
-                                                            losses={player.totalGame !== undefined && player.winGame !== undefined ? player.totalGame - player.winGame : 0}
-                                                            tier={player.tier?.name ?? '브론즈'}
-                                                            languageLogo={player?.preferredLanguage ?? 'python'}
-                                                            />
-                                                        ))
-                                                        ) : (
-                                                        <p className="text-gray-500 col-span-3 text-center">
-                                                            랭킹 정보가 없습니다.
-                                                        </p>
-                                                        )}
-
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Game Participation Section */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                                            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                                                <div className="p-4 bg-blue-500 text-white">
-                                                    <h2 className="text-xl font-bold">빠른 게임 참가</h2>
-                                                </div>
-                                                <div className="p-6">
-                                                    <p className="text-gray-600 mb-6">실력이 비슷한 상대와 바로 대결을 시작합니다.</p>
-                                                    <button className="btn-action w-full py-4 px-6 bg-blue-500 text-white font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center" onClick={enterRoomBtn}>
-                                                        <i className="fas fa-bolt mr-2"></i> 빠른 게임 시작
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                                                <div className="p-4 bg-purple-500 text-white">
-                                                    <h2 className="text-xl font-bold">방 생성</h2>
-                                                </div>
-                                                <div className="p-6">
-                                                    <p className="text-gray-600 mb-6">나만의 게임 방을 만들고 친구를 초대하세요.</p>
-                                                    <button className="btn-action w-full py-4 px-6 bg-purple-500 text-white font-medium rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center" onClick={() => showRoomSettingsModal(true)}>
-                                                        <i className="fas fa-plus-circle mr-2"></i> 새 방 만들기
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Available Rooms List */}
-                                        <RoomList rooms={rooms} enterRoomBtn={enterRoomBtn} fetchRooms={fetchRooms} />
-                                    </div>
+                                    <GameTab 
+                                        enterRoomBtn={enterRoomBtn}
+                                        showRoomSettingsModal={showRoomSettingsModal}
+                                        rooms={rooms}
+                                        fetchRooms={fetchRooms}
+                                    />
                                 )}
                                 {activeTab === 'ranking' && (
-                                    <div>
-                                        <h2 className="text-2xl font-bold">랭킹</h2>
-                                        <p>전체 랭킹 정보가 여기에 표시됩니다.</p>
-                                    </div>
+                                    <RankingTab rankings={rankings} />
                                 )}
                                 {activeTab === 'my-info' && (
-                                    <div>
-                                        <h2 className="text-2xl font-bold">내 정보</h2>
-                                        <p>상세한 내 정보가 여기에 표시됩니다.</p>
-                                    </div>
+                                    <MyInfoTab onOpenInfoModal={handleOpenInfoModal} />
                                 )}
                             </div>
                         </div>

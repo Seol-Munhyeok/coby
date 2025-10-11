@@ -499,3 +499,39 @@
     overflow-y: auto;
 }
 
+/* 게임 탭: 방 목록 2열 및 스크롤 */
+.room-list-container .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.room-list-container {
+    max-height: 400px; /* 스크롤이 생길 높이 지정 */
+    overflow-y: auto;
+    padding-right: 8px; /* 스크롤바 공간 확보 */
+}
+
+/* 랭킹 탭 스타일 */
+.ranking-row-mid {
+    background-color: #f0f9ff; /* sky-50 */
+    border-left: 4px solid #0ea5e9; /* sky-500 */
+    transition: background-color 0.2s ease;
+}
+.ranking-row-mid:hover {
+    background-color: #e0f2fe; /* sky-100 */
+}
+.ranking-row-normal {
+    border-bottom: 1px solid #e5e7eb; /* gray-200 */
+    transition: background-color 0.2s ease;
+}
+.ranking-row-normal:hover {
+     background-color: #f9fafb; /* gray-50 */
+}
+
+/* 내 정보 탭 스타일 */
+.my-info-card {
+    background-color: #f9fafb; /* gray-50 */
+    border-radius: 1rem; /* 16px */
+    padding: 1.5rem; /* 24px */
+    border: 1px solid #e5e7eb; /* gray-200 */
+}
+
