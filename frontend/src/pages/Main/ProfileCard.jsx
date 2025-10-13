@@ -8,8 +8,9 @@ import './MainPage.css';
  * 사용자 정보를 보여주는 새로운 프로필 카드 컴포넌트
  * @param {object} props
  * @param {function} props.onOpenInfoModal - 정보 모달을 여는 함수
+ * @param {function} props.onProfileClick - 프로필 카드 클릭 시 호출되는 함수
  */
-function ProfileCard({ onOpenInfoModal }) {
+function ProfileCard({ onOpenInfoModal, onProfileClick }) {
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
 
     // 사용자 정보가 없을 경우 기본값 설정
@@ -57,15 +58,19 @@ function ProfileCard({ onOpenInfoModal }) {
         onOpenInfoModal('coby');
     };
     
-    // 티어 뱃지 클릭 시 'tier' 탭으로 모달을 열도록 호출
-    const handleTierBadgeClick = () => {
+    // 티어 뱃지 클릭 시 'tier' 탭으로 모달을 열도록 호출 (이벤트 버블링 중단)
+    const handleTierBadgeClick = (e) => {
+        e.stopPropagation(); // 부모 요소(<div className="profile-card">)의 onClick 이벤트가 실행되는 것을 방지
         onOpenInfoModal('tier');
     };
 
     return (
         <div className="flex flex-col h-full">
-            {/* 티어별로 디자인이 변경되는 프로필 카드 */}
-            <div className={`profile-card ${getTierCardClass(tierName)}`}>
+            {/* 티어별로 디자인이 변경되는 프로필 카드, 클릭 시 '내 정보' 탭으로 이동 */}
+            <div 
+                className={`profile-card ${getTierCardClass(tierName)} cursor-pointer`}
+                onClick={onProfileClick}
+            >
                 <div className="p-6 flex flex-col items-center text-center h-full">
                     {/* 선호 언어 로고 */}
                     <div className="w-24 h-24 mb-4 flex items-center justify-center language-logo-container">
@@ -95,4 +100,3 @@ function ProfileCard({ onOpenInfoModal }) {
 }
 
 export default ProfileCard;
-

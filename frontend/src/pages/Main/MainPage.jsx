@@ -174,6 +174,11 @@ function MainPage() {
     const handleCloseInfoModal = () => {
         setInfoModalOpen(false);
     };
+    
+    // 프로필 카드 클릭 시 '내 정보' 탭으로 변경하는 핸들러
+    const handleProfileCardClick = () => {
+        setActiveTab('my-info');
+    };
 
     return (
         <div className="main-body min-h-screen bg-gray-100 flex flex-col">
@@ -211,7 +216,10 @@ function MainPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
                         {/* Left Section - Profile Card */}
                         <div className="lg:col-span-1 space-y-8">
-                            <ProfileCard onOpenInfoModal={handleOpenInfoModal} />
+                            <ProfileCard 
+                                onOpenInfoModal={handleOpenInfoModal} 
+                                onProfileClick={handleProfileCardClick} 
+                            />
                         </div>
 
                         {/* Right Section - Fragment Area */}
@@ -303,4 +311,3 @@ function MainPage() {
 }
 
 export default MainPage;
-

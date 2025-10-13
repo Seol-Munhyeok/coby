@@ -25,8 +25,7 @@ function MyInfoTab({ onOpenInfoModal }) {
 
     return (
         <div className="bg-white rounded-xl shadow-md p-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">{nickname}</h2>
-            <p className="text-gray-500 mb-8">당신의 COBY 여정을 확인해보세요.</p>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">{nickname}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* 티어 정보 */}

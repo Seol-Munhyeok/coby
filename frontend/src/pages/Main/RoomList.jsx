@@ -53,8 +53,6 @@ function RoomList({ rooms, enterRoomBtn, searchTerm }) {
                                     <div className="text-gray-800 font-medium">{room.timeLimit}</div>
                                     <div className="text-gray-500">인원</div>
                                     <div className="text-gray-800 font-medium">{room.currentPart}/{room.maxParticipants}</div>
-                                    <div className="text-gray-500">아이템 모드</div>
-                                    <div className="text-gray-800 font-medium">{room.itemMode ? 'ON' : 'OFF'}</div>
                                 </div>
                                 <div className="flex justify-between items-center text-sm mb-3">
                                     <span className="text-gray-500">방장: <span className="text-gray-800 font-medium">{room.owner}</span></span>
