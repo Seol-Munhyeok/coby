@@ -8,7 +8,6 @@ import ToastNotification from '../../Common/components/ToastNotification';
 
 // 분리된 컴포넌트들 임포트
 import ProfileCard from './ProfileCard';
-import RankingList from './RankingList';
 import InfoModal from './InfoModal';
 import GameTab from './GameTab'; // 게임 탭 컴포넌트
 import RankingTab from './RankingTab'; // 랭킹 탭 컴포넌트
@@ -207,8 +206,8 @@ function MainPage() {
             </header>
 
             {/* Main Content */}
-            <main className="container mx-auto px-4 py-8 flex-grow">
-                <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-full">
+            <main className="container mx-auto px-4 py-4 flex-grow">
+                <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-[600px]">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
                         {/* Left Section - Profile Card */}
                         <div className="lg:col-span-1 space-y-8">
@@ -256,11 +255,6 @@ function MainPage() {
             </main>
 
             {/* Modals */}
-            <RankingList
-                showModal={isRankingModalOpen}
-                onClose={() => setRankingModalOpen(false)}
-                rankings={rankings}
-            />
             <RoomSettingsModal
                 showModal={isCreateModalOpen}
                 onClose={closeCreateRoomModel}
