@@ -215,7 +215,7 @@ function MainPage() {
                         </div>
 
                         {/* Right Section - Fragment Area */}
-                        <div className="lg:col-span-3">
+                        <div className="lg:col-span-3 flex flex-col h-full overflow-hidden">
                             {/* Tab Buttons */}
                             <div className="flex border-b mb-6">
                                 <button onClick={() => setActiveTab('game')} className={`tab-button ${activeTab === 'game' ? 'active' : ''}`}>
@@ -233,21 +233,23 @@ function MainPage() {
                             </div>
 
                             {/* Conditional Content based on activeTab */}
-                            <div>
-                                {activeTab === 'game' && (
-                                    <GameTab 
-                                        enterRoomBtn={enterRoomBtn}
-                                        showRoomSettingsModal={showRoomSettingsModal}
-                                        rooms={rooms}
-                                        fetchRooms={fetchRooms}
-                                    />
-                                )}
-                                {activeTab === 'ranking' && (
-                                    <RankingTab rankings={rankings} />
-                                )}
-                                {activeTab === 'my-info' && (
-                                    <MyInfoTab onOpenInfoModal={handleOpenInfoModal} />
-                                )}
+                            <div className="flex-grow overflow-hidden">
+                                <div className="h-full overflow-y-auto pr-2">
+                                    {activeTab === 'game' && (
+                                        <GameTab 
+                                            enterRoomBtn={enterRoomBtn}
+                                            showRoomSettingsModal={showRoomSettingsModal}
+                                            rooms={rooms}
+                                            fetchRooms={fetchRooms}
+                                        />
+                                    )}
+                                    {activeTab === 'ranking' && (
+                                        <RankingTab rankings={rankings} />
+                                    )}
+                                    {activeTab === 'my-info' && (
+                                        <MyInfoTab onOpenInfoModal={handleOpenInfoModal} />
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
