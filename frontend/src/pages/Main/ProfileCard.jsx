@@ -72,14 +72,20 @@ function ProfileCard({ onOpenInfoModal, onProfileClick }) {
                 onClick={onProfileClick}
             >
                 <div className="p-6 flex flex-col items-center text-center h-full">
-                    {/* 선호 언어 로고 */}
-                    <div className="w-24 h-24 mb-4 flex items-center justify-center language-logo-container">
-                        {renderLogo()}
+                    
+                    {/* 콘텐츠를 감싸는 중앙 정렬 컨테이너 */}
+                    <div className="flex-grow flex flex-col justify-center items-center">
+                        {/* 선호 언어 로고 */}
+                        <div className="w-24 h-24 mb-4 rounded-full flex items-center justify-center bg-white bg-opacity-50">
+                            <div className="w-22 h-22 language-logo-container flex items-center justify-center m-5">
+                                {renderLogo()}
+                            </div>
+                        </div>
+                        {/* 닉네임 */}
+                        <h3 className="text-3xl font-bold tracking-wider">{nickname}</h3>
+                        {/* 선호 언어 텍스트 */}
+                        <p className="text-sm opacity-80 capitalize">{preferredLanguage}</p>
                     </div>
-                    {/* 닉네임 */}
-                    <h3 className="text-3xl font-bold tracking-wider">{nickname}</h3>
-                    {/* 선호 언어 텍스트 */}
-                    <p className="text-sm opacity-80 mb-6 capitalize">{preferredLanguage}</p>
 
                     {/* 티어 뱃지 (카드 하단에 위치) */}
                     <div className="mt-auto cursor-pointer" onClick={handleTierBadgeClick}>

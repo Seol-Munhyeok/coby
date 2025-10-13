@@ -334,16 +334,8 @@
 }
 
 .profile-card .language-logo-container svg {
-    filter: brightness(0) invert(1);
     width: 100%;
     height: 100%;
-}
-
-/* 실버, 골드, 플래티넘 티어의 언어 로고는 어둡게 표시 */
-.profile-card-silver .language-logo-container svg,
-.profile-card-gold .language-logo-container svg,
-.profile-card-platinum .language-logo-container svg {
-    filter: brightness(0); /* 로고가 잘 보이도록 검은색 단색으로 변경 */
 }
 
 .info-button {
