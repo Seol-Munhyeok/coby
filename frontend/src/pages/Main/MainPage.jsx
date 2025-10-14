@@ -184,7 +184,7 @@ function MainPage() {
         <div className="main-body min-h-screen bg-gray-100 flex flex-col">
             {/* Header */}
             <header className="bg-gray-800 text-white shadow-lg">
-                <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+                <div className="w-[80%] mx-auto px-4 py-3 flex justify-between items-center">
                     <div className="flex items-center">
                         <h1 className="logo-text text-3xl mr-8">COBY</h1>
                         <nav className="hidden md:flex space-x-6">
@@ -211,7 +211,7 @@ function MainPage() {
             </header>
 
             {/* Main Content */}
-            <main className="container mx-auto px-4 py-4 flex-grow">
+            <main className="w-[80%] mx-auto px-4 py-4 flex-grow">
                 <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-[80vb]">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
                         {/* Left Section - Profile Card */}
