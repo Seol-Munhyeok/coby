@@ -212,7 +212,7 @@ function MainPage() {
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-4 flex-grow">
-                <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-[600px]">
+                <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-[80vb]">
                     <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
                         {/* Left Section - Profile Card */}
                         <div className="lg:col-span-1 space-y-8">
