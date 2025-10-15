@@ -575,3 +575,33 @@
 .rank-border.rank-3 {
     background-color: #f97316; /* orange-500 */
 }
+
+/* 홈 탭 정보 카드 스타일 추가 */
+.home-info-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.home-info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+
+/* 홈 탭 정보 카드 스타일 추가 */
+.home-info-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.home-info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* HomeTab.jsx의 info-section-item 스타일 추가 */
+.info-section-item {
+    background-color: white;
+    padding: 1.5rem; /* 24px */
+    border-radius: 0.75rem; /* 12px */
+    border: 1px solid #e5e7eb; /* gray-200 */
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+}

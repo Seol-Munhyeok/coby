@@ -9,6 +9,7 @@ import ToastNotification from '../../Common/components/ToastNotification';
 // 분리된 컴포넌트들 임포트
 import ProfileCard from './ProfileCard';
 import InfoModal from './InfoModal';
+import HomeTab from './HomeTab'; // 홈 탭 컴포넌트 추가
 import GameTab from './GameTab'; // 게임 탭 컴포넌트
 import RankingTab from './RankingTab'; // 랭킹 탭 컴포넌트
 import MyInfoTab from './MyInfoTab'; // 내 정보 탭 컴포넌트
@@ -25,7 +26,7 @@ function MainPage() {
     const location = useLocation();
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
-    const [activeTab, setActiveTab] = useState('game'); // 현재 활성화된 탭 상태
+    const [activeTab, setActiveTab] = useState('home'); // 현재 활성화된 탭 상태 (home으로 변경)
     
     // 정보 모달 상태 관리
     const [isInfoModalOpen, setInfoModalOpen] = useState(false);
@@ -226,6 +227,10 @@ function MainPage() {
                         <div className="lg:col-span-3 flex flex-col h-full overflow-hidden">
                             {/* Tab Buttons */}
                             <div className="flex border-b mb-6">
+                                <button onClick={() => setActiveTab('home')} className={`tab-button ${activeTab === 'home' ? 'active' : ''}`}>
+                                    <i className="fas fa-home"></i>
+                                    <span className="tab-text">홈</span>
+                                </button>
                                 <button onClick={() => setActiveTab('game')} className={`tab-button ${activeTab === 'game' ? 'active' : ''}`}>
                                     <i className="fas fa-gamepad"></i>
                                     <span className="tab-text">게임</span>
@@ -243,6 +248,14 @@ function MainPage() {
                             {/* Conditional Content based on activeTab */}
                             <div className="flex-grow overflow-hidden">
                                 <div className="h-full overflow-y-auto pr-2">
+                                    {activeTab === 'home' && (
+                                        <HomeTab 
+                                            roomCount={rooms.length}
+                                            topRanker={rankings[0]}
+                                            currentUser={user}
+                                            setActiveTab={setActiveTab}
+                                        />
+                                    )}
                                     {activeTab === 'game' && (
                                         <GameTab 
                                             enterRoomBtn={enterRoomBtn}
