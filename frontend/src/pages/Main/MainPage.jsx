@@ -277,6 +277,11 @@ function MainPage() {
                 </div>
             </main>
 
+            {/* "Coding Online Battle with You" Text */}
+            <div className="text-center pb-4">
+                <p className="text-gray-500 font-semibold">Coding Online Battle with You</p>
+            </div>
+
             {/* Modals */}
             <RoomSettingsModal
                 showModal={isCreateModalOpen}
