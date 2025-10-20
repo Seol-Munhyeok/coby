@@ -17,11 +17,9 @@ import MyInfoTab from './MyInfoTab'; // 내 정보 탭 컴포넌트
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
     const [isRankingModalOpen, setRankingModalOpen] = useState(false); // 랭킹 모달 상태 관리
+    const [isLogoutModalOpen, setLogoutModalOpen] = useState(false); // 로그아웃 확인 모달 상태 추가
     const [rooms, setRooms] = useState([]);
     const [rankings, setRankings] = useState([]); // 랭킹 정보를 저장할 state 추가
-    const userIconButtonRef = useRef(null);
-    const [isUserMenuOpen, setUserMenuOpen] = useState(false);
-    const userMenuRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
@@ -58,21 +56,18 @@ function MainPage() {
         fetchRankings(); // 컴포넌트가 마운트될 때 랭킹 정보를 가져오도록 호출
     }, []);
 
-    // 랭킹 모달의 상태에 따라 body 스크롤을 제어하는 useEffect
+    // 모달 상태에 따라 body 스크롤을 제어하는 useEffect
     useEffect(() => {
-        // 모달이 열려 있으면 배경 스크롤을 막습니다.
-        if (isRankingModalOpen || isInfoModalOpen) {
+        if (isRankingModalOpen || isInfoModalOpen || isLogoutModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
-            // 모달이 닫히면 배경 스크롤을 다시 허용합니다.
             document.body.style.overflow = 'auto';
         }
 
-        // 컴포넌트가 언마운트될 때를 대비하여 cleanup 함수에서 스크롤을 복원합니다.
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [isRankingModalOpen, isInfoModalOpen]); // 모달 상태가 변경될 때마다 이 effect를 실행합니다.
+    }, [isRankingModalOpen, isInfoModalOpen, isLogoutModalOpen]); // 로그아웃 모달 상태도 의존성 배열에 추가
 
 
     const fetchRooms = async () => {
@@ -87,7 +82,6 @@ function MainPage() {
     // 랭킹 정보를 가져오는 함수 추가
     const fetchRankings = async () => {
         try {
-            // API는 rating 기준으로 내림차순 정렬된 사용자 목록을 반환한다고 가정
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/rankings`);
             setRankings(response.data);
         } catch (error) {
@@ -133,38 +127,22 @@ function MainPage() {
         }
     };
 
-    const enterSettingBtn = () => {
-        alert("미구현")
+    // 로그아웃을 최종 실행하는 함수
+    const handleConfirmLogout = () => {
+        setLogoutModalOpen(false); // 모달 닫기
+        navigate('/'); // 로그인 페이지로 이동
     };
 
-    const enterloginBtn = () => {
-        navigate('/');
+    // 로그아웃 모달을 여는 함수
+    const handleOpenLogoutModal = () => {
+        setLogoutModalOpen(true);
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                isUserMenuOpen &&
-                userMenuRef.current &&
-                !userMenuRef.current.contains(event.target) &&
-                userIconButtonRef.current &&
-                !userIconButtonRef.current.contains(event.target)
-            ) {
-                setUserMenuOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [isUserMenuOpen]);
-
-    const toggleUserMenu1 = () => {
-        setUserMenuOpen(prev => !prev);
+    // 로그아웃 모달을 닫는 함수
+    const handleCloseLogoutModal = () => {
+        setLogoutModalOpen(false);
     };
-
+    
     // 정보 모달을 여는 핸들러
     const handleOpenInfoModal = (tab = 'coby') => {
         setInitialModalTab(tab);
@@ -192,21 +170,14 @@ function MainPage() {
                         </nav>
                     </div>
                     <div className="flex items-center space-x-4">
-                        <button className="p-2 rounded-full hover:bg-gray-700 transition-colors" onClick={toggleUserMenu1} ref={userIconButtonRef}>
-                            <i className="fas fa-user-circle text-xl"></i>
+                        {/* 로그아웃 버튼 */}
+                        <button 
+                            className="flex items-center space-x-2 px-4 py-2 bg-gray-700 rounded-lg shadow-md hover:bg-gray-600 transition-all duration-200" 
+                            onClick={handleOpenLogoutModal}
+                        >
+                            <i className="fas fa-sign-out-alt text-lg"></i>
+                            <span className="font-semibold">Logout</span>
                         </button>
-                        {/* User Menu Dropdown */}
-                        {isUserMenuOpen && (
-                            <div id="userMenu" ref={userMenuRef} className="absolute right-4 mt-32 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                                <button type="button" className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100" onClick={enterSettingBtn}>
-                                    <i className="fas fa-cog mr-2"></i> 설정
-                                </button>
-                                <div className="border-t border-gray-200 my-1"></div>
-                                <button type="button" className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100" onClick={enterloginBtn}>
-                                    <i className="fas fa-sign-out-alt mr-2"></i> 로그아웃
-                                </button>
-                            </div>
-                        )}
                     </div>
                 </div>
             </header>
@@ -295,6 +266,31 @@ function MainPage() {
                 onClose={handleCloseInfoModal} 
                 initialTab={initialModalTab} 
             />
+
+            {/* 로그아웃 확인 모달 */}
+            {isLogoutModalOpen && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4">로그아웃 확인</h2>
+                        <p className="text-gray-600 mb-6">정말 로그아웃하시겠습니까?</p>
+                        <div className="flex justify-end space-x-4">
+                            <button
+                                onClick={handleCloseLogoutModal}
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition"
+                            >
+                                아니요
+                            </button>
+                            <button
+                                onClick={handleConfirmLogout}
+                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                            >
+                                예
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {notification && (
                 <ToastNotification
