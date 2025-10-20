@@ -13,11 +13,13 @@ import HomeTab from './HomeTab'; // 홈 탭 컴포넌트 추가
 import GameTab from './GameTab'; // 게임 탭 컴포넌트
 import RankingTab from './RankingTab'; // 랭킹 탭 컴포넌트
 import MyInfoTab from './MyInfoTab'; // 내 정보 탭 컴포넌트
+import CheatingPenaltyModal from './CheatingPenaltyModal'; // 새로 만든 부정행위 모달 import
 
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
     const [isRankingModalOpen, setRankingModalOpen] = useState(false); // 랭킹 모달 상태 관리
     const [isLogoutModalOpen, setLogoutModalOpen] = useState(false); // 로그아웃 확인 모달 상태 추가
+    const [isCheatingModalOpen, setCheatingModalOpen] = useState(false); // 부정행위 강제 퇴장 모달 상태 추가
     const [rooms, setRooms] = useState([]);
     const [rankings, setRankings] = useState([]); // 랭킹 정보를 저장할 state 추가
     const navigate = useNavigate();
@@ -25,7 +27,7 @@ function MainPage() {
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
     const [activeTab, setActiveTab] = useState('home'); // 현재 활성화된 탭 상태 (home으로 변경)
-    
+
     // 정보 모달 상태 관리
     const [isInfoModalOpen, setInfoModalOpen] = useState(false);
     const [initialModalTab, setInitialModalTab] = useState('coby'); // 모달의 초기 탭 상태
@@ -41,14 +43,23 @@ function MainPage() {
         password: '',
     });
 
-    // 강퇴 후 이동해 온 경우 알림을 표시
+    // 강퇴 또는 부정행위로 이동해 온 경우 알림을 표시
     useEffect(() => {
+        // 강퇴 처리
         if (location.state?.kicked) {
-            setNotification({message: "방에서 강퇴되었습니다.", type: "success"});
+            setNotification({message: "방에서 강퇴되었습니다.", type: "error"});
             setTimeout(() => setNotification(null), 3000);
+            // history state를 초기화하여 새로고침 시 알림이 다시 뜨지 않도록 함
             navigate(location.pathname, { replace: true, state: {} });
-
         }
+        
+        // 부정행위 퇴장 처리
+        if (location.state?.cheated) {
+            setCheatingModalOpen(true); // 부정행위 모달을 엶
+            // history state 초기화
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+
     }, [location, navigate]);
 
     useEffect(() => {
@@ -58,7 +69,7 @@ function MainPage() {
 
     // 모달 상태에 따라 body 스크롤을 제어하는 useEffect
     useEffect(() => {
-        if (isRankingModalOpen || isInfoModalOpen || isLogoutModalOpen) {
+        if (isRankingModalOpen || isInfoModalOpen || isLogoutModalOpen || isCheatingModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -67,7 +78,7 @@ function MainPage() {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [isRankingModalOpen, isInfoModalOpen, isLogoutModalOpen]); // 로그아웃 모달 상태도 의존성 배열에 추가
+    }, [isRankingModalOpen, isInfoModalOpen, isLogoutModalOpen, isCheatingModalOpen]); // 부정행위 모달 상태도 의존성 배열에 추가
 
 
     const fetchRooms = async () => {
@@ -265,6 +276,12 @@ function MainPage() {
                 isOpen={isInfoModalOpen} 
                 onClose={handleCloseInfoModal} 
                 initialTab={initialModalTab} 
+            />
+
+            {/* 부정행위 강제 퇴장 모달 렌더링 */}
+            <CheatingPenaltyModal
+                isOpen={isCheatingModalOpen}
+                onClose={() => setCheatingModalOpen(false)}
             />
 
             {/* 로그아웃 확인 모달 */}

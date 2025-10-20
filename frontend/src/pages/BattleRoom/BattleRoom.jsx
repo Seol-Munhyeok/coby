@@ -6,6 +6,7 @@ import './BattleRoom.css';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import WarningModal from './WarningModal';
 import FullscreenPromptModal from './FullscreenPromptModal';
+import ReloadWarningModal from './ReloadWarningModal'; // 새로 만든 모달 import
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useAuth } from '../AuthContext/AuthContext';
@@ -59,6 +60,9 @@ export default function CodingBattle() {
 
     // Modal State for FullscreenPromptModal
     const [isFullscreenPromptOpen, setIsFullscreenPromptOpen] = useState(false);
+
+    // 새로고침 경고 모달 상태 추가
+    const [isReloadWarningOpen, setIsReloadWarningOpen] = useState(false);
 
 
     // WebSocket 연결을 위한 ref
@@ -233,6 +237,55 @@ export default function CodingBattle() {
             navigate(`/resultpage/${roomId}`);
         }, 1500);
     };
+
+    // 새로고침 방지 및 강제 이동을 위한 useEffect
+    useEffect(() => {
+        // 1. 컴포넌트가 로드될 때 세션 스토리지 확인
+        if (sessionStorage.getItem('isReloadingBattleRoom')) {
+            // 'isReloadingBattleRoom' 아이템이 있다면, 새로고침이 발생한 것으로 간주
+            sessionStorage.removeItem('isReloadingBattleRoom'); // 플래그 제거
+            navigate('/'); // 메인 페이지로 강제 이동
+            return; // 즉시 함수를 종료하여 아래의 이벤트 리스너가 등록되지 않도록 함
+        }
+
+        // 2. beforeunload 이벤트 핸들러 설정
+        const handleBeforeUnload = (e) => {
+            // 사용자가 새로고침을 시도하면 세션 스토리지에 플래그를 먼저 설정
+            sessionStorage.setItem('isReloadingBattleRoom', 'true');
+
+            // 커스텀 모달을 띄우기 위해 상태를 변경합니다.
+            // ※주의: 일부 브라우저에서는 beforeunload 이벤트 중에
+            // 비동기 작업(React의 상태 업데이트 등)이 안정적으로 동작하지 않을 수 있습니다.
+            // 가장 확실한 방법은 아래 e.returnValue를 활성화하여 브라우저 네이티브 확인창을 띄우는 것입니다.
+            setIsReloadWarningOpen(true);
+
+            // 페이지를 떠나는 것을 막기 위해 preventDefault()를 호출하고,
+            // 브라우저 네이티브 확인창을 띄우기 위해 returnValue를 설정합니다.
+            e.preventDefault();
+            e.returnValue = '';
+        };
+
+        // 3. 이벤트 리스너 등록
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // 4. 컴포넌트가 언마운트될 때(정상적인 페이지 이동 등) 실행될 클린업 함수
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            // 정상적으로 페이지를 떠날 때는 플래그가 없어야 하므로 제거합니다.
+            sessionStorage.removeItem('isReloadingBattleRoom');
+        };
+    }, [navigate]);
+
+    // 새로고침 경고 모달에서 '강제 이동'을 눌렀을 때 실행될 함수
+    const handleConfirmReload = () => {
+        // 이미 beforeunload에서 플래그를 설정했지만, 만약을 위해 여기서도 설정
+        sessionStorage.setItem('isReloadingBattleRoom', 'true');
+        // 페이지를 강제로 새로고침합니다.
+        // 위 useEffect의 (1)번 로직에 의해 메인 페이지로 이동됩니다.
+        window.location.reload();
+    };
+
+
     useEffect(() => {
         const fetchProblem = async () => {
             setIsLoadingProblem(true);
@@ -374,33 +427,38 @@ export default function CodingBattle() {
     }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
 
   // 부정행위 감지를 위한 useEffect
-  useEffect(() => {
+    useEffect(() => {
+        const handleBlur = () => {
+            if (cheatingDetected || !document.hidden) {
+                return;
+            }
 
-    const handleBlur = () => {
-      // 현재 창에서 포커스가 없어졌을 때
-      // Alt+Tab 등으로 다른 애플리케이션으로 이동하는 경우
-      // document.hidden이 false일 때만 실행하여 중복 경고 방지
-      if (!document.hidden) {
-        setWarningCount(prevCount => {
-          const newCount = prevCount + 1;
-          if (newCount >= MAX_WARNINGS) {
-            setCheatingDetected(true);
-            showModal("부정행위 감지", "부정행위가 3회 이상 감지되어 더 이상 코드를 제출할 수 없습니다.", "error");
-          } else {
-            showModal("경고!", `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
-          }
-          return newCount;
-        });
-      }
-    };
+            setWarningCount(prevCount => {
+                const newCount = prevCount + 1;
+                if (newCount >= MAX_WARNINGS) {
+                    setCheatingDetected(true);
+                    // 3회 이상 감지 시 모달 표시
+                    showModal("부정행위 감지", "부정행위가 3회 감지되었습니다. 3초 후 메인 페이지로 이동합니다.", "error");
 
-    window.addEventListener('blur', handleBlur);
+                    // 3초 후 메인 페이지로 강제 이동
+                    setTimeout(() => {
+                        // navigate의 state를 통해 강제 퇴장 사유를 전달
+                        navigate('/', { state: { cheated: true } });
+                    }, 3000);
 
-    return () => {
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, [warningCount, cheatingDetected]); // warningCount와 cheatingDetected를 의존성 배열에 추가
+                } else {
+                    showModal("경고!", `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
+                }
+                return newCount;
+            });
+        };
 
+        window.addEventListener('blur', handleBlur);
+
+        return () => {
+            window.removeEventListener('blur', handleBlur);
+        };
+    }, [warningCount, cheatingDetected, navigate]);
 
     // WebSocket 초기화 및 이벤트 핸들링
     useEffect(() => {
@@ -747,16 +805,16 @@ export default function CodingBattle() {
                                                     <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-30 p-2 text-sm text-white font-mono overflow-auto">
                                                         {/* opponent.codeSnippet 대신 가상의 코드 블록 생성 */}
                                                         <pre>
-                              {Array(opponent.lineCount).fill('// Some code line;').join('\n')}
-                          </pre>
+                                                            {Array(opponent.lineCount).fill('// Some code line;').join('\n')}
+                                                        </pre>
                                                     </div>
                                                     <div className="absolute top-0 left-0 w-full h-full backdrop-blur-sm z-10 flex items-center justify-center">
                                                         <div className="bg-black/70 text-xs text-white px-4 py-1 rounded-full flex items-center gap-1">
-                            <span className="flex gap-1">
-                              <span className="w-1 h-1 bg-orange-400 rounded-full animate-bounce"></span>
-                              <span className="w-1 h-1 bg-orange-400 rounded-full animate-bounce delay-200"></span>
-                              <span className="w-1 h-1 bg-orange-400 rounded-full animate-bounce delay-400"></span>
-                            </span>
+                                                            <span className="flex gap-1">
+                                                                <span className="w-1 h-1 bg-orange-400 rounded-full animate-bounce"></span>
+                                                                <span className="w-1 h-1 bg-orange-400 rounded-full animate-bounce delay-200"></span>
+                                                                <span className="w-1 h-1 bg-orange-400 rounded-full animate-bounce delay-400"></span>
+                                                            </span>
                                                             코드 작성 중...
                                                         </div>
                                                     </div>
@@ -857,8 +915,8 @@ export default function CodingBattle() {
 
                                     </div>
                                     <pre className="bg-slate-700 p-3 rounded text-sm text-slate-200 whitespace-pre-wrap flex-1 overflow-y-auto">
-                      {executionResult}
-                    </pre>
+                                        {executionResult}
+                                    </pre>
                                     {cheatingDetected && (
                                         <div className="mt-4 p-3 bg-red-600 rounded-lg text-white font-bold text-center">
                                             부정행위가 감지되었습니다. 더 이상 코드를 제출할 수 없습니다.
@@ -913,6 +971,18 @@ export default function CodingBattle() {
                 isOpen={isFullscreenPromptOpen}
                 onClose={() => setIsFullscreenPromptOpen(false)}
                 onEnterFullscreen={requestFullScreen}
+            />
+            
+            {/* 새로 추가된 새로고침 경고 모달 */}
+            <ReloadWarningModal
+                isOpen={isReloadWarningOpen}
+                onClose={() => {
+                    // 모달을 닫을 때, 사용자가 '머무르기'를 선택한 것이므로
+                    // 세션 스토리지 플래그를 즉시 제거해야 합니다.
+                    sessionStorage.removeItem('isReloadingBattleRoom');
+                    setIsReloadWarningOpen(false);
+                }}
+                onConfirm={handleConfirmReload}
             />
         </div>
     );
