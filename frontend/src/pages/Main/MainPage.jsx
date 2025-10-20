@@ -45,6 +45,7 @@ function MainPage() {
 
     const roomSocketClientRef = useRef(null);
     const roomSubscriptionRef = useRef(null);
+    const isInitialFetched = useRef(false);  // race-condition 방지용
 
     // 강퇴 후 이동해 온 경우 알림을 표시
     useEffect(() => {
@@ -74,6 +75,7 @@ function MainPage() {
                 try {
                     const payload = JSON.parse(message.body);
                     if (Array.isArray(payload)) {
+                        isInitialFetched.current = true;
                         setRooms(payload);
                     }
                 } catch (err) {
@@ -122,7 +124,9 @@ function MainPage() {
     const fetchRooms = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms`);
-            setRooms(response.data);
+            if (!isInitialFetched.current) {
+                setRooms(response.data);
+            }
         } catch (error) {
             console.error('Error fetching rooms:', error);
         }
