@@ -6,7 +6,6 @@ import './BattleRoom.css';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import WarningModal from './WarningModal';
 import FullscreenPromptModal from './FullscreenPromptModal';
-import ReloadWarningModal from './ReloadWarningModal'; // 새로 만든 모달 import
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useAuth } from '../AuthContext/AuthContext';
@@ -60,10 +59,6 @@ export default function CodingBattle() {
 
     // Modal State for FullscreenPromptModal
     const [isFullscreenPromptOpen, setIsFullscreenPromptOpen] = useState(false);
-
-    // 새로고침 경고 모달 상태 추가
-    const [isReloadWarningOpen, setIsReloadWarningOpen] = useState(false);
-
 
     // WebSocket 연결을 위한 ref
     //const wsRef = useRef(null);
@@ -253,12 +248,6 @@ export default function CodingBattle() {
             // 사용자가 새로고침을 시도하면 세션 스토리지에 플래그를 먼저 설정
             sessionStorage.setItem('isReloadingBattleRoom', 'true');
 
-            // 커스텀 모달을 띄우기 위해 상태를 변경합니다.
-            // ※주의: 일부 브라우저에서는 beforeunload 이벤트 중에
-            // 비동기 작업(React의 상태 업데이트 등)이 안정적으로 동작하지 않을 수 있습니다.
-            // 가장 확실한 방법은 아래 e.returnValue를 활성화하여 브라우저 네이티브 확인창을 띄우는 것입니다.
-            setIsReloadWarningOpen(true);
-
             // 페이지를 떠나는 것을 막기 위해 preventDefault()를 호출하고,
             // 브라우저 네이티브 확인창을 띄우기 위해 returnValue를 설정합니다.
             e.preventDefault();
@@ -275,16 +264,6 @@ export default function CodingBattle() {
             sessionStorage.removeItem('isReloadingBattleRoom');
         };
     }, [navigate]);
-
-    // 새로고침 경고 모달에서 '강제 이동'을 눌렀을 때 실행될 함수
-    const handleConfirmReload = () => {
-        // 이미 beforeunload에서 플래그를 설정했지만, 만약을 위해 여기서도 설정
-        sessionStorage.setItem('isReloadingBattleRoom', 'true');
-        // 페이지를 강제로 새로고침합니다.
-        // 위 useEffect의 (1)번 로직에 의해 메인 페이지로 이동됩니다.
-        window.location.reload();
-    };
-
 
     useEffect(() => {
         const fetchProblem = async () => {
@@ -987,18 +966,6 @@ export default function CodingBattle() {
                 isOpen={isFullscreenPromptOpen}
                 onClose={() => setIsFullscreenPromptOpen(false)}
                 onEnterFullscreen={requestFullScreen}
-            />
-            
-            {/* 새로 추가된 새로고침 경고 모달 */}
-            <ReloadWarningModal
-                isOpen={isReloadWarningOpen}
-                onClose={() => {
-                    // 모달을 닫을 때, 사용자가 '머무르기'를 선택한 것이므로
-                    // 세션 스토리지 플래그를 즉시 제거해야 합니다.
-                    sessionStorage.removeItem('isReloadingBattleRoom');
-                    setIsReloadWarningOpen(false);
-                }}
-                onConfirm={handleConfirmReload}
             />
         </div>
     );
