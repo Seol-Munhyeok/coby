@@ -394,10 +394,6 @@ function ResultRoom() {
                                 </svg>
                                 <span className="btn-animated-text">방 나가기</span>
                             </button>
-                            {/* 기존 유저 아이콘 버튼 */}
-                            <button className="p-2 rounded-full hover:bg-gray-700 transition-colors">
-                                <i className="fas fa-user-circle text-xl"></i>
-                            </button>
                         </div>
                     </div>
                 </header>

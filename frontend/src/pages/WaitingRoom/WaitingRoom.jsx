@@ -24,17 +24,17 @@ function WaitingRoom() {
 
     /*
      * WebSocketContext 로부터 제공되는 값과 함수를 가져옵니다.
-     *  - users: 현재 방에 접속해 있는 유저 목록
-     *  - joinRoom / leaveRoom: 방 참여 및 퇴장 처리
-     *  - isConnected / error: 소켓 연결 상태와 에러 메시지
-     *  - joinedRoomId: 현재 참여 중인 방 ID
-     *  - toggleReadyWs: 서버에 준비 상태를 전송하는 함수
-     *  - delegateHost / startGame: 방장 위임과 게임 시작 제어
-     *  - gameStart: 서버로부터 받은 게임 시작 신호
-     *  - sendMessage: 채팅 메시지 전송
-     *  - client: STOMP WebSocket 클라이언트 인스턴스 (publish 용도)
-     *  - forcedOut: 강제 퇴장 여부를 나타내는 상태 플래그
-     *  - resetForcedOut: 강제 퇴장 플래그 초기화 함수
+     * - users: 현재 방에 접속해 있는 유저 목록
+     * - joinRoom / leaveRoom: 방 참여 및 퇴장 처리
+     * - isConnected / error: 소켓 연결 상태와 에러 메시지
+     * - joinedRoomId: 현재 참여 중인 방 ID
+     * - toggleReadyWs: 서버에 준비 상태를 전송하는 함수
+     * - delegateHost / startGame: 방장 위임과 게임 시작 제어
+     * - gameStart: 서버로부터 받은 게임 시작 신호
+     * - sendMessage: 채팅 메시지 전송
+     * - client: STOMP WebSocket 클라이언트 인스턴스 (publish 용도)
+     * - forcedOut: 강제 퇴장 여부를 나타내는 상태 플래그
+     * - resetForcedOut: 강제 퇴장 플래그 초기화 함수
      */
     const {
         users,
@@ -59,30 +59,6 @@ function WaitingRoom() {
     const currentUser = nickname || '게스트';
     const [showCountdown, setShowCountdown] = useState(false);
     const [countdownNumber, setCountdownNumber] = useState(null);
-    {/*const playerData = {
-        [currentUser]: {
-            avatar: currentUser.charAt(0).toUpperCase() + currentUser.charAt(1).toUpperCase(),
-            avatarColor: 'bg-blue-700',
-            tier: '다이아',
-            level: 28,
-            winRate: '78%',
-            wins: 45,
-            losses: 13,
-            preferredTypes: {
-                '알고리즘': 30,
-                '자료구조': 40,
-                'SQL': 20,
-                '동적계획법': 10
-            },
-            recentGames: [
-                {name: '알고리즘 배틀 #128', time: '2시간 전', result: '승리'},
-                {name: '자료구조 마스터 #45', time: '어제', result: '승리'},
-                {name: 'SQL 챌린지 #12', time: '2일 전', result: '패배'}
-            ]
-
-        }
-    };
-    */}
 
     // UI 및 방 상태 관리를 위한 여러 가지 상태 변수
     const [isReady, setIsReady] = useState(false);  // 현재 사용자 준비 상태
@@ -91,8 +67,8 @@ function WaitingRoom() {
     const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);  // 플레이어 정보 모달 표시 여부
     const [playerInfoForModal, setPlayerInfoForModal] = useState(null);  // 모달에 표시할 플레이어 정보
     const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);  // 방 설정 모달 표시 여부
+    const [isLeaveModalOpen, setLeaveModalOpen] = useState(false); // 방 나가기 확인 모달 상태 추가
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
-    const [entranceCode, setEntranceCode] = useState("BATTLE-58392");  // 임시 입장 코드
 
 
     // 방 설정 정보
@@ -113,7 +89,6 @@ function WaitingRoom() {
         contextMenuRef,
         handlePlayerCardClick,
         setShowContextMenu,
-        setSelectedPlayer,
     } = useContextMenu();
 
 
@@ -166,23 +141,29 @@ function WaitingRoom() {
         startGame(roomId);
     };
 
-
-    // 방을 떠나는 동작을 수행하는 함수
-    // hasLeft는 사용자가 이미 방에서 나갔음을 표시하여 중복 퇴장을 방지합니다.
-    // setHasLeft는 해당 상태를 업데이트하여 컴포넌트 언마운트 시 다시 나가지 않도록 합니다.
     const [hasLeft, setHasLeft] = useState(false);
-    const quickbtn = () => {
+    
+    // 방 나가기 모달을 여는 함수
+    const handleOpenLeaveModal = () => {
+        setLeaveModalOpen(true);
+    };
+
+    // 방 나가기 모달을 닫는 함수
+    const handleCancelLeave = () => {
+        setLeaveModalOpen(false);
+    };
+
+    // 방 나가기를 최종 확인하고 실행하는 함수
+    const handleConfirmLeave = () => {
+        setLeaveModalOpen(false); // 모달 닫기
         if (!hasLeft) {
-            // 아직 나가지 않았다면 서버에 퇴장을 알리고 hasLeft를 true로 설정
             leaveRoom(roomId, userId);
             setHasLeft(true);
-            // 잠시 대기 후 메인 페이지로 이동하여 퇴장 메시지가 전송될 시간을 확보
             setTimeout(() => navigate('/mainpage'), 100);
         } else {
-            // 이미 퇴장한 경우 바로 메인 페이지로 이동
             navigate('/mainpage');
         }
-    }
+    };
 
 
     // 현재 사용자의 준비 상태를 토글하고 서버에 알립니다.
@@ -208,7 +189,6 @@ function WaitingRoom() {
 
     // 게임 시작 신호가 오면 카운트다운 후 게임 페이지로 이동
     useEffect(() => {
-
         if (gameStart) {
             setShowCountdown(true);
             setCountdownNumber(5);
@@ -414,20 +394,9 @@ function WaitingRoom() {
                     <div className="flex items-center space-x-4">
                         <button id="leaveRoomBtn"
                                 className="bg-red-600 hover:bg-red-700  px-4 py-2 rounded-lg flex items-center transition"
-                                onClick={quickbtn}>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20"
-                                 fill="currentColor">
-                                <path fillRule="evenodd"
-                                      d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V7.414a1 1 0 00-.293-.707L11.414 2.414A1 1 0 0010.707 2H4a1 1 0 00-1 1zm9 4a1 1 0 00-1-1H8a1 1 0 00-1 1v8a1 1 0 001 1h3a1 1 0 001-1V7z"
-                                      clipRule="evenodd"/>
-                                <path
-                                    d="M3 7.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 4a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5z"/>
-                            </svg>
-                            나가기
-                        </button>
-
-                        <button className="p-2 rounded-full hover:bg-gray-700 transition-colors">
-                            <i className="fas fa-user-circle text-xl"></i>
+                                onClick={handleOpenLeaveModal}>
+                            <i className="fas fa-sign-out-alt text-lg"></i>
+                            방 나가기
                         </button>
                     </div>
                 </div>
@@ -597,6 +566,31 @@ function WaitingRoom() {
                 }}
                 currentParticipantsCount={currentPlayers.length}
             />
+
+            {/* 방 나가기 확인 모달 */}
+            {isLeaveModalOpen && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm mx-4">
+                        <h2 className="text-xl font-semibold text-gray-800 mb-4">방 나가기</h2>
+                        <p className="text-gray-600 mb-6">정말 방을 나가시겠습니까?</p>
+                        <div className="flex justify-end space-x-4">
+                            <button
+                                onClick={handleCancelLeave}
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition"
+                            >
+                                아니요
+                            </button>
+                            <button
+                                onClick={handleConfirmLeave}
+                                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                            >
+                                예
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {notification && (
                 <ToastNotification
