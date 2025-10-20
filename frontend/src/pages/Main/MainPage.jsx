@@ -5,6 +5,8 @@ import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import axios from 'axios';
 import { useAuth } from '../AuthContext/AuthContext';
 import ToastNotification from '../../Common/components/ToastNotification';
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 // 분리된 컴포넌트들 임포트
 import ProfileCard from './ProfileCard';
@@ -41,6 +43,10 @@ function MainPage() {
         password: '',
     });
 
+    const roomSocketClientRef = useRef(null);
+    const roomSubscriptionRef = useRef(null);
+    const isInitialFetched = useRef(false);  // race-condition 방지용
+
     // 강퇴 후 이동해 온 경우 알림을 표시
     useEffect(() => {
         if (location.state?.kicked) {
@@ -54,6 +60,51 @@ function MainPage() {
     useEffect(() => {
         fetchRooms();
         fetchRankings(); // 컴포넌트가 마운트될 때 랭킹 정보를 가져오도록 호출
+    }, []);
+
+    // 클라이언트는 메시지를 받을 때마다 setRooms(payload)를 실행하여 화면을 새로고침 없이 즉시 갱신
+    useEffect(() => {
+        const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws/room-data`);
+        const client = new Client({
+            webSocketFactory: socketFactory,
+            reconnectDelay: 5000,  // 웹소켓 연결이 비정상적으로 끊어졌을 때 5초 후에 재연결을 시도
+        });
+
+        client.onConnect = () => {
+            roomSubscriptionRef.current = client.subscribe('/topic/room-data', (message) => {
+                try {
+                    const payload = JSON.parse(message.body);
+                    if (Array.isArray(payload)) {
+                        isInitialFetched.current = true;
+                        setRooms(payload);
+                    }
+                } catch (err) {
+                    console.error('Error parsing room update message:', err);
+                }
+            });
+        };
+
+        client.onStompError = (frame) => {
+            console.error('STOMP error:', frame.headers['message'], frame.body);
+        };
+
+        client.onWebSocketError = (event) => {
+            console.error('WebSocket error:', event);
+        };
+
+        client.activate();
+        roomSocketClientRef.current = client;
+
+        return () => {
+            if (roomSubscriptionRef.current) {
+                roomSubscriptionRef.current.unsubscribe();
+                roomSubscriptionRef.current = null;
+            }
+            if (roomSocketClientRef.current) {
+                roomSocketClientRef.current.deactivate();
+                roomSocketClientRef.current = null;
+            }
+        };
     }, []);
 
     // 모달 상태에 따라 body 스크롤을 제어하는 useEffect
@@ -73,7 +124,9 @@ function MainPage() {
     const fetchRooms = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms`);
-            setRooms(response.data);
+            if (!isInitialFetched.current) {
+                setRooms(response.data);
+            }
         } catch (error) {
             console.error('Error fetching rooms:', error);
         }
