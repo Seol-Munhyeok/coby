@@ -1,12 +1,14 @@
 package com.example.coby.service;
 
 import com.example.coby.dto.CreateRoomRequest;
+import com.example.coby.dto.RoomResponse;
 import com.example.coby.dto.RoomUserResponse;
 import com.example.coby.entity.*;
 import com.example.coby.repository.*;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -34,6 +36,7 @@ public class RoomService {
     private final ProblemRepository problemRepository;
     private final SubmissionRepository submissionRepository;
     private final TierRepository tierRepository;
+    private final SimpMessagingTemplate messagingTemplate;
     private final TransactionTemplate transactionTemplate;
 
     private final ScheduledExecutorService roomDeletionScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -71,7 +74,9 @@ public class RoomService {
                 .maxCapacity(req.getMaxParticipants())
                 .problem(selectedProblem) // ✨ 여기에서 문제를 할당
                 .build();
-        return roomRepository.save(room);
+        Room savedRoom = roomRepository.save(room);
+        broadcastRoomList();
+        return savedRoom;
     }
 
     @Transactional
@@ -95,7 +100,9 @@ public class RoomService {
         } while (newProblem.equals(currentProblem)); // 현재 문제와 동일하면 다시 찾기
 
         room.setProblem(newProblem);
-        return roomRepository.save(room);
+        Room updatedRoom = roomRepository.save(room);
+        broadcastRoomList();
+        return updatedRoom;
     }
 
     @Transactional(readOnly = true) // 읽기 전용 트랜잭션으로 성능 최적화
@@ -107,7 +114,7 @@ public class RoomService {
 
 
     public Room joinRoom(Long roomId, Long userId) {
-        return transactionTemplate.execute(status -> {
+        Room result = transactionTemplate.execute(status -> {
             Room room = roomRepository.findById(roomId).orElse(null);
             if (room == null) return null;
 
@@ -150,6 +157,12 @@ public class RoomService {
 
             return room;
         });
+
+        if (result != null) {
+            broadcastRoomList();
+        }
+
+        return result;
     }
 
 
@@ -161,6 +174,8 @@ public class RoomService {
         room.setStatus(RoomStatus.IN_PROGRESS);
 
         roomRepository.save(room);
+
+        broadcastRoomList();
 
         log.info("방 {}의 게임 상태가 IN_PROGRESS로 변경되었습니다. (방 삭제 방어 활성화)", roomId);
     }
@@ -179,6 +194,9 @@ public class RoomService {
             room.setCurrentPart((int) newCount);
             roomRepository.save(room);
         }
+
+        broadcastRoomList();
+
         return room;
     }
 
@@ -267,6 +285,8 @@ public class RoomService {
             // 4. 연관 관계가 끊어졌으므로 방을 안전하게 삭제합니다.
             roomRepository.deleteById(roomId);
         });
+
+        broadcastRoomList();
     }
 
     @Transactional
@@ -386,6 +406,8 @@ public class RoomService {
         });
 
         userRepository.saveAll(usersById.values());
+
+        broadcastRoomList();
     }
 
     private Tier resolveTier(int tierPoint) {
@@ -396,5 +418,12 @@ public class RoomService {
                     log.warn("티어 정보를 찾을 수 없습니다: tierPoint={}", tierPoint);
                     return null;
                 });
+    }
+
+    private void broadcastRoomList() {
+        List<RoomResponse> responses = roomRepository.findAll().stream()
+                .map(RoomResponse::from)
+                .toList();
+        messagingTemplate.convertAndSend("/topic/room-data", responses);
     }
 }
