@@ -12,7 +12,6 @@
 </div>
 
 
-# COBY란?
 <img width="1520" height="825" alt="image" src="https://github.com/user-attachments/assets/8ffd5b43-f823-4c94-b2af-bb94258d4d86" />
 
 COBY는 **Coding Online Battle with You**의 약자로, 친구 또는 다른 사용자들과 함께 코딩 실력을 겨룰 수 있는 온라인 배틀 플랫폼입니다.
