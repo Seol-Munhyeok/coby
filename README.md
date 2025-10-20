@@ -9,6 +9,12 @@
   <span style="color:#8B5CF6;"><b>Y</b></span>ou
 </h3>
 
+<p>
+  <a href="https://cobyapp.kro.kr/" target="_blank">
+    <img src="https://img.shields.io/badge/Play%20Now!-3B82F6?style=for-the-badge&logo=firefoxbrowser&logoColor=white" alt="Play Now!" />
+  </a>
+</p>
+
 </div>
 
 
