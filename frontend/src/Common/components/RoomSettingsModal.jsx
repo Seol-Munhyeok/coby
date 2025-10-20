@@ -21,7 +21,7 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
       ...prevSettings,
       [name]: type === 'checkbox' ? checked : (
           name === 'maxParticipants' ? parseInt(value, 10) :
-              name === 'itemMode' ? value === 'true' : value
+              value
       )
     }));
   };
@@ -54,7 +54,7 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
       status: 0, // 상태 (정수)
       isPrivate: settings.isPrivate, // 비밀방 여부 (불리언)
       password: settings.isPrivate ? settings.password : '', // 비밀방이 아니면 비밀번호 초기화 (문자열)
-      itemMode: settings.itemMode // 아이템 모드 (불리언)
+      itemMode: false// 아이템 모드 (불리언)
     };
 
     try {
@@ -141,35 +141,6 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
                 <option value="45분">45분</option>
                 <option value="60분">60분</option>
               </select>
-            </div>
-
-            {/* 노템전/아이템전 선택 */}
-            <div>
-              <span className="block text-sm font-medium text-gray-700 mb-1">모드 선택</span>
-              <div className="flex space-x-4">
-                <label className="inline-flex items-center">
-                  <input
-                      type="radio"
-                      name="itemMode"
-                      value={false} // JavaScript에서 boolean 값으로 저장
-                      checked={settings.itemMode === false}
-                      onChange={handleChange}
-                      className="form-radio h-4 w-4 text-purple-600 transition duration-150 ease-in-out"
-                  />
-                  <span className="ml-2 text-gray-700">노템전</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                      type="radio"
-                      name="itemMode"
-                      value={true} // JavaScript에서 boolean 값으로 저장
-                      checked={settings.itemMode === true}
-                      onChange={handleChange}
-                      className="form-radio h-4 w-4 text-purple-600 transition duration-150 ease-in-out"
-                  />
-                  <span className="ml-2 text-gray-700">아이템전</span>
-                </label>
-              </div>
             </div>
 
             <div>
