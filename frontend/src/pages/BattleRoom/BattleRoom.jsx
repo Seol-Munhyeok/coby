@@ -244,7 +244,7 @@ export default function CodingBattle() {
         if (sessionStorage.getItem('isReloadingBattleRoom')) {
             // 'isReloadingBattleRoom' 아이템이 있다면, 새로고침이 발생한 것으로 간주
             sessionStorage.removeItem('isReloadingBattleRoom'); // 플래그 제거
-            navigate('/'); // 메인 페이지로 강제 이동
+            navigate('/mainpage'); // 메인 페이지로 강제 이동
             return; // 즉시 함수를 종료하여 아래의 이벤트 리스너가 등록되지 않도록 함
         }
 
@@ -443,7 +443,7 @@ export default function CodingBattle() {
                     // 3초 후 메인 페이지로 강제 이동
                     setTimeout(() => {
                         // navigate의 state를 통해 강제 퇴장 사유를 전달
-                        navigate('/', { state: { cheated: true } });
+                        navigate('/mainpage', { state: { cheated: true } });
                     }, 3000);
 
                 } else {
