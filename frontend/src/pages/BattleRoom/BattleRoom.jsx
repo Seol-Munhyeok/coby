@@ -426,39 +426,55 @@ export default function CodingBattle() {
       };
     }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
 
-  // 부정행위 감지를 위한 useEffect
+// 부정행위 감지를 위한 useEffect
     useEffect(() => {
         const handleBlur = () => {
-            if (cheatingDetected || !document.hidden) {
+            // 1. 이미 부정행위로 최종 처리되었다면, 더 이상 경고를 보내지 않고 함수를 종료합니다.
+            if (cheatingDetected) {
                 return;
             }
 
+            // 2. 화면 포커스가 사라졌으므로 경고 횟수를 증가시킵니다.
             setWarningCount(prevCount => {
                 const newCount = prevCount + 1;
+                
+                // 3. 경고 횟수가 최대치에 도달했는지 확인합니다.
                 if (newCount >= MAX_WARNINGS) {
                     setCheatingDetected(true);
-                    // 3회 이상 감지 시 모달 표시
-                    showModal("부정행위 감지", "부정행위가 3회 감지되었습니다. 3초 후 메인 페이지로 이동합니다.", "error");
+                    
+                    // 3-1. 최종 경고 메시지를 모달로 표시합니다.
+                    showModal(
+                        "부정행위 감지", 
+                        "부정행위가 3회 감지되었습니다. 3초 후 메인 페이지로 이동합니다.", 
+                        "error"
+                    );
 
-                    // 3초 후 메인 페이지로 강제 이동
+                    // 3-2. 3초 후 메인 페이지로 강제 이동시킵니다.
                     setTimeout(() => {
-                        // navigate의 state를 통해 강제 퇴장 사유를 전달
                         navigate('/mainpage', { state: { cheated: true } });
                     }, 3000);
 
                 } else {
-                    showModal("경고!", `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, "warning");
+                    // 3-3. 아직 최대 횟수 미만이라면, 남은 횟수를 알려줍니다.
+                    showModal(
+                        "경고!", 
+                        `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, 
+                        "warning"
+                    );
                 }
                 return newCount;
             });
         };
 
+        // 'blur' 이벤트 리스너를 등록합니다.
         window.addEventListener('blur', handleBlur);
 
+        // 컴포넌트가 언마운트될 때 이벤트 리스너를 제거합니다.
         return () => {
             window.removeEventListener('blur', handleBlur);
         };
     }, [warningCount, cheatingDetected, navigate]);
+
 
     // WebSocket 초기화 및 이벤트 핸들링
     useEffect(() => {
