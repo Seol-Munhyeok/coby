@@ -12,13 +12,12 @@ import com.example.coby.dto.CodeUpdateMessage;
 import com.example.coby.dto.RoomParticipant;
 import com.example.coby.dto.RoomParticipantsMessage;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import com.example.coby.service.RoomService;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Controller
-public class Battleroomcontroller {
+public class BattleRoomController {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;

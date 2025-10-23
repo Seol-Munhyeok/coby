@@ -5,6 +5,8 @@ import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
 import axios from 'axios';
 import { useAuth } from '../AuthContext/AuthContext';
 import ToastNotification from '../../Common/components/ToastNotification';
+import SockJS from "sockjs-client";
+import { Client } from "@stomp/stompjs";
 
 // 분리된 컴포넌트들 임포트
 import ProfileCard from './ProfileCard';
@@ -13,11 +15,13 @@ import HomeTab from './HomeTab'; // 홈 탭 컴포넌트 추가
 import GameTab from './GameTab'; // 게임 탭 컴포넌트
 import RankingTab from './RankingTab'; // 랭킹 탭 컴포넌트
 import MyInfoTab from './MyInfoTab'; // 내 정보 탭 컴포넌트
+import CheatingPenaltyModal from './CheatingPenaltyModal'; // 새로 만든 부정행위 모달 import
 
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
     const [isRankingModalOpen, setRankingModalOpen] = useState(false); // 랭킹 모달 상태 관리
     const [isLogoutModalOpen, setLogoutModalOpen] = useState(false); // 로그아웃 확인 모달 상태 추가
+    const [isCheatingModalOpen, setCheatingModalOpen] = useState(false); // 부정행위 강제 퇴장 모달 상태 추가
     const [rooms, setRooms] = useState([]);
     const [rankings, setRankings] = useState([]); // 랭킹 정보를 저장할 state 추가
     const navigate = useNavigate();
@@ -25,7 +29,7 @@ function MainPage() {
     const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
     const [activeTab, setActiveTab] = useState('home'); // 현재 활성화된 탭 상태 (home으로 변경)
-    
+
     // 정보 모달 상태 관리
     const [isInfoModalOpen, setInfoModalOpen] = useState(false);
     const [initialModalTab, setInitialModalTab] = useState('coby'); // 모달의 초기 탭 상태
@@ -41,14 +45,26 @@ function MainPage() {
         password: '',
     });
 
-    // 강퇴 후 이동해 온 경우 알림을 표시
-    useEffect(() => {
-        if (location.state?.kicked) {
-            setNotification({message: "방에서 강퇴되었습니다.", type: "success"});
-            setTimeout(() => setNotification(null), 3000);
-            navigate(location.pathname, { replace: true, state: {} });
+    const roomSocketClientRef = useRef(null);
+    const roomSubscriptionRef = useRef(null);
+    const isInitialFetched = useRef(false);  // race-condition 방지용
 
+    useEffect(() => {
+        // 강퇴 처리
+        if (location.state?.kicked) {
+            setNotification({message: "방에서 강퇴되었습니다.", type: "error"});
+            setTimeout(() => setNotification(null), 3000);
+            // history state를 초기화하여 새로고침 시 알림이 다시 뜨지 않도록 함
+            navigate(location.pathname, { replace: true, state: {} });
         }
+        
+        // 부정행위 퇴장 처리
+        if (location.state?.cheated) {
+            setCheatingModalOpen(true); // 부정행위 모달을 엶
+            // history state 초기화
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+
     }, [location, navigate]);
 
     useEffect(() => {
@@ -56,9 +72,54 @@ function MainPage() {
         fetchRankings(); // 컴포넌트가 마운트될 때 랭킹 정보를 가져오도록 호출
     }, []);
 
+    // 클라이언트는 메시지를 받을 때마다 setRooms(payload)를 실행하여 화면을 새로고침 없이 즉시 갱신
+    useEffect(() => {
+        const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws/room-data`);
+        const client = new Client({
+            webSocketFactory: socketFactory,
+            reconnectDelay: 5000,  // 웹소켓 연결이 비정상적으로 끊어졌을 때 5초 후에 재연결을 시도
+        });
+
+        client.onConnect = () => {
+            roomSubscriptionRef.current = client.subscribe('/topic/room-data', (message) => {
+                try {
+                    const payload = JSON.parse(message.body);
+                    if (Array.isArray(payload)) {
+                        isInitialFetched.current = true;
+                        setRooms(payload);
+                    }
+                } catch (err) {
+                    console.error('Error parsing room update message:', err);
+                }
+            });
+        };
+
+        client.onStompError = (frame) => {
+            console.error('STOMP error:', frame.headers['message'], frame.body);
+        };
+
+        client.onWebSocketError = (event) => {
+            console.error('WebSocket error:', event);
+        };
+
+        client.activate();
+        roomSocketClientRef.current = client;
+
+        return () => {
+            if (roomSubscriptionRef.current) {
+                roomSubscriptionRef.current.unsubscribe();
+                roomSubscriptionRef.current = null;
+            }
+            if (roomSocketClientRef.current) {
+                roomSocketClientRef.current.deactivate();
+                roomSocketClientRef.current = null;
+            }
+        };
+    }, []);
+
     // 모달 상태에 따라 body 스크롤을 제어하는 useEffect
     useEffect(() => {
-        if (isRankingModalOpen || isInfoModalOpen || isLogoutModalOpen) {
+        if (isRankingModalOpen || isInfoModalOpen || isLogoutModalOpen || isCheatingModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'auto';
@@ -67,13 +128,15 @@ function MainPage() {
         return () => {
             document.body.style.overflow = 'auto';
         };
-    }, [isRankingModalOpen, isInfoModalOpen, isLogoutModalOpen]); // 로그아웃 모달 상태도 의존성 배열에 추가
+    }, [isRankingModalOpen, isInfoModalOpen, isLogoutModalOpen, isCheatingModalOpen]); // 부정행위 모달 상태도 의존성 배열에 추가
 
 
     const fetchRooms = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms`);
-            setRooms(response.data);
+            if (!isInitialFetched.current) {
+                setRooms(response.data);
+            }
         } catch (error) {
             console.error('Error fetching rooms:', error);
         }
@@ -265,6 +328,12 @@ function MainPage() {
                 isOpen={isInfoModalOpen} 
                 onClose={handleCloseInfoModal} 
                 initialTab={initialModalTab} 
+            />
+
+            {/* 부정행위 강제 퇴장 모달 렌더링 */}
+            <CheatingPenaltyModal
+                isOpen={isCheatingModalOpen}
+                onClose={() => setCheatingModalOpen(false)}
             />
 
             {/* 로그아웃 확인 모달 */}

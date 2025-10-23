@@ -8,10 +8,11 @@ import { PythonCard, JavaCard, CppCard } from '../../Common/components/LanguageC
 const CobyLoginPage = () => {
     const nightSkyRef = useRef(null);
     const cardsRef = useRef([]);
-    const handleGoogleLogin = () => {
+    const [currentTime, setCurrentTime] = useState('');
+   /*const handleGoogleLogin = () => {
         window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/google`;
     };
-
+*/
     const handleKakaoLogin = () => {
         window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/kakao`;
     };
@@ -65,9 +66,20 @@ const CobyLoginPage = () => {
                 nightSky.appendChild(shootingStar);
             }
         };
+        const updateTime = () => {
+            const now = new Date();
+            const formattedTime = new Intl.DateTimeFormat('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false // 24시간 형식 (예: 15:03:00)
+            }).format(now);
+            setCurrentTime(formattedTime);
+        };
 
         createStars();
-
+        updateTime();
+        const timerId = setInterval(updateTime, 1000);
         // Handle card animations
         class Card {
             constructor(element, container) {
@@ -438,7 +450,8 @@ const CobyLoginPage = () => {
         return () => {
             cancelAnimationFrame(animationFrameId);
             window.removeEventListener('resize', handleResize);
-            cardsRef.current.forEach(card => card.destroy()); // Ensure all event listeners on cards are removed
+            cardsRef.current.forEach(card => card.destroy());
+            clearInterval(timerId);// Ensure all event listeners on cards are removed
         };
     }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
 
@@ -465,8 +478,7 @@ const CobyLoginPage = () => {
                         카카오로 로그인
                     </button>
 
-                    {/* Google Login Button */}
-                    <button className="btn-sso flex items-center justify-center py-4 px-6 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-medium w-full" onClick={handleGoogleLogin}>
+                    {/*<button className="btn-sso flex items-center justify-center py-4 px-6 rounded-lg bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 font-medium w-full" onClick={handleGoogleLogin}>
                         <span className="mr-3">
                             <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -477,6 +489,7 @@ const CobyLoginPage = () => {
                         </span>
                         구글로 로그인
                     </button>
+                    */}
                 </div>
             </div>
 
