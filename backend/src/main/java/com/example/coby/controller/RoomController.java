@@ -49,6 +49,13 @@ public class RoomController {
         return ResponseEntity.ok(RoomResponse.from(room));
     }
 
+    @GetMapping("/{id}/host")
+    public ResponseEntity<RoomHostResponse> getRoomHost(@PathVariable Long id) {
+        return roomService.getRoomHost(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/{id}/problem")
     public ResponseEntity<ProblemResponse> getRoomProblem(@PathVariable Long id) {
         Problem problem = roomService.getRoomProblem(id);

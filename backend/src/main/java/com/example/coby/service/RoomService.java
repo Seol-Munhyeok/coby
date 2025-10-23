@@ -1,6 +1,7 @@
 package com.example.coby.service;
 
 import com.example.coby.dto.CreateRoomRequest;
+import com.example.coby.dto.RoomHostResponse;
 import com.example.coby.dto.RoomResponse;
 import com.example.coby.dto.RoomUserResponse;
 import com.example.coby.entity.*;
@@ -13,16 +14,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.LinkedHashSet;
 
 @Slf4j
 @Service
@@ -198,6 +195,21 @@ public class RoomService {
         broadcastRoomList();
 
         return room;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<RoomHostResponse> getRoomHost(Long roomId) {
+        if (!roomRepository.existsById(roomId)) {
+            return Optional.empty();
+        }
+
+        return roomUserRepository.findByRoomIdAndIsHostTrue(roomId)
+                .flatMap(roomUser -> userRepository.findById(roomUser.getUserId())
+                        .map(user -> new RoomHostResponse(
+                                user.getId(),
+                                user.getNickname(),
+                                user.getEmail(),
+                                roomUser.isHost())));
     }
 
     public List<RoomUserResponse> getRoomUsers(Long roomId) {
