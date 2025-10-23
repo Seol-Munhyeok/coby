@@ -15,7 +15,6 @@ import {number} from "sockjs-client/lib/utils/random";
 export default function CodingBattle() {
     const { roomId } = useParams();
     const editorRef = useRef(null);
-    //const opponentRefs = [useRef(null), useRef(null), useRef(null)];
 
     const timerIdRef = useRef(null); // setTimeout/setInterval ID를 위한 ref (숫자 저장)
     const domTimerRef = useRef(null); // DOM 요소 (타이머 표시 span)를 위한 ref (DOM 요소 참조 저장)
@@ -23,7 +22,6 @@ export default function CodingBattle() {
     const intervalRef = useRef(null);
     const colors = ["bg-red-500", "bg-yellow-500", "bg-purple-500"];
     const navigate = useNavigate();
-    //const nicknameRef = useRef(null);
     const answerRef = useRef(null);
     const languageRef = useRef(null);
     const [myUserId, setMyUserId] = useState('');
@@ -34,7 +32,6 @@ export default function CodingBattle() {
     const startTimeRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
-    const [isFeverTime, setIsFeverTime] = useState(false);
     // State for the main battle timer
     const [totalTimeSeconds, setTotalTimeSeconds] = useState(null);
     const [remainingTime, setRemainingTime] = useState(null);
@@ -61,7 +58,6 @@ export default function CodingBattle() {
     const [isFullscreenPromptOpen, setIsFullscreenPromptOpen] = useState(false);
 
     // WebSocket 연결을 위한 ref
-    //const wsRef = useRef(null);
     const stompClientRef = useRef(null);
 
     // AuthContext에서 user 정보 가져오기
@@ -102,9 +98,7 @@ export default function CodingBattle() {
 # (Ctrl + C, Ctrl + V는 불가합니다.)
 # 화이팅! 💪✨🔥`;
 
-    answerRef.value = defaultCode; // This might cause issues if defaultCode is large, consider using useState for code.
-   //nicknameRef.value = "python"; // Same here, consider useState.
-    // ADDITIONS: API를 통해 불러온 문제 데이터를 저장할 상태 변수
+    answerRef.value = defaultCode;
     const [problem, setProblem] = useState(null);
     const [isLoadingProblem, setIsLoadingProblem] = useState(true);
     // 상대방 정보는 더미 데이터로 시작하며, 실제로는 서버에서 받아와야 합니다.
@@ -621,7 +615,6 @@ export default function CodingBattle() {
         timerIdRef.current = setTimeout(() => {
             if (stompClientRef.current && stompClientRef.current.connected && myUserId) {
                 const currentLineCount = value ? value.split('\n').length : 0;
-                setIsFeverTime(currentLineCount>= 15);
                 stompClientRef.current.publish({
                     destination: '/app/code_update',
                     headers: {},
@@ -731,7 +724,6 @@ export default function CodingBattle() {
                     </select>
 
                     <div className="flex items-center">
-                        <div className={`BR-player-avatar bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold ${isFeverTime ? 'fever-time' : ''}`}>나</div>
                         <div className="ml-2 text-sm font-medium">{userNickname}</div>
                     </div>
                 </div>
@@ -768,14 +760,13 @@ export default function CodingBattle() {
                     {drawerState !== 0 && ( // Only show opponent list if not fully closed
                         <div className="flex-1 overflow-y-auto">
                             {opponents.map((opponent, i) => {
-                                const isOpponentProgressActive = opponent.lineCount > 15;
                                 return (
                                     <div key={opponent.id} className="mb-4 bg-slate-700 p-3 rounded-lg flex flex-col">
                                         {/* Always visible part (collapsed & expanded) */}
                                         <div className="flex items-center justify-between">
                                             {/* Updated structure for Avatar and Name */}
                                             <div className="flex flex-col items-center">
-                                                <div className={`BR-player-avatar ${colors[i % colors.length]} text-white w-8 h-8 rounded-full flex items-center justify-center font-bold ${isOpponentProgressActive ? 'opponent-progress-active' : ''}`}
+                                                <div className={`BR-player-avatar ${colors[i % colors.length]} text-white w-8 h-8 rounded-full flex items-center justify-center font-bold`}
                                                 >
                                                     {opponent.avatarInitial}
                                                 </div>
