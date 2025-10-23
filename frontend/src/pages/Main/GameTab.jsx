@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import RoomList from './RoomList';
 
-function GameTab({ enterRoomBtn, showRoomSettingsModal, rooms, fetchRooms }) {
+function GameTab({ enterRoomBtn, showRoomSettingsModal, rooms }) {
     const [searchTerm, setSearchTerm] = useState('');
 
     const handleQuickJoin = () => {
@@ -43,9 +43,6 @@ function GameTab({ enterRoomBtn, showRoomSettingsModal, rooms, fetchRooms }) {
                         />
                          <i className="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
-                     <button title="새로고침" className="p-2 text-gray-500 hover:text-gray-800 ml-2" onClick={fetchRooms}>
-                        <i className="fas fa-sync-alt"></i>
-                    </button>
                 </div>
             </div>
 

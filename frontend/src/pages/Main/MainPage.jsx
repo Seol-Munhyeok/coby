@@ -295,7 +295,6 @@ function MainPage() {
                                             enterRoomBtn={enterRoomBtn}
                                             showRoomSettingsModal={showRoomSettingsModal}
                                             rooms={rooms}
-                                            fetchRooms={fetchRooms}
                                         />
                                     )}
                                     {activeTab === 'ranking' && (
