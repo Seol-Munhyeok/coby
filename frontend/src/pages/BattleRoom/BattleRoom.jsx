@@ -565,20 +565,20 @@ export default function CodingBattle() {
                 // "GameEnd" (최후의 1인) 메시지 처리
                 } else if (receivedMessage.type === "GameEnd") {
                     console.log('🏁 최후의 1인으로 게임 종료:', receivedMessage);
-
-                    // 승자 정보를 담아 모달을 띄웁니다.
-                    // receivedMessage에 nickname과 submissionId가 포함되어 있다고 가정합니다.
+    
                     showModal(
                         "게임 종료!",
                         `모든 상대방이 나갔습니다! 잠시 후 결과 페이지로 이동합니다.`,
                         "info"
                     );
-
+    
                     // 3초 후 결과 페이지로 이동
                     setTimeout(() => {
+                        // ResultRoom에서 상황을 구분할 수 있도록 state를 함께 전달합니다.
                         navigate(`/resultpage/${roomId}`, {
                             state: {
-                                winnerSubmissionId: receivedMessage.submissionId
+                                gameEndType: 'LAST_MAN_STANDING',
+                                winnerUserId: receivedMessage.userId,
                             }
                         });
                     }, 3000);
@@ -599,9 +599,11 @@ export default function CodingBattle() {
 
                 // 3초 후 결과 페이지로 이동
                 setTimeout(() => {
+                    // ResultRoom의 로직이 gameEndType이 없는 경우를 '정상 승리'로 처리할 것입니다.
                     navigate(`/resultpage/${roomId}`, {
                         state: {
                             winnerSubmissionId: winnerMessage.submissionId
+                            // gameEndType을 보내지 않음
                         }
                     });
                 }, 3000);
