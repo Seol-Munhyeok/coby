@@ -561,10 +561,31 @@ export default function CodingBattle() {
                     // **이 부분이 핵심입니다: prevOpponents를 사용하지 않고, newParticipants로 완전히 교체**
                     setOpponents(newParticipants);
                     console.log("Opponents state initialized/updated from room_participants:", newParticipants);
+
+                // "GameEnd" (최후의 1인) 메시지 처리
+                } else if (receivedMessage.type === "GameEnd") {
+                    console.log('🏁 최후의 1인으로 게임 종료:', receivedMessage);
+    
+                    showModal(
+                        "게임 종료!",
+                        `모든 상대방이 나갔습니다! 잠시 후 결과 페이지로 이동합니다.`,
+                        "info"
+                    );
+    
+                    // 3초 후 결과 페이지로 이동
+                    setTimeout(() => {
+                        // ResultRoom에서 상황을 구분할 수 있도록 state를 함께 전달합니다.
+                        navigate(`/resultpage/${roomId}`, {
+                            state: {
+                                gameEndType: 'LAST_MAN_STANDING',
+                                winnerUserId: receivedMessage.userId,
+                            }
+                        });
+                    }, 3000);
                 }
             });
 
-            // 승자 발생 메시지 구독
+            // 승자 발생 메시지 구독 (이건 정답 제출 시)
             client.subscribe(`/topic/room/${roomId}/result`, (message) => {
                 const winnerMessage = JSON.parse(message.body);
                 console.log('🎉 승자 정보 수신:', winnerMessage);
@@ -578,9 +599,11 @@ export default function CodingBattle() {
 
                 // 3초 후 결과 페이지로 이동
                 setTimeout(() => {
+                    // ResultRoom의 로직이 gameEndType이 없는 경우를 '정상 승리'로 처리할 것입니다.
                     navigate(`/resultpage/${roomId}`, {
                         state: {
                             winnerSubmissionId: winnerMessage.submissionId
+                            // gameEndType을 보내지 않음
                         }
                     });
                 }, 3000);
