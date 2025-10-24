@@ -1,9 +1,6 @@
 package com.example.coby.service;
 
-import com.example.coby.dto.CreateRoomRequest;
-import com.example.coby.dto.RoomHostResponse;
-import com.example.coby.dto.RoomResponse;
-import com.example.coby.dto.RoomUserResponse;
+import com.example.coby.dto.*;
 import com.example.coby.entity.*;
 import com.example.coby.repository.*;
 import jakarta.annotation.PreDestroy;
@@ -412,6 +409,16 @@ public class RoomService {
 
         // 4. 방 목록 갱신
         broadcastRoomList();
+
+        // 5. [추가된 부분] 방 참여자들에게 게임 종료 및 결과 페이지 이동 알림
+        WsMessageDto gameEndNotice = WsMessageDto.builder()
+                .type("GameEnd") // 프론트엔드에서 이 타입을 감지해야 함
+                .roomId(String.valueOf(roomId))
+                .userId(String.valueOf(winnerUserId)) // 승리한 유저 ID
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, gameEndNotice);
+        log.info("방 {} 참여자들에게 GameEnd 메시지 전송 (승자: {})", roomId, winnerUserId);
     }
 
     private void scheduleRoomDeletionIfEmpty(Long roomId) {
