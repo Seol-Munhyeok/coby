@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -311,6 +312,24 @@ public class RoomService {
 
             Room room = roomRepository.findById(rid).orElse(null);
 
+            // 게임 진행 중이었는지 확인
+            boolean wasGameInProgress = room.getStatus() == RoomStatus.IN_PROGRESS;
+
+            // --- 게임 중 이탈(패배) 처리 ---
+            if (wasGameInProgress) {
+                // 게임 중에 나갔으므로, 나간 유저는 패배 처리
+                handleGameLoss(uid);
+
+                // --- 마지막 생존자(승리) 처리 ---
+                // 방이 삭제되지 않았고 (updatedRoom != null)
+                // 유저가 나간 후, 남은 인원이 1명이라면 그 1명이 승리
+                if (room != null && room.getCurrentPart() == 1) {
+                    log.info("방 {}에서 유저 {}가 이탈하여, 마지막 생존자 승리 로직을 실행합니다.", rid, uid);
+                    // finishRoomByLastManStanding은 내부적으로 status를 IN_PROGRESS에서 RESULT로 바꿈
+                    finishRoomByLastManStanding(rid);
+                }
+            }
+
             // leaveRoom 후에도 room이 여전히 존재하고, 현재 인원이 0인지 확인
             if (room != null) {
                 if (room.getCurrentPart() == 0) {
@@ -323,6 +342,76 @@ public class RoomService {
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
+    }
+
+    /**
+     * 게임 중 이탈한 사용자의 패배를 처리합니다.
+     * (총 게임 수 + 1, 승리 수는 변동 없음)
+     * 별도 트랜잭션(REQUIRES_NEW)으로 분리하여 이 로직이 실패해도 방 나가기 처리는 롤백되지 않도록 합니다.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void handleGameLoss(Long userId) {
+        try {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null) {
+                user.incrementTotalGame(); // 총 게임 수 1 증가
+                // 승리(winGame)는 증가시키지 않음 (즉, 1패)
+                userRepository.save(user);
+                log.info("유저 {}가 게임 중 이탈하여 패배 처리되었습니다.", userId);
+            } else {
+                log.warn("패배 처리할 유저 {}를 찾을 수 없습니다.", userId);
+            }
+        } catch (Exception e) {
+            log.error("유저 {} 패배 처리 중 예외 발생", userId, e);
+        }
+    }
+
+    /**
+     * 게임 중 다른 유저가 모두 나가서, 마지막 1명이 남았을 때 호출됩니다.
+     * 마지막 1명을 승자로 처리하고 방을 종료시킵니다.
+     */
+    @Transactional
+    public void finishRoomByLastManStanding(Long roomId) {
+        Room room = roomRepository.findById(roomId).orElse(null);
+        // 방이 없거나, 이미 게임 중이 아니면 처리 중단
+        if (room == null || room.getStatus() != RoomStatus.IN_PROGRESS) {
+            log.warn("게임 중이 아닌 방 {} 의 마지막 생존자 승리 처리를 시도했습니다.", roomId);
+            return;
+        }
+
+        // 1. 마지막 생존자(승자) ID 찾기
+        Long winnerUserId = findFirstUserId(roomId);
+        if (winnerUserId == null) {
+            // 이 시점에 1명은 있어야 함. 0명이라면 removeUserFromRoom에서 0명 처리가 되어야 함.
+            log.warn("마지막 생존자 승리 처리 중 유저를 찾을 수 없음. 방 {} 상태를 WAITING으로 변경", roomId);
+            room.setStatus(RoomStatus.WAITING);
+            roomRepository.save(room);
+            broadcastRoomList();
+            return;
+        }
+
+        // 2. 방 상태 업데이트 (승자 Submission ID는 null)
+        // 기존 finishRoom과 달리 승자 Submission이 없으므로 winnerId (Submission ID)에 null 전달
+        roomRepository.updateWinnerAndFinish(roomId, null, LocalDateTime.now(), RoomStatus.RESULT);
+
+        // 3. 승자 스탯 업데이트 (이 시점에 방에는 승자만 남아있음)
+        User winnerUser = userRepository.findById(winnerUserId)
+                .orElseThrow(() -> new IllegalStateException("승자 유저를 찾을 수 없습니다: " + winnerUserId));
+
+        winnerUser.incrementTotalGame(); // 총 게임 수 증가
+        winnerUser.incrementWinGame();   // 승리 수 증가
+        winnerUser.addTierPoints(200);   // 티어 포인트 증가 (기존 finishRoom과 동일하게 200점)
+
+        Tier resolvedTier = resolveTier(winnerUser.getTierPoint());
+        if (resolvedTier != null) {
+            winnerUser.setTier(resolvedTier);
+        }
+        userRepository.save(winnerUser);
+
+        log.info("방 {}의 마지막 생존자 {}가 승리했습니다.", roomId, winnerUserId);
+
+        // 4. 방 목록 갱신
+        broadcastRoomList();
     }
 
     private void scheduleRoomDeletionIfEmpty(Long roomId) {
