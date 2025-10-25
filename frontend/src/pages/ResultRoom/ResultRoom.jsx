@@ -163,6 +163,7 @@ function ResultRoom() {
         if (roomId) {
             fetchRoomAndProblemDetails();
         }
+        // eslint-disable-next-line no-undef
     }, [roomId, navigate, gameEndType, stateWinnerUserId, stateWinnerNickname]);
 
     // WebSocket 방 참여 및 나가기

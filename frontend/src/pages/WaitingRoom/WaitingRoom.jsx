@@ -325,14 +325,36 @@ function WaitingRoom() {
     }, [systemMessage, clearSystemMessage]);
 
     // 방 설정 모달에서 저장 버튼을 눌렀을 때 호출
-    const handleSaveRoomSettings = (settings) => {
-        setRoomName(settings.roomName);
-        setDifficulty(settings.difficulty);
-        setTimeLimit(settings.timeLimit);
-        setMaxParticipants(settings.maxParticipants);
-        setItemMode(settings.itemMode)
-        setIsPrivate(settings.isPrivate);
-        setPassword(settings.password);
+    const handleSaveRoomSettings = (updatedSettings) => {
+        if (!updatedSettings) {
+            setShowRoomSettingsModal(false);
+            return;
+        }
+
+        if (updatedSettings.roomName !== undefined) {
+            setRoomName(updatedSettings.roomName);
+        }
+        if (updatedSettings.difficulty !== undefined) {
+            setDifficulty(updatedSettings.difficulty);
+        }
+        if (updatedSettings.timeLimit !== undefined) {
+            setTimeLimit(updatedSettings.timeLimit);
+        }
+        if (updatedSettings.maxParticipants !== undefined) {
+            setMaxParticipants(updatedSettings.maxParticipants);
+        }
+        if (updatedSettings.itemMode !== undefined) {
+            setItemMode(updatedSettings.itemMode);
+        }
+        if (updatedSettings.isPrivate !== undefined) {
+            setIsPrivate(updatedSettings.isPrivate);
+            if (!updatedSettings.isPrivate) {
+                setPassword('');
+            }
+        }
+        if (updatedSettings.password !== undefined && updatedSettings.isPrivate !== false) {
+            setPassword(updatedSettings.password);
+        }
         setNotification({message: "방 설정이 저장되었습니다.", type: "success"});
         setTimeout(() => setNotification(null), 3000);
         setShowRoomSettingsModal(false);
@@ -565,6 +587,8 @@ function WaitingRoom() {
                     password,
                 }}
                 currentParticipantsCount={currentPlayers.length}
+                roomId={roomId}
+                isEdit
             />
 
             {/* 방 나가기 확인 모달 */}
