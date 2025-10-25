@@ -47,6 +47,14 @@ public class RoomService {
 
     @Transactional
     public Room createRoom(CreateRoomRequest req) {
+        // request 유효성 검사
+        String roomName = req.getRoomName() != null ? req.getRoomName().trim() : "";
+        String password = req.isPrivate() && req.getPassword() != null
+                ? req.getPassword().trim()
+                : null;
+
+        validateRoomSettings(roomName, req.isPrivate(), password, req.getMaxParticipants(), req.getCurrentPart());
+
         // 1. 모든 문제 목록을 가져와서 랜덤으로 하나를 선택합니다.
         List<Problem> problems = problemRepository.findAll();
         if (problems.isEmpty()) {
@@ -56,19 +64,64 @@ public class RoomService {
 
         // 2. Room을 빌드할 때 선택된 문제를 할당합니다.
         Room room = Room.builder()
-                .roomName(req.getRoomName())
+                .roomName(roomName)
                 .difficulty(req.getDifficulty())
                 .timeLimit(req.getTimeLimit())
                 .maxParticipants(req.getMaxParticipants())
                 .currentPart(req.getCurrentPart())
                 .status(req.getStatus())
                 .isPrivate(req.isPrivate())
-                .password(req.getPassword())
+                .password(password)
                 .itemMode(req.isItemMode())
                 .currentCapacity(0)
                 .maxCapacity(req.getMaxParticipants())
                 .problem(selectedProblem) // ✨ 여기에서 문제를 할당
                 .build();
+        Room savedRoom = roomRepository.save(room);
+        broadcastRoomList();
+        return savedRoom;
+    }
+
+    @Transactional
+    public Room updateRoom(Long roomId, UpdateRoomRequest request) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new NoSuchElementException("방을 찾을 수 없습니다."));
+
+        String updatedRoomName = request.getRoomName() != null ? request.getRoomName().trim() : "";
+        boolean updatedPrivate = request.getIsPrivate() != null ? request.getIsPrivate() : room.isPrivate();
+
+        String updatedPassword;
+        if (updatedPrivate) {
+            if (request.getPassword() != null) {
+                updatedPassword = request.getPassword().trim();
+            } else {
+                updatedPassword = room.getPassword();
+            }
+        } else {
+            updatedPassword = null;
+        }
+
+        int updatedMaxParticipants = request.getMaxParticipants() != null
+                ? request.getMaxParticipants()
+                : room.getMaxParticipants();
+
+        validateRoomSettings(updatedRoomName, updatedPrivate, updatedPassword, updatedMaxParticipants, room.getCurrentPart());
+
+        room.setRoomName(updatedRoomName);
+        if (request.getDifficulty() != null) {
+            room.setDifficulty(request.getDifficulty());
+        }
+        if (request.getTimeLimit() != null) {
+            room.setTimeLimit(request.getTimeLimit());
+        }
+        if (request.getItemMode() != null) {
+            room.setItemMode(request.getItemMode());
+        }
+        room.setPrivate(updatedPrivate);
+        room.setPassword(updatedPassword);
+        room.setMaxParticipants(updatedMaxParticipants);
+        room.setMaxCapacity(updatedMaxParticipants);
+
         Room savedRoom = roomRepository.save(room);
         broadcastRoomList();
         return savedRoom;
@@ -533,5 +586,21 @@ public class RoomService {
                 .map(RoomResponse::from)
                 .toList();
         messagingTemplate.convertAndSend("/topic/room-data", responses);
+    }
+
+    private void validateRoomSettings(String roomName, boolean isPrivate, String password,
+                                      int maxParticipants, int currentParticipants) {
+        if (roomName == null || roomName.trim().isEmpty()) {
+            throw new IllegalArgumentException("방 이름을 입력해주세요.");
+        }
+        if (maxParticipants <= 0) {
+            throw new IllegalArgumentException("최대 참가자 수는 1 이상이어야 합니다.");
+        }
+        if (maxParticipants < currentParticipants) {
+            throw new IllegalArgumentException("현재 참가자 수보다 최대 참가자 수를 적게 설정할 수 없습니다.");
+        }
+        if (isPrivate && (password == null || password.trim().isEmpty())) {
+            throw new IllegalArgumentException("비밀방 비밀번호를 입력해주세요.");
+        }
     }
 }
