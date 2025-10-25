@@ -3,10 +3,19 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom'; // useNavigate 임포트
 import { useAuth } from '../../pages/AuthContext/AuthContext'; // useAuth 임포트
 
-function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, currentParticipantsCount }) {
+function RoomSettingsModal({
+                           showModal,
+                           onClose,
+                           onSave,
+                           initialSettings,
+                           currentParticipantsCount,
+                           roomId = null,
+                           isEdit = false
+}) {
   const [settings, setSettings] = useState(initialSettings);
   const navigate = useNavigate(); // useNavigate 훅 사용
   const { user } = useAuth(); // AuthContext에서 user 정보 가져오기
+  const isEditMode = Boolean(isEdit && roomId);
 
   // 모달이 열릴 때마다 초기 설정을 다시 로드
   useEffect(() => {
@@ -45,19 +54,43 @@ function RoomSettingsModal({ showModal, onClose, onSave, initialSettings, curren
       return; // 저장 중단
     }
 
-    const roomData = {
+    const basePayload = {
       roomName: settings.roomName, // 방 이름 (문자열)
       difficulty: settings.difficulty, // 문제 난이도 (문자열)
       timeLimit: settings.timeLimit, // 제한 시간 (문자열)
       maxParticipants: settings.maxParticipants, // 최대 인원 (정수)
-      currentPart: currentParticipantsCount, // 현재 인원 (정수)
-      status: 0, // 상태 (정수)
       isPrivate: settings.isPrivate, // 비밀방 여부 (불리언)
       password: settings.isPrivate ? settings.password : '', // 비밀방이 아니면 비밀번호 초기화 (문자열)
       itemMode: false// 아이템 모드 (불리언)
     };
 
     try {
+      if (isEditMode) {
+        const response = await axios.patch(
+            `${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`,
+            basePayload,
+            { withCredentials: true }
+        );
+
+        if (response.status === 200) {
+          alert('방 설정이 성공적으로 저장되었습니다!');
+          onSave({
+            ...response.data,
+            password: settings.isPrivate ? settings.password : '',
+          });
+        } else {
+          alert('방 설정 저장에 실패했습니다. 다시 시도해주세요.');
+        }
+        return;
+      }
+
+      const roomData = {
+        ...basePayload,
+        currentPart: currentParticipantsCount,
+        status: 0,
+        password: settings.isPrivate ? settings.password : '',
+      };
+
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms`, roomData, {
         withCredentials: true // 필요한 경우 쿠키 포함
       });

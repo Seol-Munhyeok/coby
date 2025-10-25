@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/rooms")
@@ -38,6 +39,19 @@ public class RoomController {
     public RoomResponse createRoom(@RequestBody CreateRoomRequest request) {
         Room room = roomService.createRoom(request);
         return RoomResponse.from(room);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<RoomResponse> updateRoom(@PathVariable Long id,
+                                                   @RequestBody UpdateRoomRequest request) {
+        try {
+            Room room = roomService.updateRoom(id, request);
+            return ResponseEntity.ok(RoomResponse.from(room));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/{id}")
