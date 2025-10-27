@@ -66,6 +66,24 @@ export default function CodingBattle() {
     const userId = user?.id || 99
     const userPreferredLanguage = user?.preferredLanguage || 'python';
 
+    // --- 테마 상태 추가 ---
+    const [theme, setTheme] = useState('dark'); // 'dark' 또는 'light'
+
+    // --- 테마 변경을 위한 useEffect ---
+    useEffect(() => {
+        const root = window.document.documentElement;
+        if (theme === 'dark') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
+    }, [theme]);
+
+    // --- 테마 토글 함수 ---
+    const toggleTheme = () => {
+        setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'));
+    };
+
 
     useEffect(() => {
         // useRef 값 초기화 (DOM이 마운트된 후에 접근)
@@ -357,46 +375,46 @@ export default function CodingBattle() {
 
 
     const requestFullScreen = () => {
-      if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen().catch((e) => {
-          console.warn("전체 화면 모드 요청 실패:", e);
-          // 에러가 발생해도 FullscreenPromptModal은 닫히지 않도록 합니다.
-        });
-      } else {
-        console.log("현재 브라우저는 전체 화면 모드를 지원하지 않습니다.");
-        // 지원하지 않는 경우 사용자에게 알림을 줄 수도 있습니다.
-        showModal("알림", "현재 브라우저는 전체 화면 모드를 지원하지 않습니다.", "info");
-      }
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch((e) => {
+                console.warn("전체 화면 모드 요청 실패:", e);
+                // 에러가 발생해도 FullscreenPromptModal은 닫히지 않도록 합니다.
+            });
+        } else {
+            console.log("현재 브라우저는 전체 화면 모드를 지원하지 않습니다.");
+            // 지원하지 않는 경우 사용자에게 알림을 줄 수도 있습니다.
+            showModal("알림", "현재 브라우저는 전체 화면 모드를 지원하지 않습니다.", "info");
+        }
     };
 
     // 전체 화면 상태 모니터링 및 Modal 띄우기
     useEffect(() => {
-      const handleFullscreenChange = () => {
-        if (document.fullscreenElement) {
-          // 전체 화면 모드 진입 시 Modal 닫기
-          setIsFullscreenPromptOpen(false);
-        } else {
-          // 전체 화면 모드 종료 시 Modal 다시 띄우기
-          setIsFullscreenPromptOpen(true);
+        const handleFullscreenChange = () => {
+            if (document.fullscreenElement) {
+                // 전체 화면 모드 진입 시 Modal 닫기
+                setIsFullscreenPromptOpen(false);
+            } else {
+                // 전체 화면 모드 종료 시 Modal 다시 띄우기
+                setIsFullscreenPromptOpen(true);
+            }
+        };
+
+        // 컴포넌트 마운트 시 전체 화면이 아니라면 Modal 띄우기
+        if (!document.fullscreenElement) {
+            setIsFullscreenPromptOpen(true);
         }
-      };
 
-      // 컴포넌트 마운트 시 전체 화면이 아니라면 Modal 띄우기
-      if (!document.fullscreenElement) {
-        setIsFullscreenPromptOpen(true);
-      }
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // For Safari
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);   // For Firefox
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);     // For IE/Edge
 
-      document.addEventListener('fullscreenchange', handleFullscreenChange);
-      document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // For Safari
-      document.addEventListener('mozfullscreenchange', handleFullscreenChange);   // For Firefox
-      document.addEventListener('MSFullscreenChange', handleFullscreenChange);     // For IE/Edge
-
-      return () => {
-        document.removeEventListener('fullscreenchange', handleFullscreenChange);
-        document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-      };
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+        };
     }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
 
 // 부정행위 감지를 위한 useEffect
@@ -410,15 +428,15 @@ export default function CodingBattle() {
             // 2. 화면 포커스가 사라졌으므로 경고 횟수를 증가시킵니다.
             setWarningCount(prevCount => {
                 const newCount = prevCount + 1;
-                
+
                 // 3. 경고 횟수가 최대치에 도달했는지 확인합니다.
                 if (newCount >= MAX_WARNINGS) {
                     setCheatingDetected(true);
-                    
+
                     // 3-1. 최종 경고 메시지를 모달로 표시합니다.
                     showModal(
-                        "부정행위 감지", 
-                        "부정행위가 3회 감지되었습니다. 3초 후 메인 페이지로 이동합니다.", 
+                        "부정행위 감지",
+                        "부정행위가 3회 감지되었습니다. 3초 후 메인 페이지로 이동합니다.",
                         "error"
                     );
 
@@ -430,8 +448,8 @@ export default function CodingBattle() {
                 } else {
                     // 3-3. 아직 최대 횟수 미만이라면, 남은 횟수를 알려줍니다.
                     showModal(
-                        "경고!", 
-                        `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`, 
+                        "경고!",
+                        `화면 이탈이 감지되었습니다. ${MAX_WARNINGS - newCount}회 더 이탈 시 부정행위로 간주됩니다.`,
                         "warning"
                     );
                 }
@@ -562,16 +580,16 @@ export default function CodingBattle() {
                     setOpponents(newParticipants);
                     console.log("Opponents state initialized/updated from room_participants:", newParticipants);
 
-                // "GameEnd" (최후의 1인) 메시지 처리
+                    // "GameEnd" (최후의 1인) 메시지 처리
                 } else if (receivedMessage.type === "GameEnd") {
                     console.log('🏁 최후의 1인으로 게임 종료:', receivedMessage);
-    
+
                     showModal(
                         "게임 종료!",
                         `모든 상대방이 나갔습니다! 잠시 후 결과 페이지로 이동합니다.`,
                         "info"
                     );
-    
+
                     // 3초 후 결과 페이지로 이동
                     setTimeout(() => {
                         // ResultRoom에서 상황을 구분할 수 있도록 state를 함께 전달합니다.
@@ -700,7 +718,7 @@ export default function CodingBattle() {
                     } else {
                         console.warn(`⚠️ timeLimit 값('${data.timeLimit}')에서 숫자를 추출할 수 없습니다.`);
                     }
-                    } else {
+                } else {
 
                     console.warn('⚠️ 응답 데이터에 유효한 timeLimit 값이 없습니다.');
                 }
@@ -716,8 +734,8 @@ export default function CodingBattle() {
 
 
     return (
-        <div className={`min-h-screen flex flex-col bg-slate-900 text-slate-100 font-sans`}  onContextMenu={(e) => e.preventDefault()}>
-            <header className="bg-slate-800 py-4 px-6 flex justify-between items-center">
+        <div className={`min-h-screen flex flex-col bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100 font-sans`}  onContextMenu={(e) => e.preventDefault()}>
+            <header className="bg-slate-100 dark:bg-slate-800 py-4 px-6 flex justify-between items-center shadow-md">
                 <div className="flex items-center space-x-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -726,7 +744,7 @@ export default function CodingBattle() {
                 </div>
                 {/* Updated Timer Display */}
                 <div className="BR-timer-container flex flex-col items-center">
-                    <div className="BR-progress-bar-wrapper w-64 bg-slate-600 rounded-full h-2 overflow-hidden">
+                    <div className="BR-progress-bar-wrapper w-64 bg-slate-300 dark:bg-slate-600 rounded-full h-2 overflow-hidden">
                         <div
                             className="BR-progress-bar bg-green-500 h-full rounded-full transition-all duration-1000 ease-linear"
                             style={{ width: `${progressBarWidth}%` }}
@@ -735,19 +753,39 @@ export default function CodingBattle() {
                     <div className="flex justify-between w-64 text-sm mt-1">
                         {/* domTimerRef를 span 요소에 연결 */}
                         <span ref={domTimerRef} className="BR-countdown-time text-orange-400 font-bold">{formatTime(remainingTime)}</span>
-                        <span className="BR-total-time text-slate-400">제한시간: {formatTime(totalTimeSeconds)}</span>
+
+                        <span className="BR-total-time text-slate-500 dark:text-slate-400">제한시간: {formatTime(totalTimeSeconds)}</span>
                     </div>
                 </div>
 
-                <div className="BR-player-card bg-slate-700 px-3 py-2 rounded flex space-x-6">
-                    <select ref={languageRef} onChange={handleLanguageChange} className="bg-slate-700 text-white px-3 py-1 rounded text-sm">
-                        <option value="python">Python</option>
-                        <option value="java">Java</option>
-                        <option value="cpp">C++</option>
-                    </select>
+                <div className="flex items-center space-x-4">
+                    <button
+                        onClick={toggleTheme}
+                        className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 p-2 rounded-full flex items-center justify-center transition-colors"
+                        aria-label="Toggle theme"
+                    >
+                        {theme === 'dark' ? (
+                            // Sun Icon (to switch to light)
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zM4.226 4.226a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM15.774 4.226a1 1 0 010 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM10 6a4 4 0 100 8 4 4 0 000-8zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM17 10a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zM4.226 15.774a1 1 0 010-1.414l.707-.707a1 1 0 111.414 1.414l-.707.707a1 1 0 01-1.414 0zM15.774 15.774a1 1 0 01-1.414 0l-.707-.707a1 1 0 011.414-1.414l.707.707a1 1 0 010 1.414zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1z" clipRule="evenodd" />
+                            </svg>
+                        ) : (
+                            // Moon Icon (to switch to dark)
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                            </svg>
+                        )}
+                    </button>
+                    <div className="BR-player-card bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded flex space-x-6">
+                        <select ref={languageRef} onChange={handleLanguageChange} className="bg-slate-300 dark:bg-slate-700 text-slate-900 dark:text-white px-3 py-1 rounded text-sm">
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
 
-                    <div className="flex items-center">
-                        <div className="ml-2 text-sm font-medium">{userNickname}</div>
+                        <div className="flex items-center">
+                            <div className="ml-2 text-sm font-medium text-white dark:text-white">{userNickname}</div>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -755,7 +793,7 @@ export default function CodingBattle() {
             {/* Main content area including the drawer */}
             <div className="flex-1 flex overflow-hidden">
                 {/* Drawer */}
-                <div className={`drawer bg-slate-800 p-4 flex flex-col ${
+                <div className={`drawer bg-slate-100 dark:bg-slate-800 p-4 flex flex-col ${
                     drawerState === 0 ? 'drawer-fully-closed' :
                         drawerState === 1 ? 'drawer-partially-open' :
                             'drawer-fully-open'
@@ -766,7 +804,7 @@ export default function CodingBattle() {
                                 {drawerState === 2 ? "참가자 진행 상황" : "참가자"}
                             </h3>
                         )}
-                        <button onClick={handleDrawerToggle} className="text-slate-400 hover:text-blue-400 transition-colors">
+                        <button onClick={handleDrawerToggle} className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors">
                             {drawerState === 0 ? (
                                 // Open icon (e.g., right arrow or hamburger) for fully closed state
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -784,7 +822,7 @@ export default function CodingBattle() {
                         <div className="flex-1 overflow-y-auto">
                             {opponents.map((opponent, i) => {
                                 return (
-                                    <div key={opponent.id} className="mb-4 bg-slate-700 p-3 rounded-lg flex flex-col">
+                                    <div key={opponent.id} className="mb-4 bg-slate-200 dark:bg-slate-700 p-3 rounded-lg flex flex-col">
                                         {/* Always visible part (collapsed & expanded) */}
                                         <div className="flex items-center justify-between">
                                             {/* Updated structure for Avatar and Name */}
@@ -793,12 +831,12 @@ export default function CodingBattle() {
                                                 >
                                                     {opponent.avatarInitial}
                                                 </div>
-                                                <div className="mt-1 text-sm font-medium">{opponent.name}</div>
+                                                <div className="mt-1 text-sm font-medium text-slate-900 dark:text-white">{opponent.name}</div>
                                             </div>
                                             {/* Show line count when partially open */}
                                             {drawerState === 1 && (
-                                                <div className="text-xs text-gray-400">
-                                                    {opponent.lineCount} <span className="text-gray-500">line</span>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {opponent.lineCount} <span className="text-gray-600 dark:text-gray-500">line</span>
                                                 </div>
                                             )}
                                         </div>
@@ -806,19 +844,18 @@ export default function CodingBattle() {
                                         {/* Visible only when drawer is fully open */}
                                         {drawerState === 2 && (
                                             <>
-                                                <div className="text-xs text-gray-400 mt-2">진행률: {opponent.progress}</div>
-                                                <div className="h-1 bg-slate-600 rounded-full mt-1 mb-2">
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">진행률: {opponent.progress}</div>
+                                                <div className="h-1 bg-slate-300 dark:bg-slate-600 rounded-full mt-1 mb-2">
                                                     <div className="h-full bg-blue-500 rounded-full" style={{ width: opponent.progress }}></div>
                                                 </div>
                                                 <div className="relative h-28 rounded-lg overflow-hidden opponent-screen-preview">
-                                                    <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-30 p-2 text-sm text-white font-mono overflow-auto">
-                                                        {/* opponent.codeSnippet 대신 가상의 코드 블록 생성 */}
+                                                    <div className="absolute top-0 left-0 w-full h-full bg-gray-100 dark:bg-black dark:bg-opacity-30 p-2 text-sm text-slate-900 dark:text-white font-mono overflow-auto">
                                                         <pre>
                                                             {Array(opponent.lineCount).fill('// Some code line;').join('\n')}
                                                         </pre>
                                                     </div>
                                                     <div className="absolute top-0 left-0 w-full h-full backdrop-blur-sm z-10 flex items-center justify-center">
-                                                        <div className="bg-black/70 text-xs text-white px-4 py-1 rounded-full flex items-center gap-1">
+                                                        <div className="bg-white/70 dark:bg-black/70 text-xs text-black dark:text-white px-4 py-1 rounded-full flex items-center gap-1">
                                                             <span className="flex gap-1">
                                                                 <span className="w-1 h-1 bg-orange-400 rounded-full animate-bounce"></span>
                                                                 <span className="w-1 h-1 bg-orange-400 rounded-full animate-bounce delay-200"></span>
@@ -842,21 +879,21 @@ export default function CodingBattle() {
                 <div className="flex-1 flex flex-col p-6 overflow-hidden">
                     <PanelGroup direction="horizontal" className="flex-1 w-full">
                         {/* Problem Section (Left Panel) */}
-                        <Panel defaultSize={40} minSize={20} className="bg-slate-800 rounded-xl p-6 overflow-y-auto">
+                        <Panel defaultSize={40} minSize={20} className="bg-slate-100 dark:bg-slate-800 rounded-xl p-6 overflow-y-auto">
                             {/* 로딩 상태와 데이터 존재 여부에 따라 조건부 렌더링 */}
                             {isLoadingProblem ? (
-                                <p className="text-center text-lg animate-pulse">문제를 불러오는 중...</p>
+                                <p className="text-center text-lg animate-pulse text-slate-700 dark:text-slate-200">문제를 불러오는 중...</p>
                             ) : problem ? (
                                 <>
                                     {/* 문제 제목을 동적으로 표시 */}
                                     <h2 className="text-2xl font-bold mb-4">{problem.title}</h2>
-                                    <div className="bg-slate-700 p-4 rounded-lg mb-4">
+                                    <div className="bg-slate-200 dark:bg-slate-700 p-4 rounded-lg mb-4">
                                         {/* content 필드의 줄바꿈을 그대로 적용하여 표시 */}
                                         <p className="whitespace-pre-wrap">{problem.content}</p>
                                     </div>
                                 </>
                             ) : (
-                                <p className="text-center text-red-400 text-lg">문제를 불러올 수 없습니다. 방 번호를 확인해주세요.</p>
+                                <p className="text-center text-red-500 dark:text-red-400 text-lg">문제를 불러올 수 없습니다. 방 번호를 확인해주세요.</p>
                             )}
                         </Panel>
 
@@ -875,7 +912,7 @@ export default function CodingBattle() {
                                             height="100%"
                                             defaultLanguage={userPreferredLanguage}
                                             defaultValue={defaultCode}
-                                            theme="vs-dark"
+                                            theme={theme === 'dark' ? 'vs-dark' : 'light'}
                                             onMount={handleEditorDidMount} // onMount 핸들러 연결
                                             onChange={handleEditorChange} // 에디터 내용 변경 시 이벤트 핸들러 연결
                                             options={{
@@ -894,13 +931,13 @@ export default function CodingBattle() {
                                 <PanelResizeHandle className="horizontal-resize-handle" />
 
                                 {/* Execution Result Section (Bottom-Right Panel) */}
-                                <Panel defaultSize={30} minSize={10} className="bg-slate-800 rounded-xl p-4 flex flex-col"> {/* Added flex flex-col */}
-                                    <div className="flex items-center justify-between mb-2"> {/* New flex container for title and button */}
+                                <Panel defaultSize={30} minSize={10} className="bg-slate-100 dark:bg-slate-800 rounded-xl p-4 flex flex-col">
+
                                         <h3 className="text-xl font-bold">실행 결과</h3> {/* Removed mb-2 here, moved to parent div */}
-                                        <div className="flex">
+                                        <div className="flex space-x-2"> {/* --- 버튼 간격 추가 --- */}
                                             <button
                                                 onClick={handleSubmit}
-                                                className="bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg font-bold text-white flex items-center gap-2 text-base"
+                                                className="bg-green-600 hover:bg-green-700 py-2 px-4 rounded-lg font-bold text-white flex items-center gap-2 text-base w-full mb-2 justify-center"
                                                 disabled={cheatingDetected} // 부정행위 감지 시 버튼 비활성화
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -908,22 +945,8 @@ export default function CodingBattle() {
                                                 </svg>
                                                 실행
                                             </button>
-
-                                            <button
-                                                onClick={handleGiveUp}
-                                                className="bg-grey-600 hover:bg-grey-700 py-2 px-4 rounded-lg font-bold text-white flex items-center gap-2 text-base"
-                                                disabled={cheatingDetected} // 부정행위 감지 시 버튼 비활성화
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.027A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                                                </svg>
-                                                결과화면 이동하기
-                                            </button>
-
                                         </div>
-
-                                    </div>
-                                    <pre className="bg-slate-700 p-3 rounded text-sm text-slate-200 whitespace-pre-wrap flex-1 overflow-y-auto">
+                                    <pre className="bg-slate-200 dark:bg-slate-700 p-3 rounded text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap flex-1 overflow-y-auto">
                                         {executionResult}
                                     </pre>
                                     {cheatingDetected && (
@@ -942,7 +965,7 @@ export default function CodingBattle() {
             {isLoading &&(
                 <div id="loadingModal" className="fixed inset-0 flex items-center justify-center z-50">
                     <div className="BR-modal-backdrop absolute inset-0 bg-black bg-opacity-50" />
-                    <div className="bg-gray-900 rounded-xl p-6 shadow-2xl z-10 w-64 border border-gray-800 relative flex flex-col items-center">
+                    <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-2xl z-10 w-64 border border-gray-200 dark:border-gray-800 relative flex flex-col items-center">
                         {/* 로딩 스피너 */}
                         <div className="relative w-16 h-16 mb-5 mt-2">
                             {/* 외부 스피너 */}
@@ -956,9 +979,10 @@ export default function CodingBattle() {
                                 </svg>
                             </div>
                         </div>
-                        <h3 className="text-gray-100 font-medium mb-3">처리 중...</h3>
+                        <h3 className="text-gray-800 dark:text-gray-100 font-medium mb-3">처리 중...</h3>
                         {/* 경과 시간 표시 */}
-                        <div className="flex items-center justify-center w-full text-sm text-gray-300 font-mono">
+
+                        <div className="flex items-center justify-center w-full text-sm text-gray-600 dark:text-gray-300 font-mono">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
