@@ -109,10 +109,13 @@ public class SubmissionService {
     public WinnerCodeDto getWinnerCode(Long SubmissionId) {
         Submission submission = submissionRepository.findById(SubmissionId)
                 .orElseThrow(() -> new RuntimeException("제출 기록이 없습니다."));
+
+        User winner = submission.getUser();
         String language = submission.getLanguage();
         WinnerCodeDto winnerCodeDto = new WinnerCodeDto();
         winnerCodeDto.setLanguage(language);
-        winnerCodeDto.setId(submission.getUser().getId());
+        winnerCodeDto.setId(winner.getId());
+        winnerCodeDto.setNickname(winner.getNickname());
         String s3_path = submission.getS3CodePath();
         String bucket = awsProperties.getS3().getBucket();
 

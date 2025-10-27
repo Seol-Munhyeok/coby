@@ -13,4 +13,5 @@ public class WinnerCodeDto {
     private String code;
     private String language;
     private Long Id;
+    private String nickname;
 }
