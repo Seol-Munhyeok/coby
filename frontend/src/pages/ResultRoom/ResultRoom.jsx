@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ResultRoom.css';
-import { useNavigate, useParams, useLocation } from 'react-router-dom'; 
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import FloatingChat from '../../Common/components/FloatingChat';
 import useContextMenu from '../../Common/hooks/useContextMenu';
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal';
@@ -17,11 +17,12 @@ function ResultRoom() {
     const [notification, setNotification] = useState(null);
     const { roomId } = useParams();
     const { user } = useAuth();
-    
+
     // BattleRoom에서 전달받은 state 값
-    const location = useLocation(); 
+    const location = useLocation();
     const gameEndType = location.state?.gameEndType;
     const stateWinnerUserId = location.state?.winnerUserId;
+    const stateWinnerNickname = location.state?.winnerNickname;
 
     const currentUser = user?.nickname || '게스트';
     const userId = user?.id || 0;
@@ -32,15 +33,15 @@ function ResultRoom() {
     const closeCodeModal = () => setIsCodeModalOpen(false);
 
     // 제출된 코드를 상수로 관리
-    const [Code, setCode] = useState(null); 
+    const [Code, setCode] = useState(null);
 
     // 방 정보 상태와 로딩 상태를 관리합니다.
     const [roomDetails, setRoomDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [problem, setProblem] = useState(null);
-    
+
     // winnerId를 state로 관리 (API 또는 location state로부터 설정됨)
-    const [winnerId, setWinnerId] = useState(0); 
+    const [winnerId, setWinnerId] = useState(0);
     const [playerDetails, setPlayerDetails] = useState({}); //플레이어 상세 정보(점수 등)를 저장할 상태
 
     // 재시작 관련 타이머
@@ -133,7 +134,7 @@ function ResultRoom() {
                     setCode({
                         code: "최후의 1인으로 승리했습니다!\n(다른 모든 참가자가 방을 나갔습니다.)",
                         language: "N/A",
-                        nickname: '승리자'
+                        nickname:stateWinnerNickname||'승리자'
                     });
                     setWinnerId(stateWinnerUserId || 0); // BattleRoom에서 받은 userId로 승리자 설정
                 } else {
@@ -242,7 +243,7 @@ function ResultRoom() {
                         details[playerData.id] = playerData;
                     }
                 });
-                
+
                 setPlayerDetails(details);
 
             } catch (err) {
@@ -256,13 +257,13 @@ function ResultRoom() {
     }, [users]); // 'users' 배열이 변경될 때마다 실행
 
 
-    
+
     // 로딩 중이거나 방 정보가 없을 때 로딩 화면을 표시
     if (loading || !roomDetails) {
         return <div className="flex justify-center items-center h-screen bg-gray-900 text-white text-2xl">로딩 중...</div>;
     }
 
-        
+
     const currentPlayers = uniqueUsers.map((player) => {
         // winnerId state를 숫자로 변환하여 비교합니다.
         const isWinner = player.userId === parseInt(winnerId, 10);
@@ -422,7 +423,7 @@ function ResultRoom() {
                 {/* Main Content: 3단 구조로 변경 */}
                 <main className="flex-1 p-6 flex flex-col items-center">
                     {/* winnerId가 0보다 클 때만 표시 */}
-                    {winnerId > 0 && ( 
+                    {winnerId > 0 && (
                         <div className="mb-4 text-center text-white">
                             <p className="text-xl font-bold">Winner ID: {winnerId}</p>
                         </div>
@@ -462,10 +463,11 @@ function ResultRoom() {
                             <div className="result-card p-6 flex flex-col" style={{ height: '600px', overflowY: 'auto' }}>
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-xl font-bold">
-                                        {/* '최후의 1인' 승리 시 제목 변경 */}
-                                        {gameEndType === 'LAST_MAN_STANDING' 
-                                            ? `제출 코드` 
-                                            : `제출 코드${Code?.language && ` (${Code.language})`}`}
+                                        {Code?.nickname ? `${Code.nickname}님의 제출 코드` : '제출 코드'}
+
+                                        {gameEndType !== 'LAST_MAN_STANDING' && Code?.language &&
+                                            ` (${Code.language})`
+                                        }
                                     </h3>
                                     {/* 크게 보기 버튼 추가 */}
                                     <button onClick={openCodeModal} className="text-gray-400 hover:text-white" title="크게 보기">
