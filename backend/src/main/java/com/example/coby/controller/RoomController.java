@@ -120,15 +120,15 @@ public class RoomController {
         return ResponseEntity.ok(RoomResponse.from(room));
     }
 
-    @PostMapping("/{id}/leave")
-    public ResponseEntity<RoomResponse> leaveRoom(@PathVariable Long id,
-                                                  @RequestBody LeaveRoomRequest request) {
-        Room room = roomService.leaveRoom(id, request.userId());
-        if (room == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(RoomResponse.from(room));
-    }
+//    @PostMapping("/{id}/leave")
+//    public ResponseEntity<RoomResponse> leaveRoom(@PathVariable Long id,
+//                                                  @RequestBody LeaveRoomRequest request) {
+//        Room room = roomService.leaveRoom(id, request.userId());
+//        if (room == null) {
+//            return ResponseEntity.notFound().build();
+//        }
+//        return ResponseEntity.ok(RoomResponse.from(room));
+//    }
 
     @GetMapping("/{id}/users")
     public List<RoomUserResponse> getRoomUsers(@PathVariable Long id) {

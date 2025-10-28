@@ -17,6 +17,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -32,7 +33,8 @@ public class WebSocketController {
     private final Map<String, String> sessionToRoom = new ConcurrentHashMap<>();
     private final Map<String, String> sessionToUser = new ConcurrentHashMap<>();
     private final Map<String, String> userToSession = new ConcurrentHashMap<>();
-
+    // 자발적 퇴장 세션을 기록할 Set
+    private final Set<String> voluntaryLeaves = ConcurrentHashMap.newKeySet();
     /**
      * 채팅 메시지를 수신하여 해당 방의 모든 클라이언트에게 전송(브로드캐스팅)합니다.
      * 클라이언트가 `/pub/room/{roomId}/chat` 경로로 메시지를 발행하면 이 메소드가 호출됩니다.
@@ -316,6 +318,7 @@ public class WebSocketController {
                           WsMessageDto message,
                           SimpMessageHeaderAccessor headerAccessor) {
         String sessionId = headerAccessor.getSessionId();
+        voluntaryLeaves.add(sessionId);
         // 이미 새로운 세션으로 재입장한 뒤 이전 세션에서 온 Leave 메시지는 무시한다.
         String mappedSession = userToSession.get(message.userId());
         if (mappedSession == null || !mappedSession.equals(sessionId)) {
@@ -323,6 +326,7 @@ public class WebSocketController {
         }
 
         boolean wasHost = roomService.isUserHost(Long.parseLong(roomId), Long.parseLong(message.userId()));
+        log.info("handle leave occured roomId={}, userId={}", roomId, message.userId());
         roomService.removeUserFromRoom(message.userId(), roomId);
         sessionToRoom.remove(headerAccessor.getSessionId());
         sessionToUser.remove(headerAccessor.getSessionId());
@@ -348,6 +352,7 @@ public class WebSocketController {
                 messagingTemplate.convertAndSend("/topic/room/" + roomId, hostNotice);
             }
         }
+        log.info("Session disconnected clear roomId={} in handle leave", roomId);
     }
 
     /**
@@ -357,6 +362,13 @@ public class WebSocketController {
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
         String sessionId = event.getSessionId();
+
+        // 이미 handleLeave()에서 처리된 세션이라면 무시
+        if (voluntaryLeaves.remove(sessionId)) {
+            log.info("Session {} already handled via handleLeave(), skipping disconnect event.", sessionId);
+            return;
+        }
+
         String roomId = sessionToRoom.remove(sessionId);
         String userId = sessionToUser.remove(sessionId);
 
@@ -367,6 +379,7 @@ public class WebSocketController {
 
         if (roomId != null && userId != null) {
             boolean wasHost = roomService.isUserHost(Long.parseLong(roomId), Long.parseLong(userId));
+            log.info("handle disconnect occured roomId={}, userId={}", roomId, userId);
             roomService.removeUserFromRoom(userId, roomId);
 
             // 방 전체에 퇴장 알림
