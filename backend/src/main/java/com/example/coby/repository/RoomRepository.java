@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface RoomRepository extends JpaRepository<Room, Long> {
     // 룸 ID로 current_part를 직접 업데이트하는 메소드
@@ -21,5 +22,7 @@ public interface RoomRepository extends JpaRepository<Room, Long> {
                                @Param("winnerId") Long winnerId,
                                @Param("submittedAt") LocalDateTime submittedAt,
                                @Param("status") RoomStatus status);
+
+    List<Room> findByStatusNot(RoomStatus status);
 
 }

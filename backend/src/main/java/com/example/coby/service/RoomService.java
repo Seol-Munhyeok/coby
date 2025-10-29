@@ -38,11 +38,23 @@ public class RoomService {
     private final Map<Long, ScheduledFuture<?>> pendingRoomDeletionTasks = new ConcurrentHashMap<>();
 
     public List<Room> getRooms() {
-        return roomRepository.findAll();
+        return roomRepository.findByStatusNot(RoomStatus.RESULT);
     }
 
     public Room getRoom(Long id) {
         return roomRepository.findById(id).orElse(null);
+    }
+
+    public List<UserRoomResultDto> getHistories(Long userId) {
+        List<Room> resultRooms = roomUserRepository.findResultRoomsByUserId(userId);
+
+        return resultRooms.stream()
+                .map(room -> new UserRoomResultDto(
+                        room.getRoomName(),
+                        room.getWinnerId() != null && room.getWinnerId().equals(userId), // 승패 판정
+                        room.getCreatedAt()
+                ))
+                .toList();
     }
 
     @Transactional
@@ -232,7 +244,9 @@ public class RoomService {
     public Room leaveRoom(Long roomId, Long userId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
-
+        if (room.getStatus() == RoomStatus.RESULT) {
+            return room;
+        }
         RoomUserId id = new RoomUserId(roomId, userId);
         if (roomUserRepository.existsById(id)) {
             roomUserRepository.deleteById(id);
@@ -358,9 +372,7 @@ public class RoomService {
             Long rid = Long.parseLong(roomId);
             Long uid = Long.parseLong(userId);
 
-            leaveRoom(rid, uid);
-
-            Room room = roomRepository.findById(rid).orElse(null);
+            Room room = leaveRoom(rid, uid);
 
             // 게임 진행 중이었는지 확인
             boolean wasGameInProgress = room.getStatus() == RoomStatus.IN_PROGRESS;
