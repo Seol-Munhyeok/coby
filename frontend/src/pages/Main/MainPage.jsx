@@ -9,7 +9,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 
 // 분리된 컴포넌트들 임포트
-import ProfileCard from './ProfileCard';
+import { DesktopProfileCard, MobileProfileBar } from './ProfileCard';
 import InfoModal from './InfoModal';
 import HomeTab from './HomeTab'; // 홈 탭 컴포넌트 추가
 import GameTab from './GameTab'; // 게임 탭 컴포넌트
@@ -226,7 +226,8 @@ function MainPage() {
         <div className="main-body min-h-screen bg-gray-100 flex flex-col">
             {/* Header */}
             <header className="bg-gray-800 text-white shadow-lg">
-                <div className="w-[80%] mx-auto px-4 py-3 flex justify-between items-center">
+                {/* 1024px 미만(lg)에서는 100% 너비, 그 이상에서는 80% 너비와 중앙 정렬 */}
+                <div className="w-full lg:w-[80%] lg:mx-auto px-4 py-3 flex justify-between items-center">
                     <div className="flex items-center">
                         <h1 className="logo-text text-3xl mr-8">COBY</h1>
                         <nav className="hidden md:flex space-x-6">
@@ -246,19 +247,36 @@ function MainPage() {
             </header>
 
             {/* Main Content */}
-            <main className="w-[80%] mx-auto px-4 py-4 flex-grow">
-                <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 h-[80vb]">
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full">
-                        {/* Left Section - Profile Card */}
-                        <div className="lg:col-span-1 space-y-8">
-                            <ProfileCard 
+            {/* 1024px 미만(lg)에서는 100% 너비, 그 이상에서는 80% 너비와 중앙 정렬 */}
+            <main className="w-full lg:w-[80%] lg:mx-auto px-4 py-4 flex-grow">
+
+                {/* === Mobile Profile Bar (lg 미만에서만 보임) === */}
+                {/* 요청에 따라 메인 컨테이너 밖으로 이동 */}
+                <div className="lg:hidden mb-6">
+                    <MobileProfileBar 
+                        onOpenInfoModal={handleOpenInfoModal} 
+                    />
+                </div>
+
+                {/* 메인 흰색 컨테이너 */}
+                <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 min-h-[44rem]">
+                    {/* 기본 1열(세로쌓임), lg(1024px) 이상에서 4열(가로배치) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 h-full"> 
+                        
+                        {/* Left Section - Desktop Profile Card (lg 이상에서만 보임) */}
+                        <div className="hidden lg:block lg:col-span-1 space-y-8"> {/* 'hidden lg:block' 추가 */}
+                            <DesktopProfileCard // 이름 변경
                                 onOpenInfoModal={handleOpenInfoModal} 
                                 onProfileClick={handleProfileCardClick} 
                             />
                         </div>
 
-                        {/* Right Section - Fragment Area */}
-                        <div className="lg:col-span-3 flex flex-col h-full overflow-hidden">
+                        {/* Right Section - Fragment Area (모바일에선 1열 전체, 데스크탑에선 3열) */}
+                        <div className="col-span-1 lg:col-span-3 flex flex-col h-full overflow-hidden"> {/* 'col-span-1' 추가 */}
+                            
+                            {/* === Mobile Profile Bar (lg 미만에서만 보임) === */}
+                            {/* 이 섹션이 <main>의 직계 자식으로 이동했습니다. */}
+                            
                             {/* Tab Buttons */}
                             <div className="flex border-b mb-6">
                                 <button onClick={() => setActiveTab('home')} className={`tab-button ${activeTab === 'home' ? 'active' : ''}`}>
