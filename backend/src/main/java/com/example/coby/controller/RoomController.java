@@ -63,6 +63,15 @@ public class RoomController {
         return ResponseEntity.ok(RoomResponse.from(room));
     }
 
+    @GetMapping("/{id}/history")
+    public ResponseEntity<List<UserRoomResultDto>> getHistory(@PathVariable Long id){
+        List<UserRoomResultDto> histories = roomService.getHistories(id);
+        if (histories.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(histories);
+    }
+
     @GetMapping("/{id}/host")
     public ResponseEntity<RoomHostResponse> getRoomHost(@PathVariable Long id) {
         return roomService.getRoomHost(id)
