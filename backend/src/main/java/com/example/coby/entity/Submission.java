@@ -28,9 +28,9 @@ public class Submission {
     @Column(nullable = false)
     private String language;
 
-    private int executionTime;
+    private Double executionTime;
 
-    private int memory;
+    private Double memory;
 
     private String s3CodePath;
 

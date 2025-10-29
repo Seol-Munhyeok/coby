@@ -37,8 +37,10 @@ public class RoomService {
     private final ScheduledExecutorService roomDeletionScheduler = Executors.newSingleThreadScheduledExecutor();
     private final Map<Long, ScheduledFuture<?>> pendingRoomDeletionTasks = new ConcurrentHashMap<>();
 
-    public List<Room> getRooms() {
-        return roomRepository.findByStatusNot(RoomStatus.RESULT);
+    public List<RoomResponse> getRooms() {
+        return  roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
+                .map(RoomResponse::from)
+                .toList();
     }
 
     public Room getRoom(Long id) {
@@ -594,7 +596,7 @@ public class RoomService {
     }
 
     private void broadcastRoomList() {
-        List<RoomResponse> responses = roomRepository.findAll().stream()
+        List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
                 .map(RoomResponse::from)
                 .toList();
         messagingTemplate.convertAndSend("/topic/room-data", responses);
