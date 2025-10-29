@@ -39,6 +39,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 
@@ -137,6 +138,8 @@ public class SubmissionService {
                 .submissionId(sub.getId())
                 .result(sub.getStatus())
                 .details(sub.getDetails())
+                .avgTime(sub.getExecutionTime())
+                .avgMemory(sub.getMemory())
                 .build();
     }
 
@@ -149,6 +152,20 @@ public class SubmissionService {
                 .orElseThrow(EntityNotFoundException::new);
         submission.setStatus(resultDto.getResult());
         submission.setDetails(resultDto.getDetails());
+        String details = submission.getDetails();
+        Double avgTime = 0.0;
+        Double avgMemory = 0.0;
+        if (Objects.equals(resultDto.getResult(), "Accepted")) {
+            if (details != null && details.contains("||")) {
+                String[] parts = details.split("\\|\\|");
+                if (parts.length == 2) {
+                    avgTime = Double.parseDouble(parts[0]);
+                    avgMemory = Double.parseDouble(parts[1]);
+                }
+            }
+        }
+        submission.setExecutionTime(avgTime);
+        submission.setMemory(avgMemory);
         submissionRepository.save(submission);
         log.info("Submission ID {}의 상태가 '{}'(으)로 업데이트되었습니다.", submissionId,
                 resultDto.getResult());

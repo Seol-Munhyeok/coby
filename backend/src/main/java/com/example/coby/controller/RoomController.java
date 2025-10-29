@@ -29,9 +29,7 @@ public class RoomController {
 
     @GetMapping
     public List<RoomResponse> getRooms() {
-        return roomService.getRooms().stream()
-                .map(RoomResponse::from)
-                .toList();
+        return roomService.getRooms();
     }
 
     @PostMapping
