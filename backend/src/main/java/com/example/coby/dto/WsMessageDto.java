@@ -23,5 +23,7 @@ public record WsMessageDto(
         List<RoomUserResponse> users,
         LocalDateTime startAt,
         LocalDateTime expireAt,
-        Long timeLimitSeconds
+        Long timeLimitSeconds,
+        Long gameStartDelaySeconds
+
 ) {}
