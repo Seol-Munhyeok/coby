@@ -241,11 +241,7 @@ public class WebSocketController {
             if (reqId == null || !roomService.isUserHost(rid, reqId)) {
                 return;
             }
-            WsMessageDto startNotice = WsMessageDto.builder()
-                    .type("StartGame")
-                    .roomId(roomId)
-                    .build();
-            messagingTemplate.convertAndSend("/topic/room/" + roomId, startNotice);
+            roomService.startGame(rid);
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: roomId={}, userId={}", roomId, requesterId);
         }
