@@ -376,7 +376,7 @@ function WaitingRoom() {
             user.nickname.charAt(0).toUpperCase() + (user.nickname.charAt(1) || '').toUpperCase(),
         tier: '골드',
         isReady: user.isReady,
-        avatarColor: 'bg-blue-700',
+        //avatarColor: 'bg-blue-700',
         isHost: user.isHost,
     }));
 
