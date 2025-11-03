@@ -1,24 +1,18 @@
-// import logo from './logo.svg';
+// src/App.js
 import React, { useEffect } from 'react';
-import Router from './Router'; // Router 컴포넌트가 Router.js에 있다고 가정
+import { Outlet } from 'react-router-dom'; // useBlocker 제거
 
 const App = () => {
+
+  // 우클릭 방지 로직 (기존과 동일)
   useEffect(() => {
-    const handleContextMenu = (e) => {
-      e.preventDefault();
-    };
-
-    // document에 'contextmenu' 이벤트 리스너 추가
+    const handleContextMenu = (e) => e.preventDefault();
     document.addEventListener('contextmenu', handleContextMenu);
-
-    // 컴포넌트 언마운트 시 이벤트 리스너 제거
-    return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
-    };
-  }, []); // 빈 의존성 배열은 마운트 시 한 번 실행되고 언마운트 시 정리됨을 의미
+    return () => document.removeEventListener('contextmenu', handleContextMenu);
+  }, []);
 
   return (
-    <Router />
+    <Outlet /> 
   );
 };
 
