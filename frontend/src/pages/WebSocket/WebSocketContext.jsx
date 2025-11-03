@@ -21,6 +21,11 @@ export const WebSocketProvider = ({ children }) => {
   // 현재 참여 중인 방 ID와 게임 시작 여부
   const [joinedRoomId, setJoinedRoomId] = useState(null);
   const [gameStart, setGameStart] = useState(false);
+  const [gameStartAt, setGameStartAt] = useState(null);
+  const [gameExpireAt, setGameExpireAt] = useState(null);
+  const [gameTimeLimitSeconds, setGameTimeLimitSeconds] = useState(null);
+  const [remainingTimeMs, setRemainingTimeMs] = useState(null);
+  const [gameExpired, setGameExpired] = useState(false);
   // 강퇴 여부 및 현재 사용자 ID를 저장
   const [forcedOut, setForcedOut] = useState(false)
   const currentUserIdRef = useRef(null);
@@ -140,6 +145,39 @@ export const WebSocketProvider = ({ children }) => {
             break;
           case 'StartGame':
             setGameStart(true);
+            setGameExpired(false);
+            if (data.startAt) {
+              const parsedStart = new Date(data.startAt).getTime();
+              setGameStartAt(Number.isNaN(parsedStart) ? null : parsedStart);
+            } else {
+              setGameStartAt(null);
+            }
+            if (data.expireAt) {
+              const parsedExpire = new Date(data.expireAt).getTime();
+              if (!Number.isNaN(parsedExpire)) {
+                setGameExpireAt(parsedExpire);
+                setRemainingTimeMs(Math.max(0, parsedExpire - Date.now()));
+              } else {
+                setGameExpireAt(null);
+                setRemainingTimeMs(null);
+              }
+            } else {
+              setGameExpireAt(null);
+              setRemainingTimeMs(null);
+            }
+            if (typeof data.timeLimitSeconds === 'number') {
+              setGameTimeLimitSeconds(data.timeLimitSeconds);
+            } else {
+              setGameTimeLimitSeconds(null);
+            }
+            break;
+          case 'GameExpired':
+            setGameExpired(true);
+            setGameStart(false);
+            setGameStartAt(null);
+            setGameExpireAt(null);
+            setGameTimeLimitSeconds(null);
+            setRemainingTimeMs(0);
             break;
           default:
             break;
@@ -250,6 +288,11 @@ export const WebSocketProvider = ({ children }) => {
     setMessages([]);
     setUsers([]);
     setGameStart(false);
+    setGameStartAt(null);
+    setGameExpireAt(null);
+    setGameTimeLimitSeconds(null);
+    setRemainingTimeMs(null);
+    setGameExpired(false);
   }, []);
 
   // 채팅 메시지를 서버로 전송
@@ -326,6 +369,37 @@ export const WebSocketProvider = ({ children }) => {
 
   // joinRoom and sendMessage functions are defined above
   // 컨텍스트에서 노출할 값들
+  const recalculateRemainingTime = useCallback(() => {
+    if (gameExpireAt) {
+      setRemainingTimeMs(Math.max(0, gameExpireAt - Date.now()));
+    } else {
+      setRemainingTimeMs(null);
+    }
+  }, [gameExpireAt]);
+
+  useEffect(() => {
+    if (!gameExpireAt) {
+      setRemainingTimeMs(null);
+      return;
+    }
+
+    const updateRemaining = () => {
+      const diff = Math.max(0, gameExpireAt - Date.now());
+      setRemainingTimeMs(diff);
+      if (diff === 0) {
+        setGameExpired(true);
+      }
+    };
+
+    updateRemaining();
+    const intervalId = setInterval(updateRemaining, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [gameExpireAt]);
+
+  const remainingTimeSeconds =
+      remainingTimeMs !== null ? Math.max(0, Math.floor(remainingTimeMs / 1000)) : null;
+
   const contextValue = {
     messages,
     sendMessage,
@@ -340,9 +414,17 @@ export const WebSocketProvider = ({ children }) => {
     client: clientRef.current,
     joinedRoomId,
     gameStart,
+    startAt: gameStartAt,
+    expireAt: gameExpireAt,
+    timeLimitSeconds: gameTimeLimitSeconds,
+    remainingTimeMs,
+    remainingTimeSeconds,
+    recalculateRemainingTime,
+    gameExpired,
     forcedOut,
     resetForcedOut,
     clearSystemMessage,
+    systemMessage,
     requestRestart,
     sendVote,
     restartModal,

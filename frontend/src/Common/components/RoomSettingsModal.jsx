@@ -169,6 +169,7 @@ function RoomSettingsModal({
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
+                <option value="1분">1분</option>
                 <option value="15분">15분</option>
                 <option value="30분">30분</option>
                 <option value="45분">45분</option>
