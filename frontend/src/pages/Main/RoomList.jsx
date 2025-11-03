@@ -18,6 +18,8 @@ function RoomList({ rooms, enterRoomBtn, searchTerm }) {
             return;
         }
 
+        sessionStorage.setItem('isValidNavigation', 'true'); //url접근을 막기위한 인증 플래그
+
         if (room.isPrivate) {
             setSelectedRoomId(room.id);
             setShowPasswordModal(true);
