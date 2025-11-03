@@ -12,6 +12,22 @@ import { useAuth } from '../AuthContext/AuthContext';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
 import {number} from "sockjs-client/lib/utils/random";
 
+const parseServerUtcMillis = (value) => {
+    if (value == null) return Number.NaN;
+
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : Number.NaN;
+    }
+
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return Number.NaN;
+        const hasTimezone = /([zZ]|[+-]\d\d:\d\d)$/.test(trimmed);
+        return new Date(hasTimezone ? trimmed : `${trimmed}Z`).getTime();
+    }
+
+    return Number.NaN;
+};
 
 export default function CodingBattle() {
     const { roomId } = useParams();
@@ -819,7 +835,7 @@ export default function CodingBattle() {
 
                     let parsedStart = null;
                     if (data.startAt) {
-                        const startMs = new Date(data.startAt).getTime();
+                        const startMs = parseServerUtcMillis(data.startAt);
                         if (!Number.isNaN(startMs)) {
                             parsedStart = startMs;
                             setStartAtTimestamp(startMs);
@@ -832,7 +848,7 @@ export default function CodingBattle() {
 
                     let parsedExpire = null;
                     if (data.expireAt) {
-                        const expireMs = new Date(data.expireAt).getTime();
+                        const expireMs = parseServerUtcMillis(data.expireAt);
                         if (!Number.isNaN(expireMs)) {
                             parsedExpire = expireMs;
                             setExpireAtTimestamp(expireMs);

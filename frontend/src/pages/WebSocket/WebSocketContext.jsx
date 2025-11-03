@@ -7,6 +7,23 @@ import { Client } from '@stomp/stompjs';
 
 export const WebSocketContext = createContext(null);
 
+const parseServerUtcMillis = (value) => {
+  if (value == null) return Number.NaN;
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : Number.NaN;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return Number.NaN;
+    const hasTimezone = /([zZ]|[+-]\d\d:\d\d)$/.test(trimmed);
+    return new Date(hasTimezone ? trimmed : `${trimmed}Z`).getTime();
+  }
+
+  return Number.NaN;
+};
+
 export const WebSocketProvider = ({ children }) => {
   // 실시간 채팅 메시지 목록
   const [messages, setMessages] = useState([]);
@@ -147,13 +164,13 @@ export const WebSocketProvider = ({ children }) => {
             setGameStart(true);
             setGameExpired(false);
             if (data.startAt) {
-              const parsedStart = new Date(data.startAt).getTime();
+              const parsedStart = parseServerUtcMillis(data.startAt);
               setGameStartAt(Number.isNaN(parsedStart) ? null : parsedStart);
             } else {
               setGameStartAt(null);
             }
             if (data.expireAt) {
-              const parsedExpire = new Date(data.expireAt).getTime();
+              const parsedExpire = parseServerUtcMillis(data.expireAt);
               if (!Number.isNaN(parsedExpire)) {
                 setGameExpireAt(parsedExpire);
                 setRemainingTimeMs(Math.max(0, parsedExpire - Date.now()));
