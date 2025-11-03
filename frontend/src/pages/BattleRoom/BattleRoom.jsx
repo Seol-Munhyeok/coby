@@ -111,12 +111,31 @@ export default function CodingBattle() {
         setModalType('info');
     };
 
-    const defaultCode = `# Coby 게임에 오신 것을 환영합니다!
+    const defaultCodeSnippets = {
+        python: `# Coby 게임에 오신 것을 환영합니다!
 # 다른 AI의 도움을 받지 않고 정정당당하게 승리하세요.
 # (Ctrl + C, Ctrl + V는 불가합니다.)
-# 화이팅! 💪✨🔥`;
+# 화이팅! 💪✨🔥`,
+        java: `import java.util.*;
 
-    answerRef.value = defaultCode;
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        
+    }
+}`,
+        cpp: `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+    
+    return 0;
+}`
+    };
+
+    const getBoilerplate = (lang) => defaultCodeSnippets[lang] || defaultCodeSnippets.python;
     const [problem, setProblem] = useState(null);
     const [isLoadingProblem, setIsLoadingProblem] = useState(true);
     // 상대방 정보는 더미 데이터로 시작하며, 실제로는 서버에서 받아와야 합니다.
@@ -339,14 +358,24 @@ export default function CodingBattle() {
 
     // 언어 변경 핸들러
     const handleLanguageChange = () => {
-        const lang = languageRef.current?.value;
+        const newlang = languageRef.current?.value;
         const editor = editorRef.current;
 
-        if (editor && lang) {
+        if (editor && newlang) {
             const model = editor.getModel();
+            const currentCode = editor.getValue();
             if (model) {
                 // 언어를 변경합니다
-                monaco.editor.setModelLanguage(model, lang === 'cpp' ? 'cpp' : lang);
+                monaco.editor.setModelLanguage(model, newlang === 'cpp' ? 'cpp' : newlang);
+            }
+            const isCurrentCodeBoilerplate = Object.values(defaultCodeSnippets).some(
+                (snippet) => snippet === currentCode
+            );
+            if (isCurrentCodeBoilerplate) {
+                const newBoilerplate = getBoilerplate(newlang);
+                if (currentCode !== newBoilerplate) {
+                    editor.setValue(newBoilerplate);
+                }
             }
         }
     };
@@ -801,7 +830,8 @@ export default function CodingBattle() {
                     <div className="flex items-center justify-between mb-3">
                         {drawerState !== 0 && ( // Only show header if not fully closed
                             <h3 className="text-lg font-medium">
-                                {drawerState === 2 ? "참가자 진행 상황" : "참가자"}
+                                {/*{drawerState === 2 ? "참가자 진행 상황" : "참가자"}*/}
+                                참가자
                             </h3>
                         )}
                         <button onClick={handleDrawerToggle} className="text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 transition-colors">
@@ -843,11 +873,12 @@ export default function CodingBattle() {
 
                                         {/* Visible only when drawer is fully open */}
                                         {drawerState === 2 && (
-                                            <>
+                                            <> {/*
                                                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">진행률: {opponent.progress}</div>
                                                 <div className="h-1 bg-slate-300 dark:bg-slate-600 rounded-full mt-1 mb-2">
                                                     <div className="h-full bg-blue-500 rounded-full" style={{ width: opponent.progress }}></div>
                                                 </div>
+                                                */}
                                                 <div className="relative h-28 rounded-lg overflow-hidden opponent-screen-preview">
                                                     <div className="absolute top-0 left-0 w-full h-full bg-gray-100 dark:bg-black dark:bg-opacity-30 p-2 text-sm text-slate-900 dark:text-white font-mono overflow-auto">
                                                         <pre>
@@ -911,7 +942,7 @@ export default function CodingBattle() {
                                         <Editor
                                             height="100%"
                                             defaultLanguage={userPreferredLanguage}
-                                            defaultValue={defaultCode}
+                                            defaultValue={getBoilerplate(userPreferredLanguage)}
                                             theme={theme === 'dark' ? 'vs-dark' : 'light'}
                                             onMount={handleEditorDidMount} // onMount 핸들러 연결
                                             onChange={handleEditorChange} // 에디터 내용 변경 시 이벤트 핸들러 연결
