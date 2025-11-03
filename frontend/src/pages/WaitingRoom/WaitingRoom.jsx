@@ -158,6 +158,7 @@ function WaitingRoom() {
     // 방 나가기를 최종 확인하고 실행하는 함수
     const handleConfirmLeave = () => {
         setLeaveModalOpen(false); // 모달 닫기
+        sessionStorage.removeItem('isValidNavigation');
         if (!hasLeft) {
             leaveRoom(roomId, userId);
             setHasLeft(true);
@@ -320,12 +321,14 @@ function WaitingRoom() {
                     } else {
                         setNotification({ message: "존재하지 않는 방입니다.", type: "error" });
                         setTimeout(() => setNotification(null), 3000);
+                        sessionStorage.removeItem('isValidNavigation');
                         navigate('/mainpage'); // 방이 없으면 메인으로
                     }
                 } catch (err) {
                     console.error("방 정보를 가져오는 데 실패했습니다:", err);
                     setNotification({ message: "방 정보를 불러올 수 없습니다.", type: "error" });
                     setTimeout(() => setNotification(null), 3000);
+                    sessionStorage.removeItem('isValidNavigation');
                     navigate('/mainpage'); // 에러 발생 시 메인으로
                 }
             };
@@ -359,6 +362,7 @@ function WaitingRoom() {
     useEffect(() => {
         if (forcedOut) {
             setHasLeft(true); // 언마운트 시 중복 퇴장 방지
+            sessionStorage.removeItem('isValidNavigation');
             navigate('/mainpage', { state: { kicked: true } });
             resetForcedOut();
         }

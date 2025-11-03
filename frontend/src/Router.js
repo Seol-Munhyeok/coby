@@ -8,7 +8,8 @@ import WaitingRoom from "./pages/WaitingRoom/WaitingRoom";
 import BattleRoom from "./pages/BattleRoom/BattleRoom";
 import ResultRoom from "./pages/ResultRoom/ResultRoom";
 import WebSocketLayout from "./pages/WebSocket/WebSocketLayout";
-import AuthLayout from "./pages/AuthContext/AuthLayout"; // AuthProvider 임포트
+import AuthLayout from "./pages/AuthContext/AuthLayout";
+import DirectAccessProtection from "./pages/DirectAccessProtection";
 
 const Router = () => {
   return (
@@ -21,11 +22,14 @@ const Router = () => {
         <Route path="/nickname" element={<NicknamePopup />} />
         <Route path="/mainpage" element={<MainPage />} />
 
-        {/* WebSocket이 필요한 라우트들을 WebSocketProvider로 감쌉니다. */}
-        <Route element={<WebSocketLayout />}>
-          <Route path="/waitingRoom/:roomId" element={<WaitingRoom />} />
-          <Route path="/gamepage/:roomId" element={<BattleRoom />} />
-          <Route path="/resultpage/:roomId" element={<ResultRoom />} />
+        {/* URL 직접 접근을 막고 싶은 라우트들을 DirectAccessProtection으로 감쌉니다. */}
+        <Route element={<DirectAccessProtection />}>
+          {/* WebSocket이 필요한 라우트들을 WebSocketProvider로 감쌉니다. */}
+          <Route element={<WebSocketLayout />}>
+            <Route path="/waitingRoom/:roomId" element={<WaitingRoom />} />
+            <Route path="/gamepage/:roomId" element={<BattleRoom />} />
+            <Route path="/resultpage/:roomId" element={<ResultRoom />} />
+          </Route>
         </Route>
       </Route>
     </Routes>

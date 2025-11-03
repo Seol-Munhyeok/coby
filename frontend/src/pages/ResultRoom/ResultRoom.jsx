@@ -68,6 +68,7 @@ function ResultRoom() {
 
     useEffect(() => {
         const handleNavigateToMain = () => {
+            sessionStorage.removeItem('isValidNavigation');
             navigate('/mainpage');
         };
 
@@ -156,6 +157,7 @@ function ResultRoom() {
                 console.error("방 정보를 가져오는 데 실패했습니다:", err);
                 setNotification({ message: "방 정보를 불러올 수 없습니다.", type: "error" });
                 setTimeout(() => setNotification(null), 3000);
+                sessionStorage.removeItem('isValidNavigation');
                 navigate('/mainpage');
             } finally {
                 setLoading(false);
@@ -191,6 +193,7 @@ function ResultRoom() {
     const quickRoomBtn = () => {
         alert('방에서 나갑니다!');
         leaveRoom(roomId, userId);
+        sessionStorage.removeItem('isValidNavigation');
         navigate('/mainpage');
     };
 
