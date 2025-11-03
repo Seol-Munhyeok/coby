@@ -53,6 +53,7 @@ function WaitingRoom() {
         systemMessage,
         clearSystemMessage,
         startAt,
+        gameStartDelaySeconds,
         recalculateRemainingTime,
     } = useWebSocket();
 

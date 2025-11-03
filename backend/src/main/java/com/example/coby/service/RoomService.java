@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 public class RoomService {
 
     private static final long ROOM_DELETION_DELAY_SECONDS = 5L;
+    private static final long GAME_START_DELAY_SECONDS = 3L;
     private static final Pattern TIME_TOKEN_PATTERN = Pattern.compile("(\\d+)(시간|분|초|h|m|s)?");
     private final RoomRepository roomRepository;
     private final RoomUserRepository roomUserRepository;
@@ -246,7 +247,7 @@ public class RoomService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("게임을 시작할 방을 찾을 수 없습니다."));
 
-        LocalDateTime startAt = LocalDateTime.now();
+        LocalDateTime startAt = LocalDateTime.now().plusSeconds(GAME_START_DELAY_SECONDS);;
         long timeLimitSeconds = parseTimeLimitSeconds(room.getTimeLimit());
         long timeLimitMinutes = timeLimitSeconds > 0 ? TimeUnit.SECONDS.toMinutes(timeLimitSeconds) : 0;
         long remainingSeconds = timeLimitSeconds > 0 ? timeLimitSeconds % 60 : 0;
@@ -269,11 +270,12 @@ public class RoomService {
                 .startAt(startAt)
                 .expireAt(expireAt)
                 .timeLimitSeconds(timeLimitSeconds)
+                .gameStartDelaySeconds(GAME_START_DELAY_SECONDS)
                 .build();
 
         messagingTemplate.convertAndSend("/topic/room/" + roomId, startNotice);
 
-        scheduleRoomExpiration(roomId, timeLimitSeconds);
+        scheduleRoomExpiration(roomId, timeLimitSeconds, GAME_START_DELAY_SECONDS);
 
         log.info("방 {}의 게임 상태가 IN_PROGRESS로 변경되었습니다. (방 삭제 방어 활성화)", roomId);
     }
@@ -634,15 +636,19 @@ public class RoomService {
         return 0L;
     }
 
-    private void scheduleRoomExpiration(Long roomId, long delaySeconds) {
+    private void scheduleRoomExpiration(Long roomId, long timeLimitSeconds, long startDelaySeconds) {
         ScheduledFuture<?> existingTask = pendingRoomExpirationTasks.remove(roomId);
         if (existingTask != null) {
             existingTask.cancel(false);
         }
 
-        if (delaySeconds <= 0) {
+        if (timeLimitSeconds <= 0) {
             return;
         }
+
+        long safeTimeLimitSeconds = Math.max(0, timeLimitSeconds);
+        long safeStartDelaySeconds = Math.max(0, startDelaySeconds);
+        long totalDelaySeconds = safeTimeLimitSeconds + safeStartDelaySeconds;
 
         final ScheduledFuture<?>[] holder = new ScheduledFuture<?>[1];
         ScheduledFuture<?> future = roomExpirationScheduler.schedule(() -> {
@@ -660,7 +666,8 @@ public class RoomService {
                         .roomId(String.valueOf(roomId))
                         .startAt(latestStart)
                         .expireAt(latestExpire)
-                        .timeLimitSeconds(delaySeconds)
+                        .timeLimitSeconds(safeTimeLimitSeconds)
+                        .gameStartDelaySeconds(safeStartDelaySeconds)
                         .build();
                 messagingTemplate.convertAndSend("/topic/room/" + roomId, expiredNotice);
 
@@ -675,7 +682,7 @@ public class RoomService {
                     pendingRoomExpirationTasks.remove(roomId);
                 }
             }
-        }, delaySeconds, TimeUnit.SECONDS);
+        }, totalDelaySeconds, TimeUnit.SECONDS);
 
         holder[0] = future;
         pendingRoomExpirationTasks.put(roomId, future);

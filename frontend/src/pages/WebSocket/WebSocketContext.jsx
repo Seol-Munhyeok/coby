@@ -41,6 +41,7 @@ export const WebSocketProvider = ({ children }) => {
   const [gameStartAt, setGameStartAt] = useState(null);
   const [gameExpireAt, setGameExpireAt] = useState(null);
   const [gameTimeLimitSeconds, setGameTimeLimitSeconds] = useState(null);
+  const [gameStartDelaySeconds, setGameStartDelaySeconds] = useState(null);
   const [remainingTimeMs, setRemainingTimeMs] = useState(null);
   const [gameExpired, setGameExpired] = useState(false);
   // 강퇴 여부 및 현재 사용자 ID를 저장
@@ -102,6 +103,7 @@ export const WebSocketProvider = ({ children }) => {
     setMessages([]);
     setUsers([]);
     setGameStart(false);
+    setGameStartDelaySeconds(null);
 
     // 방 정보에 대한 구독이 아직 없다면 생성
     if (!subscriptionsRef.current[roomId]) {
@@ -163,6 +165,14 @@ export const WebSocketProvider = ({ children }) => {
           case 'StartGame':
             setGameStart(true);
             setGameExpired(false);
+            if (typeof data.gameStartDelaySeconds === 'number') {
+              setGameStartDelaySeconds(data.gameStartDelaySeconds);
+            } else if (typeof data.gameStartDelaySeconds === 'string') {
+              const parsedDelay = Number.parseInt(data.gameStartDelaySeconds, 10);
+              setGameStartDelaySeconds(Number.isNaN(parsedDelay) ? null : parsedDelay);
+            } else {
+              setGameStartDelaySeconds(null);
+            }
             if (data.startAt) {
               const parsedStart = parseServerUtcMillis(data.startAt);
               setGameStartAt(Number.isNaN(parsedStart) ? null : parsedStart);
@@ -195,6 +205,7 @@ export const WebSocketProvider = ({ children }) => {
             setGameExpireAt(null);
             setGameTimeLimitSeconds(null);
             setRemainingTimeMs(0);
+            setGameStartDelaySeconds(null);
             break;
           default:
             break;
@@ -310,6 +321,7 @@ export const WebSocketProvider = ({ children }) => {
     setGameTimeLimitSeconds(null);
     setRemainingTimeMs(null);
     setGameExpired(false);
+    setGameStartDelaySeconds(null);
   }, []);
 
   // 채팅 메시지를 서버로 전송
@@ -434,6 +446,7 @@ export const WebSocketProvider = ({ children }) => {
     startAt: gameStartAt,
     expireAt: gameExpireAt,
     timeLimitSeconds: gameTimeLimitSeconds,
+    gameStartDelaySeconds,
     remainingTimeMs,
     remainingTimeSeconds,
     recalculateRemainingTime,
