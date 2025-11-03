@@ -17,9 +17,22 @@ public record RoomResponse(
         boolean isPrivate,
         boolean itemMode,
         LocalDateTime createdAt,
+        LocalDateTime startAt,
+        LocalDateTime expireAt,
+        Long timeLimitSeconds,
         RoomStatus status
 ) {
     public static RoomResponse from(Room room) {
+        LocalDateTime startAt = room.getStartAt();
+        LocalDateTime expireAt = room.getExpireAt();
+        Long timeLimitSeconds = null;
+        if (startAt != null && expireAt != null) {
+            long seconds = Duration.between(startAt, expireAt).getSeconds();
+            if (seconds >= 0) {
+                timeLimitSeconds = seconds;
+            }
+        }
+
         return RoomResponse.builder()
                 .id(room.getId())
                 .roomName(room.getRoomName())

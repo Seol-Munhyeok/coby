@@ -42,6 +42,13 @@ public class Room {
 
     private LocalDateTime createdAt;      // created_at
 
+    @Column
+    private LocalDateTime startAt;        // start_at
+
+    @Column
+    private LocalDateTime expireAt;       // expire_at
+
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

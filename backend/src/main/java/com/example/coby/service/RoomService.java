@@ -87,6 +87,8 @@ public class RoomService {
                 .isPrivate(req.isPrivate())
                 .password(password)
                 .itemMode(req.isItemMode())
+                .startAt(req.getStartAt())
+                .expireAt(req.getExpireAt())
                 .currentCapacity(0)
                 .maxCapacity(req.getMaxParticipants())
                 .problem(selectedProblem) // ✨ 여기에서 문제를 할당
@@ -130,6 +132,12 @@ public class RoomService {
         }
         if (request.getItemMode() != null) {
             room.setItemMode(request.getItemMode());
+        }
+        if (request.getStartAt() != null) {
+            room.setStartAt(request.getStartAt());
+        }
+        if (request.getExpireAt() != null) {
+            room.setExpireAt(request.getExpireAt());
         }
         room.setPrivate(updatedPrivate);
         room.setPassword(updatedPassword);
