@@ -4,6 +4,7 @@ import com.example.coby.entity.Room;
 import com.example.coby.entity.RoomStatus;
 import lombok.Builder;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Builder
