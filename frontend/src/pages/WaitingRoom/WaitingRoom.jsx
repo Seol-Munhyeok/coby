@@ -374,7 +374,7 @@ function WaitingRoom() {
         userId: user.userId,
         avatarInitials:
             user.nickname.charAt(0).toUpperCase() + (user.nickname.charAt(1) || '').toUpperCase(),
-        tier: '골드',
+        tier: user.tier,
         isReady: user.isReady,
         //avatarColor: 'bg-blue-700',
         isHost: user.isHost,
