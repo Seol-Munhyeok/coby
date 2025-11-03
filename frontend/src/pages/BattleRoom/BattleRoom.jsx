@@ -9,8 +9,25 @@ import FullscreenPromptModal from './FullscreenPromptModal';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 import { useAuth } from '../AuthContext/AuthContext';
+import { useWebSocket } from '../WebSocket/WebSocketContext';
 import {number} from "sockjs-client/lib/utils/random";
 
+const parseServerUtcMillis = (value) => {
+    if (value == null) return Number.NaN;
+
+    if (typeof value === 'number') {
+        return Number.isFinite(value) ? value : Number.NaN;
+    }
+
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return Number.NaN;
+        const hasTimezone = /([zZ]|[+-]\d\d:\d\d)$/.test(trimmed);
+        return new Date(hasTimezone ? trimmed : `${trimmed}Z`).getTime();
+    }
+
+    return Number.NaN;
+};
 
 export default function CodingBattle() {
     const { roomId } = useParams();
@@ -20,6 +37,7 @@ export default function CodingBattle() {
     const domTimerRef = useRef(null); // DOM 요소 (타이머 표시 span)를 위한 ref (DOM 요소 참조 저장)
 
     const intervalRef = useRef(null);
+    const hasNavigatedToResultsRef = useRef(false);
     const colors = ["bg-red-500", "bg-yellow-500", "bg-purple-500"];
     const navigate = useNavigate();
     const answerRef = useRef(null);
@@ -35,6 +53,8 @@ export default function CodingBattle() {
     // State for the main battle timer
     const [totalTimeSeconds, setTotalTimeSeconds] = useState(null);
     const [remainingTime, setRemainingTime] = useState(null);
+    const [startAtTimestamp, setStartAtTimestamp] = useState(null);
+    const [expireAtTimestamp, setExpireAtTimestamp] = useState(null);
     const [progressBarWidth, setProgressBarWidth] = useState(100);
 
     // Drawer state: 0: 완전히 닫힘, 1: 일부 열림, 2: 완전 열림
@@ -66,6 +86,14 @@ export default function CodingBattle() {
     const userId = user?.id || 99
     const userPreferredLanguage = user?.preferredLanguage || 'python';
 
+    const {
+        expireAt: wsExpireAt,
+        startAt: wsStartAt,
+        timeLimitSeconds: wsTimeLimitSeconds,
+        recalculateRemainingTime,
+        gameExpired,
+    } = useWebSocket();
+
     // --- 테마 상태 추가 ---
     const [theme, setTheme] = useState('dark'); // 'dark' 또는 'light'
 
@@ -95,6 +123,37 @@ export default function CodingBattle() {
 
 
     console.log("id =" + userId)
+
+    useEffect(() => {
+        if (typeof wsTimeLimitSeconds === 'number') {
+            setTotalTimeSeconds(wsTimeLimitSeconds);
+        } else if (wsTimeLimitSeconds === null) {
+            setTotalTimeSeconds(null);
+        }
+    }, [wsTimeLimitSeconds]);
+
+    useEffect(() => {
+        if (wsStartAt != null) {
+            setStartAtTimestamp(wsStartAt);
+        } else if (wsStartAt === null) {
+            setStartAtTimestamp(null);
+        }
+    }, [wsStartAt]);
+
+    useEffect(() => {
+        if (wsExpireAt != null) {
+            setExpireAtTimestamp(wsExpireAt);
+        } else if (wsExpireAt === null) {
+            setExpireAtTimestamp(null);
+        }
+    }, [wsExpireAt]);
+
+    useEffect(() => {
+        if (expireAtTimestamp && startAtTimestamp && wsTimeLimitSeconds == null) {
+            const diffSeconds = Math.max(0, Math.round((expireAtTimestamp - startAtTimestamp) / 1000));
+            setTotalTimeSeconds(diffSeconds);
+        }
+    }, [expireAtTimestamp, startAtTimestamp, wsTimeLimitSeconds]);
 
 
     const showModal = (title, message, type = 'info') => {
@@ -322,36 +381,51 @@ int main() {
         fetchProblem();
 
     }, [roomId]);
-    // Main battle timer useEffect
+    const updateRemainingFromExpireAt = useCallback(() => {
+        if (!expireAtTimestamp) {
+            setRemainingTime(null);
+            return;
+        }
+
+        const diffSeconds = Math.max(0, Math.round((expireAtTimestamp - Date.now()) / 1000));
+        setRemainingTime(diffSeconds);
+    }, [expireAtTimestamp]);
+
     useEffect(() => {
-        intervalRef.current = setInterval(() => {
-            setRemainingTime(prevTime => {
-                if (prevTime <= 1) {
-                    clearInterval(intervalRef.current);
-                    showModal("시간 종료", "제한 시간이 종료되었습니다!", "info");
-                    return 0;
-                }
-                return prevTime - 1;
-            });
-        }, 1000);
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+        }
+
+        updateRemainingFromExpireAt();
+
+        if (!expireAtTimestamp) {
+            return;
+        }
+
+        intervalRef.current = setInterval(updateRemainingFromExpireAt, 1000);
 
         return () => {
-            clearInterval(intervalRef.current);
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
         };
-    }, []);
+    }, [expireAtTimestamp, updateRemainingFromExpireAt]);
 
     // Progress bar and time display useEffect (domTimerRef 사용으로 수정)
     useEffect(() => {
-        if (totalTimeSeconds === null || remainingTime === null) return; // 초기값이 null일 때 실행 방지
-        const newWidth = (remainingTime / totalTimeSeconds) * 100;
-        setProgressBarWidth(newWidth);
-
-        const minutes = String(Math.floor(remainingTime / 60)).padStart(2, '0');
-        const seconds = String(remainingTime % 60).padStart(2, '0');
+        if (totalTimeSeconds && remainingTime !== null) {
+            const ratio = totalTimeSeconds > 0 ? remainingTime / totalTimeSeconds : 0;
+            const clampedRatio = Math.min(1, Math.max(0, ratio));
+            setProgressBarWidth(clampedRatio * 100);
+        } else if (!totalTimeSeconds) {
+            setProgressBarWidth(0);
+        }
 
         // domTimerRef.current가 유효한 DOM 요소를 참조하는지 확인
         if (domTimerRef.current) {
-            domTimerRef.current.textContent = `${minutes}:${seconds}`;
+            domTimerRef.current.textContent = formatTime(remainingTime);
 
         }
     }, [remainingTime, totalTimeSeconds]);
@@ -445,6 +519,39 @@ int main() {
             document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
         };
     }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
+
+    useEffect(() => {
+        const handleFocus = () => {
+            recalculateRemainingTime();
+            updateRemainingFromExpireAt();
+        };
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                handleFocus();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [recalculateRemainingTime, updateRemainingFromExpireAt]);
+
+    useEffect(() => {
+        if (gameExpired) {
+            updateRemainingFromExpireAt();
+            if (!hasNavigatedToResultsRef.current) {
+                hasNavigatedToResultsRef.current = true;
+                navigate(`/resultpage/${roomId}`);
+            }
+        } else {
+            hasNavigatedToResultsRef.current = false;
+        }
+    }, [gameExpired, navigate, roomId, updateRemainingFromExpireAt]);
 
 // 부정행위 감지를 위한 useEffect
     useEffect(() => {
@@ -735,21 +842,56 @@ int main() {
                 const data = await response.json();
                 console.log('✅ API 응답 데이터:', data);
 
-                // 응답 데이터에 timeLimit 값이 문자열로 있는지 확인합니다.("30분"의 string으로 반환되기 때문)
-                if (data && typeof data.timeLimit === 'string') {
-                    // parseInt를 사용해 문자열의 시작 부분에서 숫자만 추출합니다. (예: "30분" -> 30)
-                    const extractedTime = parseInt(data.timeLimit, 10);
+                let parsedTimeLimitSeconds = null;
 
-                    // 성공적으로 숫자를 추출했다면(NaN이 아니라면) 60(초)를 곱하여 상태를 업데이트합니다.
-                    if (!isNaN(extractedTime)) {
-                        setTotalTimeSeconds(extractedTime * 60);
-                        setRemainingTime(extractedTime * 60)
+                if (data) {
+                    if (typeof data.timeLimitSeconds === 'number') {
+                        parsedTimeLimitSeconds = data.timeLimitSeconds;
+                    } else if (typeof data.timeLimit === 'string') {
+                        const extractedTime = parseInt(data.timeLimit, 10);
+                        if (!isNaN(extractedTime)) {
+                            parsedTimeLimitSeconds = extractedTime * 60;
+                        } else {
+                            console.warn(`⚠️ timeLimit 값('${data.timeLimit}')에서 숫자를 추출할 수 없습니다.`);
+                        }
                     } else {
-                        console.warn(`⚠️ timeLimit 값('${data.timeLimit}')에서 숫자를 추출할 수 없습니다.`);
+                        console.warn('⚠️ 응답 데이터에 유효한 timeLimit 값이 없습니다.');
                     }
-                } else {
 
-                    console.warn('⚠️ 응답 데이터에 유효한 timeLimit 값이 없습니다.');
+                    if (parsedTimeLimitSeconds !== null) {
+                        setTotalTimeSeconds(parsedTimeLimitSeconds);
+                    }
+
+                    let parsedStart = null;
+                    if (data.startAt) {
+                        const startMs = parseServerUtcMillis(data.startAt);
+                        if (!Number.isNaN(startMs)) {
+                            parsedStart = startMs;
+                            setStartAtTimestamp(startMs);
+                        } else {
+                            setStartAtTimestamp(null);
+                        }
+                    } else {
+                        setStartAtTimestamp(null);
+                    }
+
+                    let parsedExpire = null;
+                    if (data.expireAt) {
+                        const expireMs = parseServerUtcMillis(data.expireAt);
+                        if (!Number.isNaN(expireMs)) {
+                            parsedExpire = expireMs;
+                            setExpireAtTimestamp(expireMs);
+                        } else {
+                            setExpireAtTimestamp(null);
+                        }
+                    } else {
+                        setExpireAtTimestamp(null);
+                    }
+
+                    if (parsedTimeLimitSeconds === null && parsedStart && parsedExpire) {
+                        const diffSeconds = Math.max(0, Math.round((parsedExpire - parsedStart) / 1000));
+                        setTotalTimeSeconds(diffSeconds);
+                    }
                 }
 
             } catch (error) {

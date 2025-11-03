@@ -3,6 +3,8 @@ package com.example.coby.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UpdateRoomRequest {
@@ -13,4 +15,6 @@ public class UpdateRoomRequest {
     private Boolean isPrivate;
     private String password;
     private Boolean itemMode;
+    private LocalDateTime startAt;
+    private LocalDateTime expireAt;
 }

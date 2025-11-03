@@ -116,6 +116,7 @@ public class RestartService {
                 log.info("재시작 성공! 새 방 ID: {}", newRoomId);
 
                 // 이전 방과 관련된 모든 정보를 안전하게 삭제
+                roomService.cancelRoomExpiration(roomId);
                 roomService.deleteRoom(roomId);
                 log.info("이전 방 ID: {} 정보가 삭제되었습니다.", roomId);
 

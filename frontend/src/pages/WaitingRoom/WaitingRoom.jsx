@@ -2,7 +2,7 @@
 /**
  * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
  */
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import './WaitingRoom.css';
 import useContextMenu from '../../Common/hooks/useContextMenu';
@@ -45,7 +45,6 @@ function WaitingRoom() {
         joinedRoomId,
         toggleReady: toggleReadyWs,
         delegateHost,
-        startGame,
         gameStart,
         sendMessage,
         client,
@@ -53,12 +52,16 @@ function WaitingRoom() {
         resetForcedOut,
         systemMessage,
         clearSystemMessage,
+        startAt,
+        recalculateRemainingTime,
     } = useWebSocket();
 
     // 현재 사용자 닉네임을 가져오고, 없으면 기본값으로 '게스트' 를 사용합니다.
     const currentUser = nickname || '게스트';
     const [showCountdown, setShowCountdown] = useState(false);
     const [countdownNumber, setCountdownNumber] = useState(null);
+    const countdownIntervalRef = useRef(null);
+    const hasNavigatedRef = useRef(false);
 
     // UI 및 방 상태 관리를 위한 여러 가지 상태 변수
     const [isReady, setIsReady] = useState(false);  // 현재 사용자 준비 상태
@@ -138,7 +141,6 @@ function WaitingRoom() {
             profileUrl: user?.profileUrl || '',
             content: '잠시 후, 게임이 시작됩니다...',
         });
-        startGame(roomId);
     };
 
     const [hasLeft, setHasLeft] = useState(false);
@@ -187,29 +189,79 @@ function WaitingRoom() {
         setRoomHost(hostUser ? hostUser.nickname : null);
     }, [users]);
 
+    const updateCountdown = useCallback(() => {
+        if (!gameStart || !startAt) {
+            setShowCountdown(false);
+            setCountdownNumber(null);
+            return;
+        }
+
+        const diffMs = startAt - Date.now();
+        if (diffMs <= 0) {
+            setCountdownNumber(0);
+            setShowCountdown(false);
+            if (!hasNavigatedRef.current) {
+                hasNavigatedRef.current = true;
+                navigate(`/gamepage/${roomId}`);
+            }
+            return;
+        }
+
+        setCountdownNumber(Math.ceil(diffMs / 1000));
+        setShowCountdown(true);
+    }, [gameStart, startAt, navigate, roomId]);
+
     // 게임 시작 신호가 오면 카운트다운 후 게임 페이지로 이동
     useEffect(() => {
-        if (gameStart) {
-            setShowCountdown(true);
-            setCountdownNumber(5);
-
-            const interval = setInterval(() => {
-                setCountdownNumber(prevNumber => {
-                    if (prevNumber > 1) {
-                        return prevNumber - 1;
-                    } else {
-                        clearInterval(interval);
-                        setShowCountdown(false);
-                        navigate(`/gamepage/${roomId}`);
-                        return null;
-                    }
-                });
-            }, 1000);
-
-            return () => clearInterval(interval);
+        if (countdownIntervalRef.current) {
+            clearInterval(countdownIntervalRef.current);
+            countdownIntervalRef.current = null;
         }
-    }, [gameStart, roomId, navigate]);
 
+        if (!gameStart || !startAt) {
+            setShowCountdown(false);
+            setCountdownNumber(null);
+            return;
+        }
+
+        hasNavigatedRef.current = false;
+        updateCountdown();
+        countdownIntervalRef.current = setInterval(updateCountdown, 500);
+
+        return () => {
+            if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
+            }
+        };
+    }, [gameStart, startAt, updateCountdown]);
+
+    useEffect(() => {
+        if (!gameStart) {
+            hasNavigatedRef.current = false;
+        }
+    }, [gameStart]);
+
+    useEffect(() => {
+        const handleFocus = () => {
+            recalculateRemainingTime();
+            updateCountdown();
+        };
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                handleFocus();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [recalculateRemainingTime, updateCountdown]);
 
     // 선택한 플레이어에게 방장 권한을 위임
     const handleDelegateHost = () => {
