@@ -284,7 +284,9 @@ public class RoomService {
                 .map(ru -> {
                     User user = userRepository.findById(ru.getUserId()).orElse(null);
                     String nickname = user != null ? user.getNickname() : "";
-                    return new RoomUserResponse(ru.getUserId(), nickname, ru.isHost(), ru.isReady());
+                    Tier tier = user.getTier();
+                    String tierName = tier.getName();
+                    return new RoomUserResponse(ru.getUserId(), nickname, tierName,ru.isHost(), ru.isReady());
                 })
                 .toList();
     }
