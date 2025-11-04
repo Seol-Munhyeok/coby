@@ -129,30 +129,6 @@ export default function CodingBattle() {
 
     console.log("id =" + userId)
 
-    useEffect(() => {
-        if (typeof wsTimeLimitSeconds === 'number') {
-            setTotalTimeSeconds(wsTimeLimitSeconds);
-        } else if (wsTimeLimitSeconds === null) {
-            setTotalTimeSeconds(null);
-        }
-    }, [wsTimeLimitSeconds]);
-
-    useEffect(() => {
-        if (wsStartAt != null) {
-            setStartAtTimestamp(wsStartAt);
-
-        } else if (wsStartAt === null) {
-            setStartAtTimestamp(null);
-        }
-    }, [wsStartAt]);
-
-    useEffect(() => {
-        if (wsExpireAt != null) {
-            setExpireAtTimestamp(wsExpireAt);
-        } else if (wsExpireAt === null) {
-            setExpireAtTimestamp(null);
-        }
-    }, [wsExpireAt]);
 
     useEffect(() => {
         if (expireAtTimestamp && startAtTimestamp && wsTimeLimitSeconds == null) {
@@ -409,7 +385,6 @@ int main() {
     // [최종] 5초 준비 + 메인 게임을 동기화하는 "통합 타이머"
     useEffect(() => {
         // 타이머 로직에 필요한 모든 타임스탬프가 준비되었는지 확인
-        // (startAt: 게임 시작, expireAt: 게임 종료)
         if (!startAtTimestamp || !expireAtTimestamp || !totalTimeSeconds) {
             setRemainingTime(totalTimeSeconds); // 데이터 로드 전에는 전체 시간 표시
             return; // 아직 서버에서 데이터를 받기 전이므로 타이머 시작 안 함
@@ -423,28 +398,17 @@ int main() {
         };
         clearTimers(); // 기존 타이머가 있다면 정리
 
-        // 5초 준비 시간의 시작점을 계산 (게임 시작 5초 전)
-        const readyStartTime = startAtTimestamp - 5000;
+        // [제거됨] 5초 준비 시간(readyStartTime) 계산 로직
 
         const updateTimer = () => {
-            // 1. 클라이언트 시간을 서버 시간 기준으로 보정 (가장 중요)
+            // 1. RTT 보정된 클라이언트 시간
             const syncedNow = Date.now() + serverTimeOffsetRef.current;
 
-            // 2. 현재 보정된 시간이 "준비" 단계인지 확인
-            // (준비 시작 시간 <= 현재 < 게임 시작 시간)
-            if (syncedNow >= readyStartTime && syncedNow < startAtTimestamp) {
-                setIsReadyPhase(true); // "준비" 단계 활성화
-                // (게임 시작 시간 - 보정된 현재 시간) = 준비 단계 남은 시간
-                // Math.ceil을 사용해야 5, 4, 3, 2, 1 순서로 보입니다.
-                const readySeconds = Math.max(0, Math.ceil((startAtTimestamp - syncedNow) / 1000));
-                setReadyCountdown(readySeconds);
-                setRemainingTime(totalTimeSeconds); // 메인 타이머는 전체 시간으로 고정
-            }
-                // 3. 현재 보정된 시간이 "게임 중" 단계인지 확인
-            // (게임 시작 시간 <= 현재 < 게임 종료 시간)
-            else if (syncedNow >= startAtTimestamp && syncedNow < expireAtTimestamp) {
-                setIsReadyPhase(false); // "준비" 단계 종료
-                // (게임 종료 시간 - 보정된 현재 시간) = 게임 남은 시간
+            // [제거됨] 2. "준비" 단계 로직
+
+            // 3. "게임 중" 단계
+            if (syncedNow >= startAtTimestamp && syncedNow < expireAtTimestamp) {
+                setIsReadyPhase(false); // "게임 중"
                 const gameSeconds = Math.max(0, Math.ceil((expireAtTimestamp - syncedNow) / 1000));
                 setRemainingTime(gameSeconds);
             }
@@ -455,26 +419,18 @@ int main() {
                 clearTimers(); // 타이머 중지
                 handleTimerCompletion(); // 결과 페이지 이동 로직 호출
             }
-            // 5. "준비 시간 이전" 단계 (아직 5초 카운트다운 시작 전)
+            // 5. "게임 시작 전" 단계 (WaitingRoom에서 넘어오는 중)
             else {
-                setIsReadyPhase(true);
-                setReadyCountdown(5); // 5초로 고정
-                setRemainingTime(totalTimeSeconds);
+                setIsReadyPhase(true); // "게임 시작 전" (아직 startAtTimestamp가 안됨)
+                // setReadyCountdown(5); // [제거됨]
+                setRemainingTime(totalTimeSeconds); // 메인 타이머는 전체 시간으로 고정
             }
         };
 
-        // 1초마다 updateTimer 함수를 반복 실행
         intervalRef.current = setInterval(updateTimer, 1000);
-
-        // 컴포넌트가 로드될 때 즉시 1회 실행 (UI 깜빡임 방지)
         updateTimer();
+        return () => clearTimers();
 
-        // 컴포넌트가 언마운트될 때 타이머 정리
-        return () => {
-            clearTimers();
-        };
-
-        // startAtTimestamp, expireAtTimestamp 등이 API로부터 확정될 때 이 로직이 실행됩니다.
     }, [startAtTimestamp, expireAtTimestamp, totalTimeSeconds, handleTimerCompletion]);
 
     // Progress bar and time display useEffect (domTimerRef 사용으로 수정)
@@ -595,45 +551,6 @@ int main() {
             document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
         };
     }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
-
-    useEffect(() => {
-        const handleFocus = () => {
-            recalculateRemainingTime();
-        };
-
-        const handleVisibility = () => {
-            if (document.visibilityState === 'visible') {
-                handleFocus();
-            }
-        };
-
-        window.addEventListener('focus', handleFocus);
-        document.addEventListener('visibilitychange', handleVisibility);
-
-        return () => {
-            window.removeEventListener('focus', handleFocus);
-            document.removeEventListener('visibilitychange', handleVisibility);
-        };
-    }, [recalculateRemainingTime]);
-
-    useEffect(() => {
-        if (gameExpired) {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
-
-            if (timerIdRef.current) {
-                clearTimeout(timerIdRef.current);
-                timerIdRef.current = null;
-            }
-
-            setRemainingTime(0);
-            handleTimerCompletion();
-        } else {
-            hasNavigatedToResultsRef.current = false;
-        }
-    }, [gameExpired, handleTimerCompletion]);
 
 // 부정행위 감지를 위한 useEffect
     useEffect(() => {
@@ -909,13 +826,18 @@ int main() {
         }, true);
     }, []);
 
-
     //roomId로 방의 정보를 가져오는 코드
     useEffect(() => {
         const fetchRoomData = async () => {
             try {
+                // [수정 1] API 호출 직전 시간 기록
+                const clientSendTime = Date.now();
+
                 const apiUrl = `${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`;
                 const response = await fetch(apiUrl);
+
+                // [수정 2] API 응답 받은 직후 시간 기록
+                const clientReceiveTime = Date.now();
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -927,6 +849,7 @@ int main() {
                 let parsedTimeLimitSeconds = null;
 
                 if (data) {
+                    // ... (중략: parsedTimeLimitSeconds, parsedStart, parsedExpire 설정 부분은 원본과 동일) ...
                     if (typeof data.timeLimitSeconds === 'number') {
                         parsedTimeLimitSeconds = data.timeLimitSeconds;
                     } else if (typeof data.timeLimit === 'string') {
@@ -970,15 +893,26 @@ int main() {
                         setExpireAtTimestamp(null);
                     }
 
-                    // 👇 [추가] 서버 시간 동기화 로직
+                    // 👇 [수정됨] RTT(왕복 시간) 기반으로 서버 시간 동기화
                     if (data.serverCurrentTime) {
                         const serverNowMs = parseServerUtcMillis(data.serverCurrentTime);
                         if (!Number.isNaN(serverNowMs)) {
-                            // (서버 현재시간) - (클라이언트 현재시간) = 시간 오차
-                            serverTimeOffsetRef.current = serverNowMs - Date.now();
+
+                            // 3. 왕복 시간(RTT) 계산
+                            const rtt = clientReceiveTime - clientSendTime;
+                            // 4. 단방향 지연 시간(Latency)은 RTT의 절반이라고 가정
+                            const oneWayLatency = rtt / 2;
+
+                            // 5. 서버가 응답한 실제 시간 추정
+                            const estimatedServerTime = serverNowMs + oneWayLatency;
+
+                            // 6. [최종 오차] = (추정된 서버 시간) - (클라이언트 현재 시간)
+                            serverTimeOffsetRef.current = estimatedServerTime - clientReceiveTime;
+
+                            console.log(`[시간 동기화] RTT: ${rtt}ms, 추정 오차: ${serverTimeOffsetRef.current.toFixed(0)}ms`);
                         }
                     }
-
+                    // ... (이하 동일) ...
                     if (parsedTimeLimitSeconds === null && parsedStart && parsedExpire) {
                         const diffSeconds = Math.max(0, Math.round((parsedExpire - parsedStart) / 1000));
                         setTotalTimeSeconds(diffSeconds);
