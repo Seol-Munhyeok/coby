@@ -156,12 +156,12 @@ export default function CodingBattle() {
     }, [expireAtTimestamp, startAtTimestamp, wsTimeLimitSeconds]);
 
 
-    const showModal = (title, message, type = 'info') => {
+    const showModal = useCallback((title, message, type = 'info') => {
         setModalTitle(title);
         setModalMessage(message);
         setModalType(type);
         setIsModalOpen(true);
-    };
+    }, []);
 
     const closeModal = () => {
         setIsModalOpen(false);
@@ -545,13 +545,22 @@ int main() {
         if (gameExpired) {
             updateRemainingFromExpireAt();
             if (!hasNavigatedToResultsRef.current) {
-                hasNavigatedToResultsRef.current = true;
-                navigate(`/resultpage/${roomId}`);
+                hasNavigatedToResultsRef.current = true; // 중복 실행 방지
+
+                showModal(
+                    "시간 종료",
+                    "제한 시간이 종료되었습니다. 3초 후 결과 페이지로 이동합니다.",
+                    "info"
+                );
+
+                setTimeout(() => {
+                    navigate(`/resultpage/${roomId}`);
+                }, 3000);
             }
         } else {
             hasNavigatedToResultsRef.current = false;
         }
-    }, [gameExpired, navigate, roomId, updateRemainingFromExpireAt]);
+    }, [gameExpired, navigate, roomId, updateRemainingFromExpireAt, showModal]);
 
 // 부정행위 감지를 위한 useEffect
     useEffect(() => {
