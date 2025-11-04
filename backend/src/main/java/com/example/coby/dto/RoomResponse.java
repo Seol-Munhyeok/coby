@@ -6,6 +6,7 @@ import lombok.Builder;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Builder
 public record RoomResponse(
@@ -21,7 +22,8 @@ public record RoomResponse(
         LocalDateTime startAt,
         LocalDateTime expireAt,
         Long timeLimitSeconds,
-        RoomStatus status
+        RoomStatus status,
+        LocalDateTime serverCurrentTime
 ) {
     public static RoomResponse from(Room room) {
         LocalDateTime startAt = room.getStartAt();
@@ -45,6 +47,10 @@ public record RoomResponse(
                 .itemMode(room.isItemMode())
                 .createdAt(room.getCreatedAt())
                 .status(room.getStatus())
+                .startAt(startAt)
+                .expireAt(expireAt)
+                .timeLimitSeconds(timeLimitSeconds)
+                .serverCurrentTime(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
     }
 }

@@ -25,9 +25,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class RoomService {
-
     private static final long ROOM_DELETION_DELAY_SECONDS = 5L;
-    private static final long GAME_START_DELAY_SECONDS = 3L;
+    private static final long GAME_START_DELAY_SECONDS = 5L;  // 게임 시작 전 카운트다운 하는 시간
     private static final Pattern TIME_TOKEN_PATTERN = Pattern.compile("(\\d+)(시간|분|초|h|m|s)?");
     private final RoomRepository roomRepository;
     private final RoomUserRepository roomUserRepository;

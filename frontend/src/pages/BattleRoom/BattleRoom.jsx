@@ -37,12 +37,15 @@ export default function CodingBattle() {
     const domTimerRef = useRef(null); // DOM 요소 (타이머 표시 span)를 위한 ref (DOM 요소 참조 저장)
 
     const intervalRef = useRef(null);
+    const editorUpdateTimeoutRef = useRef(null);
     const hasNavigatedToResultsRef = useRef(false);
     const colors = ["bg-red-500", "bg-yellow-500", "bg-purple-500"];
     const navigate = useNavigate();
     const answerRef = useRef(null);
     const languageRef = useRef(null);
     const [myUserId, setMyUserId] = useState('');
+    // 서버 시간과 클라이언트 시간의 오차를 저장할 ref
+    const serverTimeOffsetRef = useRef(0);
 
     const [currentLanguage, setCurrentLanguage] = useState('python');
     // 서버에서 받아오는 로딩창 변수
@@ -55,6 +58,8 @@ export default function CodingBattle() {
     const [remainingTime, setRemainingTime] = useState(null);
     const [startAtTimestamp, setStartAtTimestamp] = useState(null);
     const [expireAtTimestamp, setExpireAtTimestamp] = useState(null);
+    const [readyCountdown, setReadyCountdown] = useState(5);  // 5초 준비 카운트다운을 위한 상태
+    const [isReadyPhase, setIsReadyPhase] = useState(true);  // 현재 "준비" 단계인지 "게임 중" 단계인지 구분
     const [progressBarWidth, setProgressBarWidth] = useState(100);
 
     // Drawer state: 0: 완전히 닫힘, 1: 일부 열림, 2: 완전 열림
@@ -124,29 +129,6 @@ export default function CodingBattle() {
 
     console.log("id =" + userId)
 
-    useEffect(() => {
-        if (typeof wsTimeLimitSeconds === 'number') {
-            setTotalTimeSeconds(wsTimeLimitSeconds);
-        } else if (wsTimeLimitSeconds === null) {
-            setTotalTimeSeconds(null);
-        }
-    }, [wsTimeLimitSeconds]);
-
-    useEffect(() => {
-        if (wsStartAt != null) {
-            setStartAtTimestamp(wsStartAt);
-        } else if (wsStartAt === null) {
-            setStartAtTimestamp(null);
-        }
-    }, [wsStartAt]);
-
-    useEffect(() => {
-        if (wsExpireAt != null) {
-            setExpireAtTimestamp(wsExpireAt);
-        } else if (wsExpireAt === null) {
-            setExpireAtTimestamp(null);
-        }
-    }, [wsExpireAt]);
 
     useEffect(() => {
         if (expireAtTimestamp && startAtTimestamp && wsTimeLimitSeconds == null) {
@@ -162,6 +144,24 @@ export default function CodingBattle() {
         setModalType(type);
         setIsModalOpen(true);
     }, []);
+
+    const handleTimerCompletion = useCallback(() => {
+        if (hasNavigatedToResultsRef.current) {
+            return;
+        }
+
+        hasNavigatedToResultsRef.current = true;
+
+        showModal(
+            "시간 종료",
+            "제한 시간이 종료되었습니다. 3초 후 결과 페이지로 이동합니다.",
+            "info"
+        );
+
+        setTimeout(() => {
+            navigate(`/resultpage/${roomId}`);
+        }, 3000);
+    }, [navigate, roomId, showModal]);
 
     const closeModal = () => {
         setIsModalOpen(false);
@@ -381,54 +381,86 @@ int main() {
         fetchProblem();
 
     }, [roomId]);
-    const updateRemainingFromExpireAt = useCallback(() => {
-        if (!expireAtTimestamp) {
-            setRemainingTime(null);
-            return;
-        }
 
-        const diffSeconds = Math.max(0, Math.round((expireAtTimestamp - Date.now()) / 1000));
-        setRemainingTime(diffSeconds);
-    }, [expireAtTimestamp]);
-
+    // [최종] 5초 준비 + 메인 게임을 동기화하는 "통합 타이머"
     useEffect(() => {
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
+        // 타이머 로직에 필요한 모든 타임스탬프가 준비되었는지 확인
+        if (!startAtTimestamp || !expireAtTimestamp || !totalTimeSeconds) {
+            setRemainingTime(totalTimeSeconds); // 데이터 로드 전에는 전체 시간 표시
+            return; // 아직 서버에서 데이터를 받기 전이므로 타이머 시작 안 함
         }
 
-        updateRemainingFromExpireAt();
-
-        if (!expireAtTimestamp) {
-            return;
-        }
-
-        intervalRef.current = setInterval(updateRemainingFromExpireAt, 1000);
-
-        return () => {
+        const clearTimers = () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
         };
-    }, [expireAtTimestamp, updateRemainingFromExpireAt]);
+        clearTimers(); // 기존 타이머가 있다면 정리
+
+        // [제거됨] 5초 준비 시간(readyStartTime) 계산 로직
+
+        const updateTimer = () => {
+            // 1. RTT 보정된 클라이언트 시간
+            const syncedNow = Date.now() + serverTimeOffsetRef.current;
+
+            // [제거됨] 2. "준비" 단계 로직
+
+            // 3. "게임 중" 단계
+            if (syncedNow >= startAtTimestamp && syncedNow < expireAtTimestamp) {
+                setIsReadyPhase(false); // "게임 중"
+                const gameSeconds = Math.max(0, Math.ceil((expireAtTimestamp - syncedNow) / 1000));
+                setRemainingTime(gameSeconds);
+            }
+            // 4. "게임 종료" 단계
+            else if (syncedNow >= expireAtTimestamp) {
+                setIsReadyPhase(false);
+                setRemainingTime(0);
+                clearTimers(); // 타이머 중지
+                handleTimerCompletion(); // 결과 페이지 이동 로직 호출
+            }
+            // 5. "게임 시작 전" 단계 (WaitingRoom에서 넘어오는 중)
+            else {
+                setIsReadyPhase(true); // "게임 시작 전" (아직 startAtTimestamp가 안됨)
+                // setReadyCountdown(5); // [제거됨]
+                setRemainingTime(totalTimeSeconds); // 메인 타이머는 전체 시간으로 고정
+            }
+        };
+
+        intervalRef.current = setInterval(updateTimer, 1000);
+        updateTimer();
+        return () => clearTimers();
+
+    }, [startAtTimestamp, expireAtTimestamp, totalTimeSeconds, handleTimerCompletion]);
 
     // Progress bar and time display useEffect (domTimerRef 사용으로 수정)
+    // [수정] Progress bar 전용 useEffect
     useEffect(() => {
-        if (totalTimeSeconds && remainingTime !== null) {
-            const ratio = totalTimeSeconds > 0 ? remainingTime / totalTimeSeconds : 0;
-            const clampedRatio = Math.min(1, Math.max(0, ratio));
-            setProgressBarWidth(clampedRatio * 100);
-        } else if (!totalTimeSeconds) {
+        // totalTimeSeconds가 유효한 숫자가 아니면(null or 0) 프로그레스 바를 0%로
+        if (!totalTimeSeconds || totalTimeSeconds <= 0) {
             setProgressBarWidth(0);
+            return;
         }
 
-        // domTimerRef.current가 유효한 DOM 요소를 참조하는지 확인
-        if (domTimerRef.current) {
-            domTimerRef.current.textContent = formatTime(remainingTime);
-
+        // remainingTime이 null이 아니면(타이머가 시작했으면) 비율 계산
+        if (remainingTime !== null) {
+            const ratio = remainingTime / totalTimeSeconds;
+            const clampedRatio = Math.min(1, Math.max(0, ratio)); // 0% ~ 100% 사이로 보정
+            setProgressBarWidth(clampedRatio * 100);
+        } else {
+            // remainingTime이 null이면 (아직 expireAt을 받기 전) 100%로 표시
+            setProgressBarWidth(100);
         }
-    }, [remainingTime, totalTimeSeconds]);
+    }, [remainingTime, totalTimeSeconds]); // 'isReadyPhase' 의존성 제거
+
+    useEffect(() => {
+        return () => {
+            if (editorUpdateTimeoutRef.current) {
+                clearTimeout(editorUpdateTimeoutRef.current);
+                editorUpdateTimeoutRef.current = null;
+            }
+        };
+    }, []);
 
     // 언어 변경 핸들러
     const handleLanguageChange = () => {
@@ -519,48 +551,6 @@ int main() {
             document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
         };
     }, []); // 빈 의존성 배열로 컴포넌트 마운트/언마운트 시에만 실행
-
-    useEffect(() => {
-        const handleFocus = () => {
-            recalculateRemainingTime();
-            updateRemainingFromExpireAt();
-        };
-
-        const handleVisibility = () => {
-            if (document.visibilityState === 'visible') {
-                handleFocus();
-            }
-        };
-
-        window.addEventListener('focus', handleFocus);
-        document.addEventListener('visibilitychange', handleVisibility);
-
-        return () => {
-            window.removeEventListener('focus', handleFocus);
-            document.removeEventListener('visibilitychange', handleVisibility);
-        };
-    }, [recalculateRemainingTime, updateRemainingFromExpireAt]);
-
-    useEffect(() => {
-        if (gameExpired) {
-            updateRemainingFromExpireAt();
-            if (!hasNavigatedToResultsRef.current) {
-                hasNavigatedToResultsRef.current = true; // 중복 실행 방지
-
-                showModal(
-                    "시간 종료",
-                    "제한 시간이 종료되었습니다. 3초 후 결과 페이지로 이동합니다.",
-                    "info"
-                );
-
-                setTimeout(() => {
-                    navigate(`/resultpage/${roomId}`);
-                }, 3000);
-            }
-        } else {
-            hasNavigatedToResultsRef.current = false;
-        }
-    }, [gameExpired, navigate, roomId, updateRemainingFromExpireAt, showModal]);
 
 // 부정행위 감지를 위한 useEffect
     useEffect(() => {
@@ -793,12 +783,12 @@ int main() {
         };
     }, [userId, roomId, userNickname, navigate]); // roomId, userNickname, navigate를 의존성 배열에 추가
 
-    // Monaco Editor 내용 변경 시 서버로 업데이트 전송 (timerIdRef 사용으로 수정)
+    // Monaco Editor 내용 변경 시 서버로 업데이트 전송 (디바운싱 적용)
     const handleEditorChange = useCallback((value) => {
 
-        if (timerIdRef.current) clearTimeout(timerIdRef.current);
+        if (editorUpdateTimeoutRef.current) clearTimeout(editorUpdateTimeoutRef.current);
 
-        timerIdRef.current = setTimeout(() => {
+        editorUpdateTimeoutRef.current = setTimeout(() => {
             if (stompClientRef.current && stompClientRef.current.connected && myUserId) {
                 const currentLineCount = value ? value.split('\n').length : 0;
                 stompClientRef.current.publish({
@@ -836,13 +826,18 @@ int main() {
         }, true);
     }, []);
 
-
     //roomId로 방의 정보를 가져오는 코드
     useEffect(() => {
         const fetchRoomData = async () => {
             try {
+                // [수정 1] API 호출 직전 시간 기록
+                const clientSendTime = Date.now();
+
                 const apiUrl = `${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`;
                 const response = await fetch(apiUrl);
+
+                // [수정 2] API 응답 받은 직후 시간 기록
+                const clientReceiveTime = Date.now();
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -854,6 +849,7 @@ int main() {
                 let parsedTimeLimitSeconds = null;
 
                 if (data) {
+                    // ... (중략: parsedTimeLimitSeconds, parsedStart, parsedExpire 설정 부분은 원본과 동일) ...
                     if (typeof data.timeLimitSeconds === 'number') {
                         parsedTimeLimitSeconds = data.timeLimitSeconds;
                     } else if (typeof data.timeLimit === 'string') {
@@ -897,6 +893,26 @@ int main() {
                         setExpireAtTimestamp(null);
                     }
 
+                    // 👇 [수정됨] RTT(왕복 시간) 기반으로 서버 시간 동기화
+                    if (data.serverCurrentTime) {
+                        const serverNowMs = parseServerUtcMillis(data.serverCurrentTime);
+                        if (!Number.isNaN(serverNowMs)) {
+
+                            // 3. 왕복 시간(RTT) 계산
+                            const rtt = clientReceiveTime - clientSendTime;
+                            // 4. 단방향 지연 시간(Latency)은 RTT의 절반이라고 가정
+                            const oneWayLatency = rtt / 2;
+
+                            // 5. 서버가 응답한 실제 시간 추정
+                            const estimatedServerTime = serverNowMs + oneWayLatency;
+
+                            // 6. [최종 오차] = (추정된 서버 시간) - (클라이언트 현재 시간)
+                            serverTimeOffsetRef.current = estimatedServerTime - clientReceiveTime;
+
+                            console.log(`[시간 동기화] RTT: ${rtt}ms, 추정 오차: ${serverTimeOffsetRef.current.toFixed(0)}ms`);
+                        }
+                    }
+                    // ... (이하 동일) ...
                     if (parsedTimeLimitSeconds === null && parsedStart && parsedExpire) {
                         const diffSeconds = Math.max(0, Math.round((parsedExpire - parsedStart) / 1000));
                         setTotalTimeSeconds(diffSeconds);
@@ -932,9 +948,17 @@ int main() {
                     </div>
                     <div className="flex justify-between w-64 text-sm mt-1">
                         {/* domTimerRef를 span 요소에 연결 */}
-                        <span ref={domTimerRef} className="BR-countdown-time text-orange-400 font-bold">{formatTime(remainingTime)}</span>
+                        <span className="BR-countdown-time text-orange-400 font-bold">
+    {/* 이제 'remainingTime'은 expireAtTimestamp 기준으로 계산된 실제 남은 시간입니다.
+      'remainingTime'이 null일 때 "00:00"으로 고정되는 문제를 해결하기 위해
+      (remainingTime ?? totalTimeSeconds)를 사용합니다.
+      이렇게 하면, 타이머가 아직 null일 때는 '제한시간'과 동일한 시간이 표시됩니다.
+    */}
+                            {formatTime(remainingTime ?? totalTimeSeconds)}
+                        </span>
 
-                        <span className="BR-total-time text-slate-500 dark:text-slate-400">제한시간: {formatTime(totalTimeSeconds)}</span>
+                        <span
+                            className="BR-total-time text-slate-500 dark:text-slate-400">제한시간: {formatTime(totalTimeSeconds)}</span>
                     </div>
                 </div>
 
