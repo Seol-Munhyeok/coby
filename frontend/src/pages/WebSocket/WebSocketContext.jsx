@@ -124,7 +124,8 @@ export const WebSocketProvider = ({ children }) => {
                 nickname: data.nickname,
                 profileUrl: data.profileUrl,
                 isReady: data.isReady ?? false,
-                isHost: data.isHost ?? false
+                isHost: data.isHost ?? false,
+                tier: data.tier ?? '브론즈',
               }
             ]);
             break;

@@ -24,6 +24,7 @@ public record WsMessageDto(
         LocalDateTime startAt,
         LocalDateTime expireAt,
         Long timeLimitSeconds,
-        Long gameStartDelaySeconds
+        Long gameStartDelaySeconds,
+        String tier //티어 이름(tierName과 동일)
 
 ) {}

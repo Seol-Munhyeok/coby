@@ -182,7 +182,6 @@ function MainPage() {
             await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms/${id}/join`, {
                 userId: user.id,
             });
-            alert('방에 입장합니다!');
             sessionStorage.setItem('isValidNavigation', 'true');
             navigate(`/waitingRoom/${id}?userId=${user.id}`); // roomId와 user.id를 쿼리 파라미터로 전달
         } catch (error) {
