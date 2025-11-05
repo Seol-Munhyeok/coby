@@ -2,7 +2,7 @@
 /**
  * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
  */
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import './WaitingRoom.css';
 import useContextMenu from '../../Common/hooks/useContextMenu';
@@ -14,6 +14,8 @@ import ToastNotification from '../../Common/components/ToastNotification';
 import {useWebSocket} from '../WebSocket/WebSocketContext';
 import {useAuth} from '../AuthContext/AuthContext';
 import axios from 'axios';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs'
 
 function WaitingRoom() {
     const navigate = useNavigate();
@@ -81,6 +83,8 @@ function WaitingRoom() {
     const [isPrivate, setIsPrivate] = useState(false);
     const [password, setPassword] = useState("");
 
+    const roomSocketClientRef = useRef(null);
+    const roomSubscriptionRef = useRef(null);
 
     // 플레이어 카드 우클릭 시 표시되는 커스텀 컨텍스트 메뉴 제어 훅
     const {
@@ -251,6 +255,66 @@ function WaitingRoom() {
         }
     };
 
+    const applyRoomDetails = useCallback((currentRoom) => {
+        if (!currentRoom) {
+            return;
+        }
+
+        setRoomName(currentRoom.roomName ?? "");
+        setDifficulty(currentRoom.difficulty ?? "");
+        setTimeLimit(currentRoom.timeLimit ?? "");
+        setMaxParticipants(currentRoom.maxParticipants ?? 4);
+        setItemMode(Boolean(currentRoom.itemMode));
+        setIsPrivate(Boolean(currentRoom.isPrivate));
+        setPassword(currentRoom.isPrivate ? (currentRoom.password ?? "") : "");
+    }, []);
+
+    // WebSocket 연결을 통해 실시간으로 방 정보 변경 사항을 감지
+    useEffect(() => {
+        const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws/room-data`);
+        const client = new Client({
+            webSocketFactory: socketFactory,
+            reconnectDelay: 5000,
+        });
+
+        client.onConnect = () => {
+            roomSubscriptionRef.current = client.subscribe('/topic/room-data', (message) => {
+                try {
+                    const payload = JSON.parse(message.body);
+                    if (Array.isArray(payload)) {
+                        const currentRoom = payload.find((room) => room.id?.toString() === roomId);
+                        if (currentRoom) {
+                            applyRoomDetails(currentRoom);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error parsing room update message:', err);
+                }
+            });
+        };
+
+        client.onStompError = (frame) => {
+            console.error('STOMP error:', frame.headers['message'], frame.body);
+        };
+
+        client.onWebSocketError = (event) => {
+            console.error('WebSocket error:', event);
+        };
+
+        client.activate();
+        roomSocketClientRef.current = client;
+
+        return () => {
+            if (roomSubscriptionRef.current) {
+                roomSubscriptionRef.current.unsubscribe();
+                roomSubscriptionRef.current = null;
+            }
+            if (roomSocketClientRef.current) {
+                roomSocketClientRef.current.deactivate();
+                roomSocketClientRef.current = null;
+            }
+        };
+    }, [roomId, applyRoomDetails]);
 
     // WebSocker 연결 상태에 따라 토스트 알림을 표시
     useEffect(() => {
@@ -262,12 +326,7 @@ function WaitingRoom() {
                     const currentRoom = allRooms.find(room => room.id.toString() === roomId);
 
                     if (currentRoom) {
-                        setRoomName(currentRoom.roomName);
-                        setDifficulty(currentRoom.difficulty);
-                        setTimeLimit(currentRoom.timeLimit);
-                        setMaxParticipants(currentRoom.maxParticipants);
-                        setItemMode(currentRoom.itemMode);
-                        setIsPrivate(currentRoom.isPrivate);
+                        applyRoomDetails(currentRoom);
                     } else {
                         setNotification({ message: "존재하지 않는 방입니다.", type: "error" });
                         setTimeout(() => setNotification(null), 3000);
@@ -284,8 +343,7 @@ function WaitingRoom() {
             };
             fetchRoomDetails();
         }
-    }, [roomId, navigate, setNotification]);
-
+    }, [roomId, navigate, setNotification, applyRoomDetails]);
 
     // 연결 성공/실패 시 사용자에게 알려주기 위한 토스트 알림 처리
     useEffect(() => {
