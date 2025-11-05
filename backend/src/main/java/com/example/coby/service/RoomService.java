@@ -27,7 +27,9 @@ import java.util.stream.Collectors;
 public class RoomService {
     private static final long ROOM_DELETION_DELAY_SECONDS = 5L;
     private static final long GAME_START_DELAY_SECONDS = 5L;  // 게임 시작 전 카운트다운 하는 시간
+    private static final int WINNER_ADDITIONAL_POINTS = 200;  // 승리자의 증가 포인트 양
     private static final Pattern TIME_TOKEN_PATTERN = Pattern.compile("(\\d+)(시간|분|초|h|m|s)?");
+
     private final RoomRepository roomRepository;
     private final RoomUserRepository roomUserRepository;
     private final UserRepository userRepository;
@@ -346,6 +348,7 @@ public class RoomService {
                 long newCount = roomUserRepository.countByRoomId(rid);
                 room.setCurrentPart((int) newCount);
                 roomRepository.save(room);
+                broadcastRoomList();
                 cancelScheduledRoomDeletion(rid);
             }
         } catch (NumberFormatException e) {
@@ -442,7 +445,6 @@ public class RoomService {
                     cancelScheduledRoomDeletion(rid);
                 }
             }
-
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
@@ -506,7 +508,7 @@ public class RoomService {
 
         winnerUser.incrementTotalGame(); // 총 게임 수 증가
         winnerUser.incrementWinGame();   // 승리 수 증가
-        winnerUser.addTierPoints(200);   // 티어 포인트 증가 (기존 finishRoom과 동일하게 200점)
+        winnerUser.addTierPoints(WINNER_ADDITIONAL_POINTS);   // 티어 포인트 증가 (기존 finishRoom과 동일하게 200점)
 
         Tier resolvedTier = resolveTier(winnerUser.getTierPoint());
         if (resolvedTier != null) {
