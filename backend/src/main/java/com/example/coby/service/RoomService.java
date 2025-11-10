@@ -57,12 +57,39 @@ public class RoomService {
     public List<UserRoomResultDto> getHistories(Long userId) {
         List<Room> resultRooms = roomUserRepository.findResultRoomsByUserId(userId);
 
+        Set<Long> winnerSubmissionIds = resultRooms.stream()
+                .map(Room::getWinnerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, Long> submissionWinnerUserIds = winnerSubmissionIds.isEmpty()
+                ? Collections.emptyMap()
+                : submissionRepository.findAllById(winnerSubmissionIds).stream()
+                .filter(submission -> submission.getUser() != null && submission.getUser().getId() != null)
+                .collect(Collectors.toMap(
+                        Submission::getId,
+                        submission -> submission.getUser().getId(),
+                        (existing, replacement) -> existing
+                ));
+
         return resultRooms.stream()
-                .map(room -> new UserRoomResultDto(
-                        room.getRoomName(),
-                        room.getWinnerId() != null && room.getWinnerId().equals(userId), // 승패 판정
-                        room.getCreatedAt()
-                ))
+                .map(room -> {
+                    Long winnerId = room.getWinnerId();
+                    boolean isWinner = false;
+
+                    if (winnerId != null) {
+                        Long winnerUserId = submissionWinnerUserIds.get(winnerId);
+                        if (winnerUserId != null) {
+                            isWinner = winnerUserId.equals(userId);
+                        }
+                    }
+
+                    return new UserRoomResultDto(
+                            room.getRoomName(),
+                            isWinner,
+                            room.getCreatedAt()
+                    );
+                })
                 .toList();
     }
 
