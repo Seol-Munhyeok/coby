@@ -81,8 +81,6 @@ public class RoomService {
                         Long winnerUserId = submissionWinnerUserIds.get(winnerId);
                         if (winnerUserId != null) {
                             isWinner = winnerUserId.equals(userId);
-                        } else {
-                            isWinner = winnerId.equals(userId);
                         }
                     }
 
