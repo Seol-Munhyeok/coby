@@ -3,6 +3,7 @@ import './ResultRoom.css';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import FloatingChat from '../../Common/components/FloatingChat';
 import useContextMenu from '../../Common/hooks/useContextMenu';
+import usePlayerInfo from '../../Common/hooks/usePlayerInfo';
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
 import ToastNotification from '../../Common/components/ToastNotification';
@@ -17,6 +18,7 @@ function ResultRoom() {
     const [notification, setNotification] = useState(null);
     const { roomId } = useParams();
     const { user } = useAuth();
+
 
     // BattleRoom에서 전달받은 state 값
     const location = useLocation();
@@ -59,6 +61,18 @@ function ResultRoom() {
         handlePlayerCardClick,
         setShowContextMenu,
     } = useContextMenu();
+
+    const {
+        playerInfoForModal,
+        showPlayerInfoModal,
+        setShowPlayerInfoModal,
+        handleShowPlayerInfo: fetchPlayerInfo
+    } = usePlayerInfo({ users, setNotification });
+
+    const handleContextMenuClick = () => {
+        // selectedPlayer와 setShowContextMenu를 usePlayerInfo 훅에 전달된 함수로 호출
+        fetchPlayerInfo(selectedPlayer, setShowContextMenu);
+    };
 
     useEffect(() => {
         if (restartModal && restartTimer === 0) {
@@ -186,9 +200,6 @@ function ResultRoom() {
         }
     }, [loading, roomDetails]);
 
-
-    const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
-    const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
 
     const quickRoomBtn = () => {
         alert('방에서 나갑니다!');
@@ -550,14 +561,7 @@ function ResultRoom() {
                         <ul className="text-sm">
                             <li
                                 className="px-4 py-2 hover:bg-blue-700 cursor-pointer"
-                                onClick={() => {
-                                    const fullPlayer = users.find(user => user.nickname === selectedPlayer.name);
-                                    if (fullPlayer) {
-                                        setPlayerInfoForModal(fullPlayer);
-                                        setShowPlayerInfoModal(true);
-                                    }
-                                    setShowContextMenu(false);
-                                }}
+                                onClick={handleContextMenuClick}
                             >
                                 정보 보기
                             </li>
