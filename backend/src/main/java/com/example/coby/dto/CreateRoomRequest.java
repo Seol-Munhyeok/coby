@@ -4,6 +4,8 @@ import com.example.coby.entity.RoomStatus;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 public class CreateRoomRequest {
@@ -16,4 +18,6 @@ public class CreateRoomRequest {
     private boolean isPrivate;
     private String password;
     private boolean itemMode;
+    private LocalDateTime startAt;
+    private LocalDateTime expireAt;
 }

@@ -1,154 +1,196 @@
-// PlayerInfoModal.jsx
 /**
  * 플레이어 정보 모달을 렌더링하는 컴포넌트입니다.
  */
+import React from 'react';
+import {PythonLogo, JavaLogo, CppLogo} from './LanguageCards';
 
-import React, { useEffect, useState } from 'react'; // Import useEffect and useState
-import PieChart from './PieChart';
+// KST 시간으로 포맷하는 헬퍼 함수
+function formatKST(utcDateString) {
+    if (!utcDateString) return "시간 정보 없음";
 
-// Define a mapping of preferred type names to specific colors for consistency
-const TYPE_COLORS = {
-  '알고리즘': 'rgba(255, 99, 132, 0.8)',
-  '자료구조': 'rgba(54, 162, 235, 0.8)',
-  'SQL': 'rgba(255, 206, 86, 0.8)',
-  '동적계획법': 'rgba(75, 192, 192, 0.8)',
-  // Add more types and colors as needed
+    try {
+        let parsableDateString = utcDateString;
+
+        if (typeof utcDateString === 'string') {
+
+            parsableDateString = utcDateString.replace(' ', 'T');
+
+            if (!parsableDateString.endsWith('Z') && !parsableDateString.includes('+')) {
+                parsableDateString += 'Z';
+            }
+        }
+
+        const date = new Date(parsableDateString);
+
+        if (isNaN(date.getTime())) {
+            throw new Error("Invalid Date from input");
+        }
+
+        const formatter = new Intl.DateTimeFormat('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        return formatter.format(date).replace(/\. /g, '.').replace(/\.$/, '');
+    } catch (error) {
+        console.error("Error formatting date:", error, `Input: ${utcDateString}`);
+        return "날짜 오류";
+    }
+}
+
+const renderLanguageLogo = (preferredLanguage) => {
+    const lang = preferredLanguage?.toLowerCase();
+    switch (lang) {
+        case 'python':
+            return <PythonLogo/>;
+        case 'java':
+            return <JavaLogo/>;
+        case 'cpp':
+            return <CppLogo/>;
+        default:
+            return null;
+    }
 };
 
-function PlayerInfoModal({ showModal, onClose, playerData, selectedPlayerName }) { // Accept props
-  // State to hold chart data
-  const [chartData, setChartData] = useState({
-    labels: [],
-    datasets: [
-      {
-        label: '# of Problems',
-        data: [],
-        backgroundColor: [],
-        borderColor: [],
-        borderWidth: 1,
-      },
-    ],
-  });
+function PlayerInfoModal({showModal, onClose, playerData, selectedPlayerName}) {
+    const totalGame = playerData?.totalGame ?? 0;
+    const winGame = playerData?.winGame ?? 0;
+    const loseGame = totalGame - winGame;
+    const winRate = totalGame > 0 ? ((winGame / totalGame) * 100).toFixed(2) : "0.00";
 
-  useEffect(() => {
-    // Update chart data when playerData changes
-    if (playerData && playerData.preferredTypes) {
-      const labels = Object.keys(playerData.preferredTypes);
-      const dataValues = Object.values(playerData.preferredTypes);
-      const backgroundColors = labels.map(label => TYPE_COLORS[label] || 'rgba(153, 102, 255, 0.8)'); // Fallback color
-      const borderColors = backgroundColors.map(color => color.replace('0.8', '1')); // Make border opaque
+    const renderRecentGames = (games) => {
+        if (!games || games.length === 0) {
+            return <p className="text-gray-400 text-center py-4">최근 기록이 없습니다.</p>;
+        }
 
-      setChartData({
-        labels: labels,
-        datasets: [
-          {
-            label: '# of Problems',
-            data: dataValues,
-            backgroundColor: backgroundColors,
-            borderColor: borderColors,
-            borderWidth: 1,
-          },
-        ],
-      });
-    }
-  }, [playerData]); // Re-run effect when playerData changes
+        return games.slice(-5).reverse().map((game, index) => {
+            const resultText = game.winner ? '승리' : '패배';
+            const resultColor = game.winner ? 'border-green-500 text-green-300' : 'border-red-500 text-red-300';
+            const bgColor = 'bg-gray-700 bg-opacity-40';
 
-
-  // Helper function to render recent games
-  const renderRecentGames = (games) => {
-    if (!games || games.length === 0) {
-      return <p className="waitingRoom-text text-center">최근 기록이 없습니다.</p>;
-    }
-    return games.map((game, index) => (
-      <div key={index} className={`flex justify-between items-center waitingRoom-glass-effect rounded-lg p-2 border-l-4 ${game.result === '승리' ? 'border-green-500' : 'border-red-500'}`}>
-        <div>
-          <p className="font-medium ">{game.name}</p>
-          <p className="text-xs waitingRoom-text">{game.time}</p>
-        </div>
-        <span className={`font-medium ${game.result === '승리' ? 'text-green-400' : 'text-red-400'}`}>{game.result}</span>
-      </div>
-    ));
-  };
-
-  if (!showModal || !playerData) { // Only render if showModal is true and playerData is available
-    return null;
-  }
-
-  return (
-    <div id="playerInfoModal" className={`fixed inset-0 bg-black/70 flex items-center justify-center z-50 ${showModal ? '' : 'hidden'}`}> {/* Control visibility with showModal prop */}
-      {/* 모달 컨테이너의 너비와 높이를 조정 (가로 600px, 세로 450px) */}
-      <div className="waitingRoom-glass-effect rounded-xl w-[750px] h-[550px] p-6 waitingRoom-animate-fade-in flex flex-col">
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
-          <h2 className="text-xl font-bold text-white">플레이어 정보</h2>
-          <button id="closePlayerModal" className="waitingRoom-text hover: transition" onClick={onClose}> {/* Use onClose prop */}
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* 플레이어 정보 (아바타, 이름, 티어, 레벨) 및 전적 섹션 */}
-        <div className="flex items-start justify-between mb-4 flex-shrink-0">
-          {/* 플레이어 아바타 및 기본 정보 */}
-          <div className="flex items-center">
-            <div className="waitingRoom-character mr-4">
-              <div id="playerAvatar" className="w-16 h-16 rounded-full bg-blue-700 flex items-center justify-center text-xl font-medium"
-                style={{ backgroundColor: playerData.avatarColor || 'bg-blue-700' }}> {/* Use playerData.avatarColor */}
-                {playerData.avatar} {/* Use playerData.avatar */}
-              </div>
-            </div>
-            <div>
-              <h3 id="playerName" className="text-lg font-bold text-white">{selectedPlayerName}</h3> {/* Use selectedPlayerName */}
-              <div className="flex items-center">
-                <div id="playerTier" className="waitingRoom-tier-badge w-6 h-6 rounded-full bg-blue-900 flex items-center justify-center mr-2">
-                  <span className="text-[0.6rem] font-bold text-blue-200">{playerData.tier}</span> {/* Use playerData.tier */}
+            return (
+                <div key={index}
+                     className={`flex justify-between items-center ${bgColor} rounded-lg p-3 border-l-4 ${resultColor} transition-all duration-200 hover:bg-opacity-60`}>
+                    <div>
+                        <p className="font-semibold text-white text-base">{game.roomName || '알 수 없는 방'}</p>
+                        <p className="text-xs text-gray-400 mt-1">{formatKST(game.createdAt)}</p>
+                    </div>
+                    <span className={`font-bold text-sm ${resultColor}`}>{resultText}</span>
                 </div>
-                <span id="playerLevel" className="text-sm waitingRoom-text">Lv.{playerData.level}</span> {/* Use playerData.level */}
-              </div>
-            </div>
-          </div>
+            );
+        });
+    };
 
-          {/* 전적 섹션 */}
-          <div className="waitingRoom-glass-effect rounded-lg p-4 flex-1 ml-4">
-            <h4 className="text-sm font-medium waitingRoom-text mb-2">전적</h4>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="waitingRoom-glass-effect rounded-lg p-2">
-                <p className="text-xs waitingRoom-text">승률</p>
-                <p id="playerWinRate" className="text-xl font-bold text-white">{playerData.winRate}</p> {/* Use playerData.winRate */}
-              </div>
-              <div className="waitingRoom-glass-effect rounded-lg p-2">
-                <p className="text-xs waitingRoom-text">승리</p>
-                <p id="playerWins" className="text-xl font-bold text-green-400 ">{playerData.wins}</p> {/* Use playerData.wins */}
-              </div>
-              <div className="waitingRoom-glass-effect rounded-lg p-2">
-                <p className="text-xs waitingRoom-text">패배</p>
-                <p id="playerLosses" className="text-xl font-bold text-red-400">{playerData.losses}</p> {/* Use playerData.losses */}
-              </div>
-            </div>
-          </div>
-        </div>
+    if (!showModal || !playerData) {
+        return null;
+    }
 
-        {/* 모달 콘텐츠 영역: 선호 문제 유형 (오른쪽), 최근 기록 (왼쪽) */}
-        <div className="grid grid-cols-2 gap-4 flex-grow overflow-y-auto waitingRoom-custom-scrollbar">
-          {/* 최근 기록 섹션 (왼쪽) */}
-          <div className="waitingRoom-glass-effect rounded-lg p-4">
-            <h4 className="text-sm font-medium waitingRoom-text mb-2">최근 기록</h4>
-            <div className="space-y-2 text-white">
-              {renderRecentGames(playerData.recentGames)} {/* Render recent games dynamically */}
-            </div>
-          </div>
+    const languageLogoComponent = renderLanguageLogo(playerData.preferredLanguage);
 
-          {/* 선호 문제 유형 섹션 (오른쪽) */}
-          <div className="waitingRoom-glass-effect rounded-lg p-4">
-            <h4 className="text-sm font-medium waitingRoom-text mb-2">선호 문제 유형</h4>
-            <div className="waitingRoom-stats-chart-container">
-              <PieChart data={chartData} /> {/* Pass chartData state to PieChart */}
+    return (
+        <>
+            <style>
+                {`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4b5563; 
+            border-radius: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; 
+          }
+          .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #4b5563 #1f2937;
+          }
+        `}
+            </style>
+
+            <div id="playerInfoModal"
+                 className={`fixed inset-0 bg-black/80 flex items-center justify-center z-50 ${showModal ? '' : 'hidden'}`}>
+                <div className="bg-gray-800 rounded-xl w-[750px] h-[580px] p-6 shadow-2xl flex flex-col">
+
+                    <div className="flex justify-between items-center mb-5 flex-shrink-0">
+                        <h2 className="text-2xl font-bold text-white">플레이어 정보</h2>
+                        <button id="closePlayerModal" className="text-gray-400 hover:text-white transition-colors"
+                                onClick={onClose}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                      d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div className="flex items-start justify-between mb-5 flex-shrink-0">
+                        <div className="flex flex-col items-start mr-4">
+                            <h3 id="playerName" className="text-2xl font-bold text-white mb-2">{selectedPlayerName}</h3>
+                            <div className="flex items-center space-x-2 mb-2">
+                                <div id="playerTier"
+                                     className="bg-blue-900 rounded-full px-3 py-1 flex items-center justify-center min-w-[50px]">
+                                    <span
+                                        className="text-xs font-bold text-blue-200">{playerData.tierName || '??'}</span>
+                                </div>
+                            </div>
+                            {languageLogoComponent && (
+                                <div className="flex items-center mt-2">
+                                    <div className="h-6 w-6 mr-2 flex items-center justify-center">
+                                        {languageLogoComponent}
+                                    </div>
+                                    <span
+                                        className="text-gray-300 text-sm capitalize">{playerData.preferredLanguage}</span>
+                                </div>
+                            )}
+                            {!languageLogoComponent && playerData.preferredLanguage && (
+                                <span
+                                    className="text-gray-300 text-sm mt-2">선호 언어: {playerData.preferredLanguage}</span>
+                            )}
+                        </div>
+
+                        <div className="bg-gray-700 bg-opacity-50 rounded-lg p-5 flex-1 ml-4 border border-gray-600">
+                            <h4 className="text-lg font-semibold text-gray-200 mb-3">전적</h4>
+                            <div className="grid grid-cols-3 gap-3 text-center">
+                                <div className="bg-gray-600 bg-opacity-40 rounded-lg p-3 border border-gray-500">
+                                    <p className="text-sm text-gray-300 mb-1">승률</p>
+                                    <p id="playerWinRate" className="text-2xl font-bold text-white">{winRate}%</p>
+                                </div>
+                                <div className="bg-gray-600 bg-opacity-40 rounded-lg p-3 border border-gray-500">
+                                    <p className="text-sm text-gray-300 mb-1">승리</p>
+                                    <p id="playerWins" className="text-2xl font-bold text-green-400 ">{winGame}</p>
+                                </div>
+                                <div className="bg-gray-600 bg-opacity-40 rounded-lg p-3 border border-gray-500">
+                                    <p className="text-sm text-gray-300 mb-1">패배</p>
+                                    <p id="playerLosses"
+                                       className="text-2xl font-bold text-red-400">{loseGame < 0 ? 0 : loseGame}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex-grow overflow-y-auto custom-scrollbar pr-2 min-h-0">
+
+                        <div className="bg-gray-700 bg-opacity-50 rounded-lg p-5 border border-gray-600">
+                            <h4 className="text-lg font-semibold text-gray-200 mb-3">최근 기록 (최신 5개)</h4>
+                            <div className="space-y-3">
+                                {renderRecentGames(playerData.recentGames)}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+        </>
+    );
 }
 
 export default PlayerInfoModal;

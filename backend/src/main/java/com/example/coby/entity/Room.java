@@ -2,6 +2,8 @@ package com.example.coby.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
@@ -10,6 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Builder
 public class Room {
 
@@ -40,7 +43,15 @@ public class Room {
 
     private String language;              // language
 
+    @CreatedDate
     private LocalDateTime createdAt;      // created_at
+
+    @Column
+    private LocalDateTime startAt;        // start_at
+
+    @Column
+    private LocalDateTime expireAt;       // expire_at
+
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

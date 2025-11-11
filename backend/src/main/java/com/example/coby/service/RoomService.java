@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.*;
@@ -23,8 +25,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class RoomService {
-
     private static final long ROOM_DELETION_DELAY_SECONDS = 5L;
+    private static final long GAME_START_DELAY_SECONDS = 5L;  // 게임 시작 전 카운트다운 하는 시간
+    private static final int WINNER_ADDITIONAL_POINTS = 200;  // 승리자의 증가 포인트 양
+    private static final Pattern TIME_TOKEN_PATTERN = Pattern.compile("(\\d+)(시간|분|초|h|m|s)?");
+
     private final RoomRepository roomRepository;
     private final RoomUserRepository roomUserRepository;
     private final UserRepository userRepository;
@@ -35,7 +40,9 @@ public class RoomService {
     private final TransactionTemplate transactionTemplate;
 
     private final ScheduledExecutorService roomDeletionScheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService roomExpirationScheduler = Executors.newSingleThreadScheduledExecutor();
     private final Map<Long, ScheduledFuture<?>> pendingRoomDeletionTasks = new ConcurrentHashMap<>();
+    private final Map<Long, ScheduledFuture<?>> pendingRoomExpirationTasks = new ConcurrentHashMap<>();
 
     public List<RoomResponse> getRooms() {
         List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
@@ -60,12 +67,39 @@ public class RoomService {
     public List<UserRoomResultDto> getHistories(Long userId) {
         List<Room> resultRooms = roomUserRepository.findResultRoomsByUserId(userId);
 
+        Set<Long> winnerSubmissionIds = resultRooms.stream()
+                .map(Room::getWinnerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, Long> submissionWinnerUserIds = winnerSubmissionIds.isEmpty()
+                ? Collections.emptyMap()
+                : submissionRepository.findAllById(winnerSubmissionIds).stream()
+                .filter(submission -> submission.getUser() != null && submission.getUser().getId() != null)
+                .collect(Collectors.toMap(
+                        Submission::getId,
+                        submission -> submission.getUser().getId(),
+                        (existing, replacement) -> existing
+                ));
+
         return resultRooms.stream()
-                .map(room -> new UserRoomResultDto(
-                        room.getRoomName(),
-                        room.getWinnerId() != null && room.getWinnerId().equals(userId), // 승패 판정
-                        room.getCreatedAt()
-                ))
+                .map(room -> {
+                    Long winnerId = room.getWinnerId();
+                    boolean isWinner = false;
+
+                    if (winnerId != null) {
+                        Long winnerUserId = submissionWinnerUserIds.get(winnerId);
+                        if (winnerUserId != null) {
+                            isWinner = winnerUserId.equals(userId);
+                        }
+                    }
+
+                    return new UserRoomResultDto(
+                            room.getRoomName(),
+                            isWinner,
+                            room.getCreatedAt()
+                    );
+                })
                 .toList();
     }
 
@@ -97,6 +131,8 @@ public class RoomService {
                 .isPrivate(req.isPrivate())
                 .password(password)
                 .itemMode(req.isItemMode())
+                .startAt(req.getStartAt())
+                .expireAt(req.getExpireAt())
                 .currentCapacity(0)
                 .maxCapacity(req.getMaxParticipants())
                 .problem(selectedProblem) // ✨ 여기에서 문제를 할당
@@ -140,6 +176,12 @@ public class RoomService {
         }
         if (request.getItemMode() != null) {
             room.setItemMode(request.getItemMode());
+        }
+        if (request.getStartAt() != null) {
+            room.setStartAt(request.getStartAt());
+        }
+        if (request.getExpireAt() != null) {
+            room.setExpireAt(request.getExpireAt());
         }
         room.setPrivate(updatedPrivate);
         room.setPassword(updatedPassword);
@@ -243,11 +285,35 @@ public class RoomService {
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("게임을 시작할 방을 찾을 수 없습니다."));
 
+        LocalDateTime startAt = LocalDateTime.now().plusSeconds(GAME_START_DELAY_SECONDS);;
+        long timeLimitSeconds = parseTimeLimitSeconds(room.getTimeLimit());
+        long timeLimitMinutes = timeLimitSeconds > 0 ? TimeUnit.SECONDS.toMinutes(timeLimitSeconds) : 0;
+        long remainingSeconds = timeLimitSeconds > 0 ? timeLimitSeconds % 60 : 0;
+        LocalDateTime expireAt = startAt.plusMinutes(Math.max(timeLimitMinutes, 0));
+        if (remainingSeconds > 0) {
+            expireAt = expireAt.plusSeconds(remainingSeconds);
+        }
+
         room.setStatus(RoomStatus.IN_PROGRESS);
+        room.setStartAt(startAt);
+        room.setExpireAt(expireAt);
 
         roomRepository.save(room);
 
         broadcastRoomList();
+
+        WsMessageDto startNotice = WsMessageDto.builder()
+                .type("StartGame")
+                .roomId(String.valueOf(roomId))
+                .startAt(startAt)
+                .expireAt(expireAt)
+                .timeLimitSeconds(timeLimitSeconds)
+                .gameStartDelaySeconds(GAME_START_DELAY_SECONDS)
+                .build();
+
+        messagingTemplate.convertAndSend("/topic/room/" + roomId, startNotice);
+
+        scheduleRoomExpiration(roomId, timeLimitSeconds, GAME_START_DELAY_SECONDS);
 
         log.info("방 {}의 게임 상태가 IN_PROGRESS로 변경되었습니다. (방 삭제 방어 활성화)", roomId);
     }
@@ -319,6 +385,7 @@ public class RoomService {
                 long newCount = roomUserRepository.countByRoomId(rid);
                 room.setCurrentPart((int) newCount);
                 roomRepository.save(room);
+                broadcastRoomList();
                 cancelScheduledRoomDeletion(rid);
             }
         } catch (NumberFormatException e) {
@@ -359,6 +426,7 @@ public class RoomService {
     }
 
     public void deleteRoom(Long roomId) {
+        cancelScheduledRoomExpiration(roomId);
         cancelScheduledRoomDeletion(roomId);
         transactionTemplate.executeWithoutResult(status -> {
             // 1. 이 방을 참조하는 모든 Submission을 찾습니다.
@@ -414,7 +482,6 @@ public class RoomService {
                     cancelScheduledRoomDeletion(rid);
                 }
             }
-
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
@@ -448,6 +515,8 @@ public class RoomService {
      */
     @Transactional
     public void finishRoomByLastManStanding(Long roomId) {
+        cancelScheduledRoomExpiration(roomId);
+
         Room room = roomRepository.findById(roomId).orElse(null);
         // 방이 없거나, 이미 게임 중이 아니면 처리 중단
         if (room == null || room.getStatus() != RoomStatus.IN_PROGRESS) {
@@ -476,7 +545,7 @@ public class RoomService {
 
         winnerUser.incrementTotalGame(); // 총 게임 수 증가
         winnerUser.incrementWinGame();   // 승리 수 증가
-        winnerUser.addTierPoints(200);   // 티어 포인트 증가 (기존 finishRoom과 동일하게 200점)
+        winnerUser.addTierPoints(WINNER_ADDITIONAL_POINTS);   // 티어 포인트 증가 (기존 finishRoom과 동일하게 200점)
 
         Tier resolvedTier = resolveTier(winnerUser.getTierPoint());
         if (resolvedTier != null) {
@@ -527,9 +596,147 @@ public class RoomService {
         }
     }
 
+    private long parseTimeLimitSeconds(String timeLimit) {
+        if (timeLimit == null) {
+            return 0L;
+        }
+
+        String normalized = timeLimit.trim().toLowerCase();
+        if (normalized.isEmpty()) {
+            return 0L;
+        }
+
+        long totalSeconds = 0L;
+        boolean matched = false;
+        Matcher matcher = TIME_TOKEN_PATTERN.matcher(normalized);
+        while (matcher.find()) {
+            matched = true;
+            String numberPart = matcher.group(1);
+            if (numberPart == null) {
+                continue;
+            }
+            long value;
+            try {
+                value = Long.parseLong(numberPart);
+            } catch (NumberFormatException e) {
+                log.warn("시간 제한 파싱 실패 - 숫자 변환 오류: {}", numberPart, e);
+                continue;
+            }
+
+            String unit = matcher.group(2);
+            if (unit == null || unit.equals("분") || unit.equals("m")) {
+                totalSeconds += TimeUnit.MINUTES.toSeconds(value);
+            } else if (unit.equals("시간") || unit.equals("h")) {
+                totalSeconds += TimeUnit.HOURS.toSeconds(value);
+            } else if (unit.equals("초") || unit.equals("s")) {
+                totalSeconds += value;
+            }
+        }
+
+        if (matched && totalSeconds > 0) {
+            return totalSeconds;
+        }
+
+        if (normalized.contains(":")) {
+            String[] parts = normalized.split(":");
+            try {
+                if (parts.length == 3) {
+                    long hours = Long.parseLong(parts[0]);
+                    long minutes = Long.parseLong(parts[1]);
+                    long seconds = Long.parseLong(parts[2]);
+                    return TimeUnit.HOURS.toSeconds(hours)
+                            + TimeUnit.MINUTES.toSeconds(minutes)
+                            + seconds;
+                } else if (parts.length == 2) {
+                    long minutes = Long.parseLong(parts[0]);
+                    long seconds = Long.parseLong(parts[1]);
+                    return TimeUnit.MINUTES.toSeconds(minutes) + seconds;
+                } else if (parts.length == 1) {
+                    long minutes = Long.parseLong(parts[0]);
+                    return TimeUnit.MINUTES.toSeconds(minutes);
+                }
+            } catch (NumberFormatException e) {
+                log.warn("시간 제한 파싱 실패 - 콜론 포맷: {}", timeLimit, e);
+            }
+        }
+
+        String digitsOnly = normalized.replaceAll("[^0-9]", "");
+        if (!digitsOnly.isEmpty()) {
+            try {
+                long minutes = Long.parseLong(digitsOnly);
+                return TimeUnit.MINUTES.toSeconds(minutes);
+            } catch (NumberFormatException e) {
+                log.warn("시간 제한 파싱 실패 - 숫자 추출: {}", timeLimit, e);
+            }
+        }
+
+        log.warn("시간 제한 문자열 '{}'을(를) 해석할 수 없습니다. 기본값 0초 사용", timeLimit);
+        return 0L;
+    }
+
+    private void scheduleRoomExpiration(Long roomId, long timeLimitSeconds, long startDelaySeconds) {
+        ScheduledFuture<?> existingTask = pendingRoomExpirationTasks.remove(roomId);
+        if (existingTask != null) {
+            existingTask.cancel(false);
+        }
+
+        if (timeLimitSeconds <= 0) {
+            return;
+        }
+
+        long safeTimeLimitSeconds = Math.max(0, timeLimitSeconds);
+        long safeStartDelaySeconds = Math.max(0, startDelaySeconds);
+        long totalDelaySeconds = safeTimeLimitSeconds + safeStartDelaySeconds;
+
+        final ScheduledFuture<?>[] holder = new ScheduledFuture<?>[1];
+        ScheduledFuture<?> future = roomExpirationScheduler.schedule(() -> {
+            try {
+                Room latestRoom = roomRepository.findById(roomId).orElse(null);
+                if (latestRoom == null || latestRoom.getStatus() != RoomStatus.IN_PROGRESS) {
+                    return;
+                }
+
+                LocalDateTime latestStart = latestRoom.getStartAt();
+                LocalDateTime latestExpire = latestRoom.getExpireAt();
+
+                WsMessageDto expiredNotice = WsMessageDto.builder()
+                        .type("GameExpired")
+                        .roomId(String.valueOf(roomId))
+                        .startAt(latestStart)
+                        .expireAt(latestExpire)
+                        .timeLimitSeconds(safeTimeLimitSeconds)
+                        .gameStartDelaySeconds(safeStartDelaySeconds)
+                        .build();
+                messagingTemplate.convertAndSend("/topic/room/" + roomId, expiredNotice);
+
+                transactionTemplate.executeWithoutResult(status -> finalizeRoom(roomId, null));
+            } catch (Exception e) {
+                log.error("방 {} 만료 처리 중 오류", roomId, e);
+            } finally {
+                ScheduledFuture<?> scheduled = holder[0];
+                if (scheduled != null) {
+                    pendingRoomExpirationTasks.remove(roomId, scheduled);
+                } else {
+                    pendingRoomExpirationTasks.remove(roomId);
+                }
+            }
+        }, totalDelaySeconds, TimeUnit.SECONDS);
+
+        holder[0] = future;
+        pendingRoomExpirationTasks.put(roomId, future);
+    }
+
+    private void cancelScheduledRoomExpiration(Long roomId) {
+        ScheduledFuture<?> scheduledFuture = pendingRoomExpirationTasks.remove(roomId);
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(false);
+        }
+    }
+
     @PreDestroy
     public void shutdownScheduler() {
         roomDeletionScheduler.shutdownNow();
+        roomExpirationScheduler.shutdownNow();
     }
 
 
@@ -557,12 +764,27 @@ public class RoomService {
 
     @Transactional
     public void finishRoom(Long roomId, Long winId) {
+        finalizeRoom(roomId, winId);
+    }
+
+    public void cancelRoomExpiration(Long roomId) {
+        cancelScheduledRoomExpiration(roomId);
+    }
+
+    private void finalizeRoom(Long roomId, Long winId) {
+        cancelScheduledRoomExpiration(roomId);
+
         roomRepository.updateWinnerAndFinish(roomId, winId, LocalDateTime.now(), RoomStatus.RESULT);
 
-        // winId에서 승리자의 userId를 가져옴
-        Submission winningSubmission = submissionRepository.findById(winId)
-                .orElseThrow(() -> new IllegalArgumentException("제출 기록을 찾을 수 없습니다: " + winId));
-        Long winnerUserId = winningSubmission.getUser().getId();
+        Long winnerUserId;
+        if (winId != null) {
+            // winId에서 승리자의 userId를 가져옴
+            Submission winningSubmission = submissionRepository.findById(winId)
+                    .orElseThrow(() -> new IllegalArgumentException("제출 기록을 찾을 수 없습니다: " + winId));
+            winnerUserId = winningSubmission.getUser().getId();
+        } else {
+            winnerUserId = null;
+        }
 
         // roomId에 해당하는 room의 참가자를 가져옴
         List<RoomUser> participants = roomUserRepository.findByRoomId(roomId);
@@ -582,7 +804,7 @@ public class RoomService {
 
             user.incrementTotalGame();
 
-            if (participantId.equals(winnerUserId)) {
+            if (winnerUserId != null && participantId.equals(winnerUserId)) {
                 user.incrementWinGame();
                 user.addTierPoints(200);
                 Tier resolvedTier = resolveTier(user.getTierPoint());

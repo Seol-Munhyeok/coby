@@ -7,6 +7,23 @@ import { Client } from '@stomp/stompjs';
 
 export const WebSocketContext = createContext(null);
 
+const parseServerUtcMillis = (value) => {
+  if (value == null) return Number.NaN;
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : Number.NaN;
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return Number.NaN;
+    const hasTimezone = /([zZ]|[+-]\d\d:\d\d)$/.test(trimmed);
+    return new Date(hasTimezone ? trimmed : `${trimmed}Z`).getTime();
+  }
+
+  return Number.NaN;
+};
+
 export const WebSocketProvider = ({ children }) => {
   // 실시간 채팅 메시지 목록
   const [messages, setMessages] = useState([]);
@@ -21,6 +38,12 @@ export const WebSocketProvider = ({ children }) => {
   // 현재 참여 중인 방 ID와 게임 시작 여부
   const [joinedRoomId, setJoinedRoomId] = useState(null);
   const [gameStart, setGameStart] = useState(false);
+  const [gameStartAt, setGameStartAt] = useState(null);
+  const [gameExpireAt, setGameExpireAt] = useState(null);
+  const [gameTimeLimitSeconds, setGameTimeLimitSeconds] = useState(null);
+  const [gameStartDelaySeconds, setGameStartDelaySeconds] = useState(null);
+  const [remainingTimeMs, setRemainingTimeMs] = useState(null);
+  const [gameExpired, setGameExpired] = useState(false);
   // 강퇴 여부 및 현재 사용자 ID를 저장
   const [forcedOut, setForcedOut] = useState(false)
   const currentUserIdRef = useRef(null);
@@ -80,6 +103,7 @@ export const WebSocketProvider = ({ children }) => {
     setMessages([]);
     setUsers([]);
     setGameStart(false);
+    setGameStartDelaySeconds(null);
 
     // 방 정보에 대한 구독이 아직 없다면 생성
     if (!subscriptionsRef.current[roomId]) {
@@ -100,7 +124,8 @@ export const WebSocketProvider = ({ children }) => {
                 nickname: data.nickname,
                 profileUrl: data.profileUrl,
                 isReady: data.isReady ?? false,
-                isHost: data.isHost ?? false
+                isHost: data.isHost ?? false,
+                tier: data.tier ?? '브론즈',
               }
             ]);
             break;
@@ -140,6 +165,48 @@ export const WebSocketProvider = ({ children }) => {
             break;
           case 'StartGame':
             setGameStart(true);
+            setGameExpired(false);
+            if (typeof data.gameStartDelaySeconds === 'number') {
+              setGameStartDelaySeconds(data.gameStartDelaySeconds);
+            } else if (typeof data.gameStartDelaySeconds === 'string') {
+              const parsedDelay = Number.parseInt(data.gameStartDelaySeconds, 10);
+              setGameStartDelaySeconds(Number.isNaN(parsedDelay) ? null : parsedDelay);
+            } else {
+              setGameStartDelaySeconds(null);
+            }
+            if (data.startAt) {
+              const parsedStart = parseServerUtcMillis(data.startAt);
+              setGameStartAt(Number.isNaN(parsedStart) ? null : parsedStart);
+            } else {
+              setGameStartAt(null);
+            }
+            if (data.expireAt) {
+              const parsedExpire = parseServerUtcMillis(data.expireAt);
+              if (!Number.isNaN(parsedExpire)) {
+                setGameExpireAt(parsedExpire);
+                setRemainingTimeMs(Math.max(0, parsedExpire - Date.now()));
+              } else {
+                setGameExpireAt(null);
+                setRemainingTimeMs(null);
+              }
+            } else {
+              setGameExpireAt(null);
+              setRemainingTimeMs(null);
+            }
+            if (typeof data.timeLimitSeconds === 'number') {
+              setGameTimeLimitSeconds(data.timeLimitSeconds);
+            } else {
+              setGameTimeLimitSeconds(null);
+            }
+            break;
+          case 'GameExpired':
+            setGameExpired(true);
+            setGameStart(false);
+            setGameStartAt(null);
+            setGameExpireAt(null);
+            setGameTimeLimitSeconds(null);
+            setRemainingTimeMs(0);
+            setGameStartDelaySeconds(null);
             break;
           default:
             break;
@@ -250,6 +317,12 @@ export const WebSocketProvider = ({ children }) => {
     setMessages([]);
     setUsers([]);
     setGameStart(false);
+    setGameStartAt(null);
+    setGameExpireAt(null);
+    setGameTimeLimitSeconds(null);
+    setRemainingTimeMs(null);
+    setGameExpired(false);
+    setGameStartDelaySeconds(null);
   }, []);
 
   // 채팅 메시지를 서버로 전송
@@ -326,6 +399,37 @@ export const WebSocketProvider = ({ children }) => {
 
   // joinRoom and sendMessage functions are defined above
   // 컨텍스트에서 노출할 값들
+  const recalculateRemainingTime = useCallback(() => {
+    if (gameExpireAt) {
+      setRemainingTimeMs(Math.max(0, gameExpireAt - Date.now()));
+    } else {
+      setRemainingTimeMs(null);
+    }
+  }, [gameExpireAt]);
+
+  useEffect(() => {
+    if (!gameExpireAt) {
+      setRemainingTimeMs(null);
+      return;
+    }
+
+    const updateRemaining = () => {
+      const diff = Math.max(0, gameExpireAt - Date.now());
+      setRemainingTimeMs(diff);
+      if (diff === 0) {
+        setGameExpired(true);
+      }
+    };
+
+    updateRemaining();
+    const intervalId = setInterval(updateRemaining, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [gameExpireAt]);
+
+  const remainingTimeSeconds =
+      remainingTimeMs !== null ? Math.max(0, Math.floor(remainingTimeMs / 1000)) : null;
+
   const contextValue = {
     messages,
     sendMessage,
@@ -340,9 +444,18 @@ export const WebSocketProvider = ({ children }) => {
     client: clientRef.current,
     joinedRoomId,
     gameStart,
+    startAt: gameStartAt,
+    expireAt: gameExpireAt,
+    timeLimitSeconds: gameTimeLimitSeconds,
+    gameStartDelaySeconds,
+    remainingTimeMs,
+    remainingTimeSeconds,
+    recalculateRemainingTime,
+    gameExpired,
     forcedOut,
     resetForcedOut,
     clearSystemMessage,
+    systemMessage,
     requestRestart,
     sendVote,
     restartModal,

@@ -1,10 +1,14 @@
 package com.example.coby.controller;
 
 import com.example.coby.dto.RoomUserResponse;
+import com.example.coby.dto.UserProfileResponse;
 import com.example.coby.dto.WsMessageDto;
+import com.example.coby.entity.Tier;
+import com.example.coby.entity.User;
 import com.example.coby.service.ChatService;
 import com.example.coby.service.RoomService;
 import com.example.coby.service.RestartService;
+import com.example.coby.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -27,6 +31,7 @@ public class WebSocketController {
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
     private final RoomService roomService;
+    private final UserService userService;
     private final RestartService restartService;
 
     private final Map<String, String> sessionToRoom = new ConcurrentHashMap<>();
@@ -136,6 +141,11 @@ public class WebSocketController {
         // 입장한 사용자가 방장인지 확인
         boolean isHost = roomService.isUserHost(Long.parseLong(roomId), Long.parseLong(message.userId()));
 
+
+        long longUserId = Long.parseLong(message.userId());
+        UserProfileResponse userProfile = userService.getUserProfile(longUserId); // UserService를 통해 유저 정보 조회
+        String tierName = (userProfile != null) ? userProfile.tierName() : "브론즈";
+
         // 방 전체에 새로운 사용자 입장을 알림
         WsMessageDto joinNotice = WsMessageDto.builder()
                 .type("Join")
@@ -145,6 +155,7 @@ public class WebSocketController {
                 .profileUrl(message.profileUrl())
                 .isReady(Boolean.FALSE)
                 .isHost(isHost)
+                .tier(tierName)
                 .build();
         messagingTemplate.convertAndSend("/topic/room/" + roomId, joinNotice);
 
@@ -241,11 +252,7 @@ public class WebSocketController {
             if (reqId == null || !roomService.isUserHost(rid, reqId)) {
                 return;
             }
-            WsMessageDto startNotice = WsMessageDto.builder()
-                    .type("StartGame")
-                    .roomId(roomId)
-                    .build();
-            messagingTemplate.convertAndSend("/topic/room/" + roomId, startNotice);
+            roomService.startGame(rid);
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: roomId={}, userId={}", roomId, requesterId);
         }

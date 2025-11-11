@@ -3,6 +3,7 @@ import './ResultRoom.css';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import FloatingChat from '../../Common/components/FloatingChat';
 import useContextMenu from '../../Common/hooks/useContextMenu';
+import usePlayerInfo from '../../Common/hooks/usePlayerInfo';
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal';
 import { useWebSocket } from '../WebSocket/WebSocketContext';
 import ToastNotification from '../../Common/components/ToastNotification';
@@ -17,6 +18,7 @@ function ResultRoom() {
     const [notification, setNotification] = useState(null);
     const { roomId } = useParams();
     const { user } = useAuth();
+
 
     // BattleRoom에서 전달받은 state 값
     const location = useLocation();
@@ -60,6 +62,18 @@ function ResultRoom() {
         setShowContextMenu,
     } = useContextMenu();
 
+    const {
+        playerInfoForModal,
+        showPlayerInfoModal,
+        setShowPlayerInfoModal,
+        handleShowPlayerInfo: fetchPlayerInfo
+    } = usePlayerInfo({ users, setNotification });
+
+    const handleContextMenuClick = () => {
+        // selectedPlayer와 setShowContextMenu를 usePlayerInfo 훅에 전달된 함수로 호출
+        fetchPlayerInfo(selectedPlayer, setShowContextMenu);
+    };
+
     useEffect(() => {
         if (restartModal && restartTimer === 0) {
             sendVote(roomId, userId, false);
@@ -68,6 +82,7 @@ function ResultRoom() {
 
     useEffect(() => {
         const handleNavigateToMain = () => {
+            sessionStorage.removeItem('isValidNavigation');
             navigate('/mainpage');
         };
 
@@ -156,6 +171,7 @@ function ResultRoom() {
                 console.error("방 정보를 가져오는 데 실패했습니다:", err);
                 setNotification({ message: "방 정보를 불러올 수 없습니다.", type: "error" });
                 setTimeout(() => setNotification(null), 3000);
+                sessionStorage.removeItem('isValidNavigation');
                 navigate('/mainpage');
             } finally {
                 setLoading(false);
@@ -185,12 +201,10 @@ function ResultRoom() {
     }, [loading, roomDetails]);
 
 
-    const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);
-    const [playerInfoForModal, setPlayerInfoForModal] = useState(null);
-
     const quickRoomBtn = () => {
         alert('방에서 나갑니다!');
         leaveRoom(roomId, userId);
+        sessionStorage.removeItem('isValidNavigation');
         navigate('/mainpage');
     };
 
@@ -547,14 +561,7 @@ function ResultRoom() {
                         <ul className="text-sm">
                             <li
                                 className="px-4 py-2 hover:bg-blue-700 cursor-pointer"
-                                onClick={() => {
-                                    const fullPlayer = users.find(user => user.nickname === selectedPlayer.name);
-                                    if (fullPlayer) {
-                                        setPlayerInfoForModal(fullPlayer);
-                                        setShowPlayerInfoModal(true);
-                                    }
-                                    setShowContextMenu(false);
-                                }}
+                                onClick={handleContextMenuClick}
                             >
                                 정보 보기
                             </li>

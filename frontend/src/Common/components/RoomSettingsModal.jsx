@@ -96,12 +96,12 @@ function RoomSettingsModal({
       });
 
       if (response.status === 201) { // 성공적인 생성 또는 변경 (HTTP 201 Created)
-        alert('방 설정이 성공적으로 저장되었습니다!');
         onSave(roomData); // 상위 컴포넌트로 저장된 설정 전달 (현재는 이 데이터가 사용되지 않음)
 
         // 새롭게 생성된 방의 ID를 가져와 대기실로 이동
         const newRoomId = response.data.id;
         if (newRoomId && user && user.id) {
+            sessionStorage.setItem('isValidNavigation', 'true');
             navigate(`/waitingRoom/${newRoomId}?userId=${user.id}`); // 새 방의 ID와 사용자 ID로 이동
         } else {
             console.error("방 ID 또는 사용자 ID를 찾을 수 없어 대기실로 이동할 수 없습니다.");
@@ -169,6 +169,7 @@ function RoomSettingsModal({
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
+                <option value="1분">1분</option>
                 <option value="15분">15분</option>
                 <option value="30분">30분</option>
                 <option value="45분">45분</option>

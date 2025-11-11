@@ -2,10 +2,11 @@
 /**
  * 메인 컴포넌트로, 다른 컴포넌트와 훅을 가져와 사용합니다.
  */
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import './WaitingRoom.css';
 import useContextMenu from '../../Common/hooks/useContextMenu';
+import usePlayerInfo from '../../Common/hooks/usePlayerInfo';
 import PlayerCard from './components/PlayerCard';
 import PlayerInfoModal from '../../Common/components/PlayerInfoModal'
 import ChatWindow from '../../Common/components/ChatWindow';
@@ -14,6 +15,8 @@ import ToastNotification from '../../Common/components/ToastNotification';
 import {useWebSocket} from '../WebSocket/WebSocketContext';
 import {useAuth} from '../AuthContext/AuthContext';
 import axios from 'axios';
+import SockJS from 'sockjs-client';
+import {Client} from '@stomp/stompjs'
 
 function WaitingRoom() {
     const navigate = useNavigate();
@@ -53,6 +56,7 @@ function WaitingRoom() {
         resetForcedOut,
         systemMessage,
         clearSystemMessage,
+        recalculateRemainingTime,
     } = useWebSocket();
 
     // 현재 사용자 닉네임을 가져오고, 없으면 기본값으로 '게스트' 를 사용합니다.
@@ -64,8 +68,6 @@ function WaitingRoom() {
     const [isReady, setIsReady] = useState(false);  // 현재 사용자 준비 상태
     const [roomHost, setRoomHost] = useState(null); // 방장 닉네임
     const isCurrentUserHost = users.some(u => u.userId === Number(userId) && u.isHost);  // 현재 사용자가 방장인지 여부
-    const [showPlayerInfoModal, setShowPlayerInfoModal] = useState(false);  // 플레이어 정보 모달 표시 여부
-    const [playerInfoForModal, setPlayerInfoForModal] = useState(null);  // 모달에 표시할 플레이어 정보
     const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);  // 방 설정 모달 표시 여부
     const [isLeaveModalOpen, setLeaveModalOpen] = useState(false); // 방 나가기 확인 모달 상태 추가
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
@@ -80,6 +82,8 @@ function WaitingRoom() {
     const [isPrivate, setIsPrivate] = useState(false);
     const [password, setPassword] = useState("");
 
+    const roomSocketClientRef = useRef(null);
+    const roomSubscriptionRef = useRef(null);
 
     // 플레이어 카드 우클릭 시 표시되는 커스텀 컨텍스트 메뉴 제어 훅
     const {
@@ -91,6 +95,17 @@ function WaitingRoom() {
         setShowContextMenu,
     } = useContextMenu();
 
+    const {
+        playerInfoForModal,
+        showPlayerInfoModal,
+        setShowPlayerInfoModal,
+        handleShowPlayerInfo: fetchPlayerInfo // 훅 내부 함수를 fetchPlayerInfo로 별칭 지정
+    } = usePlayerInfo({ users, setNotification });
+
+    const handleShowPlayerInfo = () => {
+        // ResultRoom의 로직을 따라 selectedPlayer와 setShowContextMenu를 인자로 전달
+        fetchPlayerInfo(selectedPlayer, setShowContextMenu);
+    };
 
     // 방장이 게임 시작 버튼을 눌렀을 때 실행되는 함수
     const enterRoomBtn1 = async () => {
@@ -115,7 +130,7 @@ function WaitingRoom() {
             const response = await axios.post(
                 `${process.env.REACT_APP_API_URL}/api/rooms/${roomId}/start`,
                 {}, // POST 요청이지만 body는 비워둡니다.
-                { withCredentials: true }
+                {withCredentials: true}
             );
 
             if (response.status !== 200) {
@@ -142,7 +157,7 @@ function WaitingRoom() {
     };
 
     const [hasLeft, setHasLeft] = useState(false);
-    
+
     // 방 나가기 모달을 여는 함수
     const handleOpenLeaveModal = () => {
         setLeaveModalOpen(true);
@@ -156,6 +171,7 @@ function WaitingRoom() {
     // 방 나가기를 최종 확인하고 실행하는 함수
     const handleConfirmLeave = () => {
         setLeaveModalOpen(false); // 모달 닫기
+        sessionStorage.removeItem('isValidNavigation');
         if (!hasLeft) {
             leaveRoom(roomId, userId);
             setHasLeft(true);
@@ -186,6 +202,7 @@ function WaitingRoom() {
         const hostUser = users.find(u => u.isHost);
         setRoomHost(hostUser ? hostUser.nickname : null);
     }, [users]);
+
 
     // 게임 시작 신호가 오면 카운트다운 후 게임 페이지로 이동
     useEffect(() => {
@@ -226,7 +243,7 @@ function WaitingRoom() {
     const handleKickPlayer = () => {
         if (selectedPlayer) {
             if (selectedPlayer.isHost) {
-                setNotification({ message: "방장은 강퇴할 수 없습니다.", type: "error" });
+                setNotification({message: "방장은 강퇴할 수 없습니다.", type: "error"});
                 setTimeout(() => setNotification(null), 3000);
                 setShowContextMenu(false);
                 return;
@@ -235,19 +252,80 @@ function WaitingRoom() {
                 if (client && client.connected) {
                     client.publish({
                         destination: `/app/room/${roomId}/kick`,
-                        body: JSON.stringify({ type: 'Kick', userId: selectedPlayer.userId }),
+                        body: JSON.stringify({type: 'Kick', userId: selectedPlayer.userId}),
                     });
-                    setNotification({ message: `${selectedPlayer.name}님을 강퇴했습니다.`, type: "success" });
+                    setNotification({message: `${selectedPlayer.name}님을 강퇴했습니다.`, type: "success"});
                 }
             } catch (error) {
                 console.error('Error kicking user:', error);
-                setNotification({ message: "강퇴에 실패했습니다.", type: "error" });
+                setNotification({message: "강퇴에 실패했습니다.", type: "error"});
             }
             setTimeout(() => setNotification(null), 3000);
             setShowContextMenu(false);
         }
     };
 
+
+    const applyRoomDetails = useCallback((currentRoom) => {
+        if (!currentRoom) {
+            return;
+        }
+
+        setRoomName(currentRoom.roomName ?? "");
+        setDifficulty(currentRoom.difficulty ?? "");
+        setTimeLimit(currentRoom.timeLimit ?? "");
+        setMaxParticipants(currentRoom.maxParticipants ?? 4);
+        setItemMode(Boolean(currentRoom.itemMode));
+        setIsPrivate(Boolean(currentRoom.isPrivate));
+        setPassword(currentRoom.isPrivate ? (currentRoom.password ?? "") : "");
+    }, []);
+
+    // WebSocket 연결을 통해 실시간으로 방 정보 변경 사항을 감지
+    useEffect(() => {
+        const socketFactory = () => new SockJS(`${process.env.REACT_APP_API_URL}/ws/room-data`);
+        const client = new Client({
+            webSocketFactory: socketFactory,
+            reconnectDelay: 5000,
+        });
+
+        client.onConnect = () => {
+            roomSubscriptionRef.current = client.subscribe('/topic/room-data', (message) => {
+                try {
+                    const payload = JSON.parse(message.body);
+                    if (Array.isArray(payload)) {
+                        const currentRoom = payload.find((room) => room.id?.toString() === roomId);
+                        if (currentRoom) {
+                            applyRoomDetails(currentRoom);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error parsing room update message:', err);
+                }
+            });
+        };
+
+        client.onStompError = (frame) => {
+            console.error('STOMP error:', frame.headers['message'], frame.body);
+        };
+
+        client.onWebSocketError = (event) => {
+            console.error('WebSocket error:', event);
+        };
+
+        client.activate();
+        roomSocketClientRef.current = client;
+
+        return () => {
+            if (roomSubscriptionRef.current) {
+                roomSubscriptionRef.current.unsubscribe();
+                roomSubscriptionRef.current = null;
+            }
+            if (roomSocketClientRef.current) {
+                roomSocketClientRef.current.deactivate();
+                roomSocketClientRef.current = null;
+            }
+        };
+    }, [roomId, applyRoomDetails]);
 
     // WebSocker 연결 상태에 따라 토스트 알림을 표시
     useEffect(() => {
@@ -259,28 +337,24 @@ function WaitingRoom() {
                     const currentRoom = allRooms.find(room => room.id.toString() === roomId);
 
                     if (currentRoom) {
-                        setRoomName(currentRoom.roomName);
-                        setDifficulty(currentRoom.difficulty);
-                        setTimeLimit(currentRoom.timeLimit);
-                        setMaxParticipants(currentRoom.maxParticipants);
-                        setItemMode(currentRoom.itemMode);
-                        setIsPrivate(currentRoom.isPrivate);
+                        applyRoomDetails(currentRoom);
                     } else {
-                        setNotification({ message: "존재하지 않는 방입니다.", type: "error" });
+                        setNotification({message: "존재하지 않는 방입니다.", type: "error"});
                         setTimeout(() => setNotification(null), 3000);
+                        sessionStorage.removeItem('isValidNavigation');
                         navigate('/mainpage'); // 방이 없으면 메인으로
                     }
                 } catch (err) {
                     console.error("방 정보를 가져오는 데 실패했습니다:", err);
-                    setNotification({ message: "방 정보를 불러올 수 없습니다.", type: "error" });
+                    setNotification({message: "방 정보를 불러올 수 없습니다.", type: "error"});
                     setTimeout(() => setNotification(null), 3000);
+                    sessionStorage.removeItem('isValidNavigation');
                     navigate('/mainpage'); // 에러 발생 시 메인으로
                 }
             };
             fetchRoomDetails();
         }
-    }, [roomId, navigate, setNotification]);
-
+    }, [roomId, navigate, setNotification, applyRoomDetails]);
 
     // 연결 성공/실패 시 사용자에게 알려주기 위한 토스트 알림 처리
     useEffect(() => {
@@ -307,7 +381,8 @@ function WaitingRoom() {
     useEffect(() => {
         if (forcedOut) {
             setHasLeft(true); // 언마운트 시 중복 퇴장 방지
-            navigate('/mainpage', { state: { kicked: true } });
+            sessionStorage.removeItem('isValidNavigation');
+            navigate('/mainpage', {state: {kicked: true}});
             resetForcedOut();
         }
     }, [forcedOut, navigate, resetForcedOut]);
@@ -315,7 +390,7 @@ function WaitingRoom() {
     // 시스템 메시지를 토스트로 표시
     useEffect(() => {
         if (systemMessage) {
-            setNotification({ message: systemMessage, type: 'info' });
+            setNotification({message: systemMessage, type: 'info'});
             const timer = setTimeout(() => {
                 setNotification(null);
                 clearSystemMessage();
@@ -376,7 +451,7 @@ function WaitingRoom() {
             user.nickname.charAt(0).toUpperCase() + (user.nickname.charAt(1) || '').toUpperCase(),
         tier: user.tier,
         isReady: user.isReady,
-        //avatarColor: 'bg-blue-700',
+        avatarColor: 'bg-blue-700',
         isHost: user.isHost,
     }));
 
@@ -542,14 +617,8 @@ function WaitingRoom() {
                     style={{top: contextMenuPos.y, left: contextMenuPos.x}}
                 >
                     <ul className=" text-sm">
-                        <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer" onClick={() => {
-                            const fullPlayer = users.find(user => user.nickname === selectedPlayer.name);
-                            if (fullPlayer) {
-                                setPlayerInfoForModal(fullPlayer);
-                                setShowPlayerInfoModal(true);
-                            }
-                            setShowContextMenu(false);
-                        }}>
+                        <li className="px-4 py-2 hover:bg-blue-700 cursor-pointer"
+                            onClick={handleShowPlayerInfo}>
                             정보 보기
                         </li>
                         {isCurrentUserHost && selectedPlayer.name !== currentUser && (

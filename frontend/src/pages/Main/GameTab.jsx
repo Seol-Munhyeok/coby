@@ -6,11 +6,15 @@ function GameTab({ enterRoomBtn, showRoomSettingsModal, rooms }) {
 
     const handleQuickJoin = () => {
         // 참여 가능한 방을 찾아 바로 입장하는 로직
-        const availableRoom = rooms.find(room => room.status === 'WAITING' && room.currentPart < room.maxParticipants);
+        const availableRoom = rooms.find(room => 
+            room.status === 'WAITING' && 
+            room.currentPart < room.maxParticipants &&
+            !room.isPrivate
+        );
         if (availableRoom) {
             enterRoomBtn(availableRoom.id);
         } else {
-            alert('참여 가능한 방이 없습니다. 새로운 방을 만들어보세요!');
+            alert('참여 가능한 공개 방이 없습니다. 새로운 방을 만들어보세요!');
         }
     };
 
