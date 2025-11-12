@@ -747,6 +747,7 @@ public class RoomService {
             ru.setHost(ru.getUserId().equals(newHostId));
             roomUserRepository.save(ru);
         }
+        broadcastRoomList();
     }
 
     public boolean isUserHost(Long roomId, Long userId) {
