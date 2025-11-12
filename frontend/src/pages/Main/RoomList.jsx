@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import PasswordModal from "./PasswordModal";
 
 
+/**
+ * Render a responsive list of room cards filtered by the provided search term and manage entry interactions (public entry or opening the password modal for private rooms).
+ *
+ * @param {Object[]} rooms - Array of room objects. Each room is expected to include at least: `id`, `roomName`, `status`, `currentPart`, `maxParticipants`, `isPrivate`, `difficulty`, `timeLimit`, and `hostName`.
+ * @param {(roomId: string|number) => void} enterRoomBtn - Callback invoked with a room's `id` when the user is allowed to enter that room.
+ * @param {string} searchTerm - Case-insensitive substring used to filter rooms by `roomName`.
+ * @returns {JSX.Element} The rendered room list and associated password modal.
 function RoomList({ rooms, enterRoomBtn, searchTerm }) {
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [selectedRoomId, setSelectedRoomId] = useState(null);

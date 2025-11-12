@@ -44,6 +44,11 @@ public class RoomService {
     private final Map<Long, ScheduledFuture<?>> pendingRoomDeletionTasks = new ConcurrentHashMap<>();
     private final Map<Long, ScheduledFuture<?>> pendingRoomExpirationTasks = new ConcurrentHashMap<>();
 
+    /**
+     * Retrieve rooms whose status is not RESULT and include each room's host nickname when present.
+     *
+     * @return a list of RoomResponse objects for rooms with status not RESULT; each response contains the room data and the host's nickname or an empty string if no host is found
+     */
     public List<RoomResponse> getRooms() {
         List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
                 .map(room -> {
@@ -60,6 +65,12 @@ public class RoomService {
         return  responses;
     }
 
+    /**
+     * Retrieve a room by its identifier.
+     *
+     * @param id the room's primary key
+     * @return the Room with the given id, or `null` if no such room exists
+     */
     public Room getRoom(Long id) {
         return roomRepository.findById(id).orElse(null);
     }
@@ -829,6 +840,12 @@ public class RoomService {
                 });
     }
 
+    /**
+     * Broadcasts the current list of non-result rooms, including each room's host nickname, to subscribed clients.
+     *
+     * The method collects rooms whose status is not RESULT, resolves the host nickname for each room (empty string if none),
+     * constructs RoomResponse instances with that host name, and sends the resulting list to the "/topic/room-data" destination.
+     */
     private void broadcastRoomList() {
         List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
                 .map(room -> {

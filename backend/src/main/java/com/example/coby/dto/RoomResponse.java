@@ -26,6 +26,19 @@ public record RoomResponse(
         Long timeLimitSeconds,
         LocalDateTime serverCurrentTime
 ) {
+    /**
+     * Create a RoomResponse DTO from a Room entity.
+     *
+     * <p>Computed fields:
+     * <ul>
+     *   <li>`timeLimitSeconds` — the non-negative number of seconds between the Room's `startAt` and `expireAt` when both are present; `null` otherwise.</li>
+     *   <li>`serverCurrentTime` — the current UTC time at construction.</li>
+     *   <li>`hostName` — not populated by this overload (will be `null`).</li>
+     * </ul>
+     *
+     * @param room the source Room entity to convert
+     * @return a RoomResponse populated from the given Room
+     */
     public static RoomResponse from(Room room) {
         LocalDateTime startAt = room.getStartAt();
         LocalDateTime expireAt = room.getExpireAt();
@@ -54,6 +67,13 @@ public record RoomResponse(
                 .serverCurrentTime(LocalDateTime.now(ZoneOffset.UTC))
                 .build();
     }
+    /**
+     * Create a RoomResponse DTO from a Room entity and an explicit host name.
+     *
+     * @param room the Room entity to convert into the response
+     * @param hostName the host's name to include in the response
+     * @return a RoomResponse populated from the given room and hostName; `serverCurrentTime` is set to the current UTC time and `timeLimitSeconds` is computed from `startAt`/`expireAt` when both are present and non-negative
+     */
     public static RoomResponse from(Room room,String hostName) {
         LocalDateTime startAt = room.getStartAt();
         LocalDateTime expireAt = room.getExpireAt();
