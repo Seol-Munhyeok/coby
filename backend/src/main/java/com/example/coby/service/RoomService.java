@@ -287,14 +287,11 @@ public class RoomService {
                         .build();
                 roomUserRepository.save(roomUser);
 
-                long newCount = roomUserRepository.countByRoomId(roomId);
-                room.setCurrentPart((int) newCount);
-                roomRepository.save(room);
-
                 // 신규 입장 시 알림 (방 삭제 취소 + 목록 갱신)
                 org.springframework.transaction.support.TransactionSynchronizationManager
                         .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
                             @Override public void afterCommit() {
+                                recalculateCurrentParticipants(roomId, room);
                                 cancelScheduledRoomDeletion(roomId);
                                 broadcastRoomList();
                             }
@@ -365,13 +362,10 @@ public class RoomService {
         if (room == null) return null;
 
         RoomUserId id = new RoomUserId(roomId, userId);
+        boolean[] participantChanged = {false};
         if (roomUserRepository.existsById(id)) {
             roomUserRepository.deleteById(id);
-
-            // Room_user 테이블의 실제 레코드 수를 기반으로 current_part 업데이트
-            long newCount = roomUserRepository.countByRoomId(roomId);
-            room.setCurrentPart((int) newCount);
-            roomRepository.save(room);
+            participantChanged[0] = true;
         }
 
         // 트랜잭션이 성공적으로 커밋된 후에만 방송을 실행
@@ -379,6 +373,9 @@ public class RoomService {
                 .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
+                        if (participantChanged[0]) {
+                            recalculateCurrentParticipants(roomId, room);
+                        }
                         // DB 커밋이 완료된 후,
                         // 그 상태를 기준으로 스케줄링을 업데이트
                         updateRoomDeletionScheduling(room);
@@ -388,6 +385,17 @@ public class RoomService {
 
         return room;
     }
+
+    private void recalculateCurrentParticipants(Long roomId, Room room) {
+        transactionTemplate.executeWithoutResult(status -> {
+            long newCount = roomUserRepository.countByRoomId(roomId);
+            roomRepository.updateCurrentPart((int) newCount, roomId);
+            if (room != null) {
+                room.setCurrentPart((int) newCount);
+            }
+        });
+    }
+
 
     @Transactional(readOnly = true)
     public Optional<RoomHostResponse> getRoomHost(Long roomId) {
