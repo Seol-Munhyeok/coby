@@ -151,6 +151,7 @@ export const WebSocketProvider = ({ children }) => {
 
             // 나간 사용자가 '나 자신'인지 확인
             if (Number(data.userId) === Number(currentUserIdRef.current)) {
+              const wasVoluntary = voluntaryLeaveRef.current;
               const resolver = leaveAckResolverRef.current;
               if (resolver) {
                 resolver();
@@ -162,11 +163,11 @@ export const WebSocketProvider = ({ children }) => {
               currentUserIdRef.current = null;
               currentUserInfoRef.current = null;
 
-              if (!voluntaryLeaveRef.current) {
+              if (!wasVoluntary) {
                 setForcedOut(true);
-              } else {
-                voluntaryLeaveRef.current = false;
+
               }
+              voluntaryLeaveRef.current = false;
             }
             break;
           case 'Host':
@@ -282,6 +283,7 @@ export const WebSocketProvider = ({ children }) => {
           currentUserIdRef.current = null;
           currentUserInfoRef.current = null;
           setForcedOut(true);
+          voluntaryLeaveRef.current = false;
         }
       });
       subscriptionsRef.current[roomId] = [roomSub, userSub, kickedSub, restartSub];
@@ -327,7 +329,6 @@ export const WebSocketProvider = ({ children }) => {
       delete subscriptionsRef.current[roomId];
     }
     leaveAckResolverRef.current = null;
-    voluntaryLeaveRef.current = false;
     setJoinedRoomId(prev => (prev === roomId ? null : prev));
     setMessages([]);
     setUsers([]);
