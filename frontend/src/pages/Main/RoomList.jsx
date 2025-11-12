@@ -86,7 +86,7 @@ function RoomList({ rooms, enterRoomBtn, searchTerm }) {
                                         <div className="text-gray-800 font-medium">{room.currentPart}/{room.maxParticipants}</div>
                                     </div>
                                     <div className="flex justify-between items-center text-sm mb-3">
-                                        {/*<span className="text-gray-500">방장: <span className="text-gray-800 font-medium">{room.owner}</span></span>*/}
+                                        {<span className="text-gray-500">방장: <span className="text-gray-800 font-medium">{room.hostName}</span></span>}
                                         {room.isPrivate && (
                                             <span className="text-yellow-600 flex items-center">
                                                 <i className="fas fa-lock mr-1"></i>비공개

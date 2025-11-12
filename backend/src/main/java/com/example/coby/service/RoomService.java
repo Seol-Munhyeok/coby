@@ -45,9 +45,19 @@ public class RoomService {
     private final Map<Long, ScheduledFuture<?>> pendingRoomExpirationTasks = new ConcurrentHashMap<>();
 
     public List<RoomResponse> getRooms() {
-        return  roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
-                .map(RoomResponse::from)
+        List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
+                .map(room -> {
+                    // host 찾기 (없으면 "")
+                    String hostName = roomUserRepository.findByRoomIdAndIsHostTrue(room.getId())
+                            .flatMap(ru -> userRepository.findById(ru.getUserId()))
+                            .map(User::getNickname)
+                            .orElse("");
+
+                    return RoomResponse.from(room, hostName);
+                })
                 .toList();
+
+        return  responses;
     }
 
     public Room getRoom(Long id) {
@@ -821,8 +831,20 @@ public class RoomService {
 
     private void broadcastRoomList() {
         List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
-                .map(RoomResponse::from)
+                .map(room -> {
+                    // host 찾기 (없으면 "")
+                    String hostName = roomUserRepository.findByRoomIdAndIsHostTrue(room.getId())
+                            .flatMap(ru -> userRepository.findById(ru.getUserId()))
+                            .map(User::getNickname)
+                            .orElse("");
+
+                    return RoomResponse.from(room, hostName);
+                })
                 .toList();
+
+//        List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
+//                .map(RoomResponse::from)
+//                .toList();
         messagingTemplate.convertAndSend("/topic/room-data", responses);
     }
 
