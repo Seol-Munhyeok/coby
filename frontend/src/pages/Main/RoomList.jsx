@@ -72,9 +72,19 @@ function RoomList({ rooms, enterRoomBtn, searchTerm }) {
                             <div key={room.id} className="main-room-card bg-white rounded-xl overflow-hidden border border-gray-200 transition-shadow hover:shadow-lg">
                                 <div className="px-4 py-3 flex justify-between items-center border-b bg-gray-50">
                                     <h3 className="font-bold text-gray-800 truncate">{room.roomName}</h3>
-                                    <span className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColorClass}`}>
-                                        {room.status === 'WAITING' ? '대기중' : room.status === 'IN_PROGRESS' ? '진행중' : '결과 확인'}
-                                    </span>
+                                    <div className="flex items-center gap-2 justify-end">
+                                        {room.isPrivate && (
+                                            <span
+                                                className="inline-flex items-center gap-1 text-xs text-yellow-600 font-semibold"
+                                            >
+                                                <i className="fas fa-lock"></i>비공개
+                                            </span>
+                                        )}
+                                        <span
+                                            className={`text-xs px-2 py-1 rounded-full font-semibold ${statusColorClass}`}>
+                                            {room.status === 'WAITING' ? '대기중' : room.status === 'IN_PROGRESS' ? '진행중' : '결과 확인'}
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="p-4">
                                     <div className="grid grid-cols-2 gap-y-2 text-sm mb-3">
@@ -83,16 +93,11 @@ function RoomList({ rooms, enterRoomBtn, searchTerm }) {
                                         <div className="text-gray-500">시간 제한</div>
                                         <div className="text-gray-800 font-medium">{room.timeLimit}</div>
                                         <div className="text-gray-500">인원</div>
-                                        <div className="text-gray-800 font-medium">{room.currentPart}/{room.maxParticipants}</div>
+                                        <div
+                                            className="text-gray-800 font-medium">{room.currentPart}/{room.maxParticipants}</div>
                                         <div className="text-gray-500">방장</div>
                                         <div className="text-gray-800 font-medium flex items-center gap-2">
                                             <span>{room.hostName}</span>
-                                            {room.isPrivate && (
-                                                <span
-                                                    className="inline-flex items-center gap-1 text-xs text-yellow-600 font-semibold">
-                                                    <i className="fas fa-lock"></i>비공개
-                                                </span>
-                                            )}
                                         </div>
                                     </div>
                                     <button className={`w-full py-2 rounded-lg transition ${isDisabled

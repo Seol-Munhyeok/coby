@@ -51,6 +51,7 @@ export const WebSocketProvider = ({ children }) => {
   // 시스템 토스트 메시지와 자발적 퇴장을 구분하기 위한 ref
   const [systemMessage, setSystemMessage] = useState(null);
   const voluntaryLeaveRef = useRef(false);
+  const leaveAckResolverRef = useRef(null);
   // 재시작 용 변수
   const [restartModal, setRestartModal] = useState(false);
   const [votes, setVotes] = useState({}); // { userId: true/false }
@@ -150,7 +151,17 @@ export const WebSocketProvider = ({ children }) => {
 
             // 나간 사용자가 '나 자신'인지 확인
             if (Number(data.userId) === Number(currentUserIdRef.current)) {
+              const resolver = leaveAckResolverRef.current;
+              if (resolver) {
+                resolver();
+                leaveAckResolverRef.current = null;
+              }
+
               cleanupRoom(roomId);
+
+              currentUserIdRef.current = null;
+              currentUserInfoRef.current = null;
+
               if (!voluntaryLeaveRef.current) {
                 setForcedOut(true);
               } else {
@@ -268,6 +279,8 @@ export const WebSocketProvider = ({ children }) => {
         const body = JSON.parse(msg.body);
         if (body.type === 'Kicked') {
           cleanupRoom(body.roomId);
+          currentUserIdRef.current = null;
+          currentUserInfoRef.current = null;
           setForcedOut(true);
         }
       });
@@ -313,6 +326,8 @@ export const WebSocketProvider = ({ children }) => {
       subs.forEach(s => s.unsubscribe());
       delete subscriptionsRef.current[roomId];
     }
+    leaveAckResolverRef.current = null;
+    voluntaryLeaveRef.current = false;
     setJoinedRoomId(prev => (prev === roomId ? null : prev));
     setMessages([]);
     setUsers([]);
@@ -382,16 +397,21 @@ export const WebSocketProvider = ({ children }) => {
   const leaveRoom = useCallback((roomId, userId) => {
     if (clientRef.current && clientRef.current.connected) {
       voluntaryLeaveRef.current = true;
+      const leaveAckPromise = new Promise((resolve) => {
+        leaveAckResolverRef.current = resolve;
+      });
       clientRef.current.publish({
         destination: `/app/room/${roomId}/leave`,
         body: JSON.stringify({ type: 'Leave', userId }),
       });
+      return leaveAckPromise;
     }
-    // 서버가 퇴장 메시지를 처리할 시간을 조금 둔 뒤 구독을 정리한다.
-    setTimeout(() => {
-      cleanupRoom(roomId);
-      currentUserIdRef.current = null;
-      }, 100);
+
+    // 서버로부터 명시적인 응답을 받은 후에 구독을 정리한다.
+    cleanupRoom(roomId);
+    currentUserIdRef.current = null;
+    currentUserInfoRef.current = null;
+    return Promise.resolve();
   }, [cleanupRoom]);
 
   const resetForcedOut = useCallback(() => setForcedOut(false), []);

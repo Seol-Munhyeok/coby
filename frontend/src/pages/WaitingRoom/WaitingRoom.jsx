@@ -169,14 +169,31 @@ function WaitingRoom() {
     };
 
     // 방 나가기를 최종 확인하고 실행하는 함수
-    const handleConfirmLeave = () => {
+    const handleConfirmLeave = async () => {
         setLeaveModalOpen(false); // 모달 닫기
         sessionStorage.removeItem('isValidNavigation');
-        if (!hasLeft) {
-            leaveRoom(roomId, userId);
-            setHasLeft(true);
-            setTimeout(() => navigate('/mainpage'), 100);
-        } else {
+        if (hasLeft) {
+            navigate('/mainpage');
+            return;
+        }
+
+        setHasLeft(true);
+        const leavePromise = leaveRoom(roomId, userId);
+        const ackPromise = (leavePromise && typeof leavePromise.then === 'function')
+            ? leavePromise
+            : Promise.resolve();
+        let fallbackTimer;
+        const fallbackPromise = new Promise((resolve) => {
+            fallbackTimer = setTimeout(resolve, 700);
+        });
+
+        try {
+            await Promise.race([
+                ackPromise.catch(() => {}),
+                fallbackPromise,
+            ]);
+        } finally {
+            clearTimeout(fallbackTimer);
             navigate('/mainpage');
         }
     };
