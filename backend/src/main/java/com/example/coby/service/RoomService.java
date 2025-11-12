@@ -3,6 +3,7 @@ package com.example.coby.service;
 import com.example.coby.dto.*;
 import com.example.coby.entity.*;
 import com.example.coby.repository.*;
+import com.example.coby.repository.projection.RoomHostNicknameProjection;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,19 +46,25 @@ public class RoomService {
     private final Map<Long, ScheduledFuture<?>> pendingRoomExpirationTasks = new ConcurrentHashMap<>();
 
     public List<RoomResponse> getRooms() {
-        List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
-                .map(room -> {
-                    // host 찾기 (없으면 "")
-                    String hostName = roomUserRepository.findByRoomIdAndIsHostTrue(room.getId())
-                            .flatMap(ru -> userRepository.findById(ru.getUserId()))
-                            .map(User::getNickname)
-                            .orElse("");
+        List<Room> rooms = roomRepository.findByStatusNot(RoomStatus.RESULT);
 
-                    return RoomResponse.from(room, hostName);
-                })
+        List<Long> roomIds = rooms.stream()
+                .map(Room::getId)
+                .filter(Objects::nonNull)
                 .toList();
 
-        return  responses;
+        Map<Long, String> hostNicknames = roomIds.isEmpty()
+                ? Collections.emptyMap()
+                : roomUserRepository.findHostNicknamesByRoomIds(roomIds).stream()
+                .collect(Collectors.toMap(
+                        RoomHostNicknameProjection::getRoomId,
+                        RoomHostNicknameProjection::getNickname,
+                        (existing, replacement) -> existing
+                ));
+
+        return rooms.stream()
+                .map(room -> RoomResponse.from(room, hostNicknames.getOrDefault(room.getId(), "")))
+                .toList();
     }
 
     public Room getRoom(Long id) {
@@ -138,7 +145,15 @@ public class RoomService {
                 .problem(selectedProblem) // ✨ 여기에서 문제를 할당
                 .build();
         Room savedRoom = roomRepository.save(room);
-        broadcastRoomList();
+
+        // DB 커밋이 성공한 후에만 브로드캐스트
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        broadcastRoomList();
+                    }
+                });
         return savedRoom;
     }
 
@@ -189,7 +204,15 @@ public class RoomService {
         room.setMaxCapacity(updatedMaxParticipants);
 
         Room savedRoom = roomRepository.save(room);
-        broadcastRoomList();
+
+        // DB 커밋이 성공한 후에만 브로드캐스트
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        broadcastRoomList();
+                    }
+                });
         return savedRoom;
     }
 
@@ -215,7 +238,15 @@ public class RoomService {
 
         room.setProblem(newProblem);
         Room updatedRoom = roomRepository.save(room);
-        broadcastRoomList();
+
+        // DB 커밋이 성공한 후에만 브로드캐스트
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        broadcastRoomList();
+                    }
+                });
         return updatedRoom;
     }
 
@@ -260,21 +291,18 @@ public class RoomService {
                 room.setCurrentPart((int) newCount);
                 roomRepository.save(room);
 
-                // 예약취소는 커밋 이후 실행 (부분실패/롤백 시 부작용 방지)
+                // 신규 입장 시 알림 (방 삭제 취소 + 목록 갱신)
                 org.springframework.transaction.support.TransactionSynchronizationManager
                         .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
                             @Override public void afterCommit() {
                                 cancelScheduledRoomDeletion(roomId);
+                                broadcastRoomList();
                             }
                         });
             }
 
             return room;
         });
-
-        if (result != null) {
-            broadcastRoomList();
-        }
 
         return result;
     }
@@ -294,14 +322,6 @@ public class RoomService {
             expireAt = expireAt.plusSeconds(remainingSeconds);
         }
 
-        room.setStatus(RoomStatus.IN_PROGRESS);
-        room.setStartAt(startAt);
-        room.setExpireAt(expireAt);
-
-        roomRepository.save(room);
-
-        broadcastRoomList();
-
         WsMessageDto startNotice = WsMessageDto.builder()
                 .type("StartGame")
                 .roomId(String.valueOf(roomId))
@@ -311,20 +331,39 @@ public class RoomService {
                 .gameStartDelaySeconds(GAME_START_DELAY_SECONDS)
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, startNotice);
+        room.setStatus(RoomStatus.IN_PROGRESS);
+        room.setStartAt(startAt);
+        room.setExpireAt(expireAt);
 
-        scheduleRoomExpiration(roomId, timeLimitSeconds, GAME_START_DELAY_SECONDS);
+        roomRepository.save(room);
 
-        log.info("방 {}의 게임 상태가 IN_PROGRESS로 변경되었습니다. (방 삭제 방어 활성화)", roomId);
+        // 모든 알림, 스케줄링, 관련 로그를 '커밋 후'에 실행하도록 예약
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        // 이 코드는 DB 커밋이 100% 완료된 뒤에 실행됨
+
+                        // 알림 (1)
+                        broadcastRoomList();
+
+                        // 알림 (2)
+                        messagingTemplate.convertAndSend("/topic/room/" + roomId, startNotice);
+
+                        // 스케줄링 (안전한 위치)
+                        scheduleRoomExpiration(roomId, timeLimitSeconds, GAME_START_DELAY_SECONDS);
+
+                        // 로그 (커밋이 확실히 되었을 때 찍는 것이 좋음)
+                        log.info("방 {}의 게임 상태가 IN_PROGRESS로 변경되었습니다. (방 삭제 방어 활성화)", roomId);
+                    }
+                });
     }
 
     @Transactional
     public Room leaveRoom(Long roomId, Long userId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
-        if (room.getStatus() == RoomStatus.RESULT) {
-            return room;
-        }
+
         RoomUserId id = new RoomUserId(roomId, userId);
         if (roomUserRepository.existsById(id)) {
             roomUserRepository.deleteById(id);
@@ -335,7 +374,17 @@ public class RoomService {
             roomRepository.save(room);
         }
 
-        broadcastRoomList();
+        // 트랜잭션이 성공적으로 커밋된 후에만 방송을 실행
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        // DB 커밋이 완료된 후,
+                        // 그 상태를 기준으로 스케줄링을 업데이트
+                        updateRoomDeletionScheduling(room);
+                        broadcastRoomList();
+                    }
+                });
 
         return room;
     }
@@ -380,14 +429,8 @@ public class RoomService {
         try {
             Long uid = Long.parseLong(userId);
             Long rid = Long.parseLong(roomId);
-            Room room = joinRoom(rid, uid);
-            if (room != null) {
-                long newCount = roomUserRepository.countByRoomId(rid);
-                room.setCurrentPart((int) newCount);
-                roomRepository.save(room);
-                broadcastRoomList();
-                cancelScheduledRoomDeletion(rid);
-            }
+            joinRoom(rid, uid);
+
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 사용자 ID 또는 방 ID: userId={}, roomId={}", userId, roomId);
         }
@@ -428,6 +471,7 @@ public class RoomService {
     public void deleteRoom(Long roomId) {
         cancelScheduledRoomExpiration(roomId);
         cancelScheduledRoomDeletion(roomId);
+
         transactionTemplate.executeWithoutResult(status -> {
             // 1. 이 방을 참조하는 모든 Submission을 찾습니다.
             List<Submission> submissions = submissionRepository.findAllByRoomId(roomId);
@@ -443,9 +487,16 @@ public class RoomService {
 
             // 4. 연관 관계가 끊어졌으므로 방을 안전하게 삭제합니다.
             roomRepository.deleteById(roomId);
-        });
 
-        broadcastRoomList();
+            // DB 커밋이 성공한 후에만 브로드캐스트
+            org.springframework.transaction.support.TransactionSynchronizationManager
+                    .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            broadcastRoomList();
+                        }
+                    });
+        });
     }
 
     @Transactional
@@ -474,14 +525,7 @@ public class RoomService {
                 }
             }
 
-            // leaveRoom 후에도 room이 여전히 존재하고, 현재 인원이 0인지 확인
-            if (room != null) {
-                if (room.getCurrentPart() == 0) {
-                    scheduleRoomDeletionIfEmpty(rid);
-                } else {
-                    cancelScheduledRoomDeletion(rid);
-                }
-            }
+
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
@@ -531,7 +575,15 @@ public class RoomService {
             log.warn("마지막 생존자 승리 처리 중 유저를 찾을 수 없음. 방 {} 상태를 WAITING으로 변경", roomId);
             room.setStatus(RoomStatus.WAITING);
             roomRepository.save(room);
-            broadcastRoomList();
+
+            // WAITING 변경이 커밋된 후에 알림
+            org.springframework.transaction.support.TransactionSynchronizationManager
+                    .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            broadcastRoomList();
+                        }
+                    });
             return;
         }
 
@@ -553,11 +605,6 @@ public class RoomService {
         }
         userRepository.save(winnerUser);
 
-        log.info("방 {}의 마지막 생존자 {}가 승리했습니다.", roomId, winnerUserId);
-
-        // 4. 방 목록 갱신
-        broadcastRoomList();
-
         // 5. [추가된 부분] 방 참여자들에게 게임 종료 및 결과 페이지 이동 알림
         WsMessageDto gameEndNotice = WsMessageDto.builder()
                 .type("GameEnd") // 프론트엔드에서 이 타입을 감지해야 함
@@ -565,8 +612,34 @@ public class RoomService {
                 .userId(String.valueOf(winnerUserId)) // 승리한 유저 ID
                 .build();
 
-        messagingTemplate.convertAndSend("/topic/room/" + roomId, gameEndNotice);
-        log.info("방 {} 참여자들에게 GameEnd 메시지 전송 (승자: {})", roomId, winnerUserId);
+        // 모든 DB 작업이 커밋된 후에 알림
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        // 이 코드는 DB 커밋이 100% 완료된 뒤에 실행됨
+                        log.info("방 {}의 마지막 생존자 {}가 승리했습니다.", roomId, winnerUserId);
+
+                        // 알림 (1) - 로비
+                        broadcastRoomList();
+
+                        // 알림 (2) - 방
+                        messagingTemplate.convertAndSend("/topic/room/" + roomId, gameEndNotice);
+                        log.info("방 {} 참여자들에게 GameEnd 메시지 전송 (승자: {})", roomId, winnerUserId);
+                    }
+                });
+    }
+
+    private void updateRoomDeletionScheduling(Room room) {
+        if (room == null) {
+            return;
+        }
+
+        if (room.getCurrentPart() == 0) {
+            scheduleRoomDeletionIfEmpty(room.getId());
+        } else {
+            cancelScheduledRoomDeletion(room.getId());
+        }
     }
 
     private void scheduleRoomDeletionIfEmpty(Long roomId) {
@@ -747,7 +820,15 @@ public class RoomService {
             ru.setHost(ru.getUserId().equals(newHostId));
             roomUserRepository.save(ru);
         }
-        broadcastRoomList();
+        // DB 커밋이 성공한 후에만 알림을 보내도록 예약
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        // 이 코드는 DB 커밋이 100% 완료된 뒤에 실행됨
+                        broadcastRoomList();
+                    }
+                });
     }
 
     public boolean isUserHost(Long roomId, Long userId) {
@@ -817,7 +898,15 @@ public class RoomService {
 
         userRepository.saveAll(usersById.values());
 
-        broadcastRoomList();
+        // DB 커밋이 성공한 후에만 알림을 보내도록 예약
+        org.springframework.transaction.support.TransactionSynchronizationManager
+                .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        // 이 코드는 DB 커밋이 100% 완료된 뒤에 실행됨
+                        broadcastRoomList();
+                    }
+                });
     }
 
     private Tier resolveTier(int tierPoint) {
@@ -831,21 +920,26 @@ public class RoomService {
     }
 
     private void broadcastRoomList() {
-        List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
-                .map(room -> {
-                    // host 찾기 (없으면 "")
-                    String hostName = roomUserRepository.findByRoomIdAndIsHostTrue(room.getId())
-                            .flatMap(ru -> userRepository.findById(ru.getUserId()))
-                            .map(User::getNickname)
-                            .orElse("");
+        List<Room> rooms = roomRepository.findByStatusNot(RoomStatus.RESULT);
 
-                    return RoomResponse.from(room, hostName);
-                })
+        List<Long> roomIds = rooms.stream()
+                .map(Room::getId)
+                .filter(Objects::nonNull)
                 .toList();
 
-//        List<RoomResponse> responses = roomRepository.findByStatusNot(RoomStatus.RESULT).stream()
-//                .map(RoomResponse::from)
-//                .toList();
+        Map<Long, String> hostNicknames = roomIds.isEmpty()
+                ? Collections.emptyMap()
+                : roomUserRepository.findHostNicknamesByRoomIds(roomIds).stream()
+                .collect(Collectors.toMap(
+                        RoomHostNicknameProjection::getRoomId,
+                        RoomHostNicknameProjection::getNickname,
+                        (existing, replacement) -> existing
+                ));
+
+        List<RoomResponse> responses = rooms.stream()
+                .map(room -> RoomResponse.from(room, hostNicknames.getOrDefault(room.getId(), "")))
+                .toList();
+
         messagingTemplate.convertAndSend("/topic/room-data", responses);
     }
 
