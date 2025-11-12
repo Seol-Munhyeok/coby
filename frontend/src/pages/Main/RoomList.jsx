@@ -77,21 +77,23 @@ function RoomList({ rooms, enterRoomBtn, searchTerm }) {
                                     </span>
                                 </div>
                                 <div className="p-4">
-                                    <div className="grid grid-cols-2 gap-y-2 text-sm mb-4">
+                                    <div className="grid grid-cols-2 gap-y-2 text-sm mb-3">
                                         <div className="text-gray-500">난이도</div>
                                         <div className="text-gray-800 font-medium">{room.difficulty}</div>
                                         <div className="text-gray-500">시간 제한</div>
                                         <div className="text-gray-800 font-medium">{room.timeLimit}</div>
                                         <div className="text-gray-500">인원</div>
                                         <div className="text-gray-800 font-medium">{room.currentPart}/{room.maxParticipants}</div>
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm mb-3">
-                                        {<span className="text-gray-500">방장: <span className="text-gray-800 font-medium">{room.hostName}</span></span>}
-                                        {room.isPrivate && (
-                                            <span className="text-yellow-600 flex items-center">
-                                                <i className="fas fa-lock mr-1"></i>비공개
-                                            </span>
-                                        )}
+                                        <div className="text-gray-500">방장</div>
+                                        <div className="text-gray-800 font-medium flex items-center gap-2">
+                                            <span>{room.hostName}</span>
+                                            {room.isPrivate && (
+                                                <span
+                                                    className="inline-flex items-center gap-1 text-xs text-yellow-600 font-semibold">
+                                                    <i className="fas fa-lock"></i>비공개
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <button className={`w-full py-2 rounded-lg transition ${isDisabled
                                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
