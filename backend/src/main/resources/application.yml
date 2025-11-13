@@ -43,7 +43,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
@@ -64,6 +64,15 @@ logging:
   level:
     org.springframework.security: DEBUG
 
-
 server:
   forward-headers-strategy: native
+  compression:
+    enabled: true
+    min-response-size: 1024
+    # main.js 압축해서 전송 -> 시간 단축
+    mime-types:
+      - application/javascript
+      - text/css
+      - text/html
+      - application/json
+      - image/svg+xml

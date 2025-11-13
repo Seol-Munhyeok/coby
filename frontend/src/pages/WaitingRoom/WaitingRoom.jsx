@@ -71,6 +71,7 @@ function WaitingRoom() {
     const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);  // 방 설정 모달 표시 여부
     const [isLeaveModalOpen, setLeaveModalOpen] = useState(false); // 방 나가기 확인 모달 상태 추가
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
+    const isLeaving = useRef(false);
 
 
     // 방 설정 정보
@@ -84,6 +85,7 @@ function WaitingRoom() {
 
     const roomSocketClientRef = useRef(null);
     const roomSubscriptionRef = useRef(null);
+
 
     // 플레이어 카드 우클릭 시 표시되는 커스텀 컨텍스트 메뉴 제어 훅
     const {
@@ -169,15 +171,34 @@ function WaitingRoom() {
     };
 
     // 방 나가기를 최종 확인하고 실행하는 함수
-    const handleConfirmLeave = () => {
+    const handleConfirmLeave = async () => {
         setLeaveModalOpen(false); // 모달 닫기
         sessionStorage.removeItem('isValidNavigation');
-        if (!hasLeft) {
-            leaveRoom(roomId, userId);
-            setHasLeft(true);
-            setTimeout(() => navigate('/mainpage'), 100);
-        } else {
-            navigate('/mainpage');
+        isLeaving.current = true;
+
+        if (hasLeft) {
+            navigate('/mainpage', { state: { refreshRooms: true } });
+            return;
+        }
+
+        setHasLeft(true);
+        const leavePromise = leaveRoom(roomId, userId);
+        const ackPromise = (leavePromise && typeof leavePromise.then === 'function')
+            ? leavePromise
+            : Promise.resolve();
+        let fallbackTimer;
+        const fallbackPromise = new Promise((resolve) => {
+            fallbackTimer = setTimeout(resolve, 700);
+        });
+
+        try {
+            await Promise.race([
+                ackPromise.catch(() => {}),
+                fallbackPromise,
+            ]);
+        } finally {
+            clearTimeout(fallbackTimer);
+            navigate('/mainpage', { state: { refreshRooms: true } });
         }
     };
 
@@ -342,14 +363,14 @@ function WaitingRoom() {
                         setNotification({message: "존재하지 않는 방입니다.", type: "error"});
                         setTimeout(() => setNotification(null), 3000);
                         sessionStorage.removeItem('isValidNavigation');
-                        navigate('/mainpage'); // 방이 없으면 메인으로
+                        navigate('/mainpage', { state: { refreshRooms: true } }); // 방이 없으면 메인으로
                     }
                 } catch (err) {
                     console.error("방 정보를 가져오는 데 실패했습니다:", err);
                     setNotification({message: "방 정보를 불러올 수 없습니다.", type: "error"});
                     setTimeout(() => setNotification(null), 3000);
                     sessionStorage.removeItem('isValidNavigation');
-                    navigate('/mainpage'); // 에러 발생 시 메인으로
+                    navigate('/mainpage', { state: { refreshRooms: true } }); // 에러 발생 시 메인으로
                 }
             };
             fetchRoomDetails();
@@ -372,7 +393,8 @@ function WaitingRoom() {
 
     // 소켓 연결 후 아직 방에 참여하지 않았다면 joinRoom 호출
     useEffect(() => {
-        if (isConnected && joinedRoomId !== roomId) {
+        // "나가는 중"이 아닐 때만 join을 시도합니다.
+        if (isConnected && joinedRoomId !== roomId && !isLeaving.current) {
             joinRoom(roomId, {userId, nickname: currentUser, profileUrl: user?.profileUrl || ''});
         }
     }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl]);
@@ -382,7 +404,7 @@ function WaitingRoom() {
         if (forcedOut) {
             setHasLeft(true); // 언마운트 시 중복 퇴장 방지
             sessionStorage.removeItem('isValidNavigation');
-            navigate('/mainpage', {state: {kicked: true}});
+            navigate('/mainpage', { state: {kicked: true, refreshRooms: true } });
             resetForcedOut();
         }
     }, [forcedOut, navigate, resetForcedOut]);

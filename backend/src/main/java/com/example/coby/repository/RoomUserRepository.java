@@ -3,6 +3,7 @@ package com.example.coby.repository;
 import com.example.coby.entity.Room;
 import com.example.coby.entity.RoomUser;
 import com.example.coby.entity.RoomUserId;
+import com.example.coby.repository.projection.RoomHostNicknameProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,12 @@ public interface RoomUserRepository extends JpaRepository<RoomUser, RoomUserId> 
     long countByRoomId(Long roomId);
 
     Optional<RoomUser> findByRoomIdAndIsHostTrue(Long roomId);
+
+    @Query("SELECT ru.roomId AS roomId, u.nickname AS nickname " +
+            "FROM RoomUser ru " +
+            "JOIN User u ON ru.userId = u.id " +
+            "WHERE ru.roomId IN :roomIds AND ru.isHost = true")
+    List<RoomHostNicknameProjection> findHostNicknamesByRoomIds(@Param("roomIds") List<Long> roomIds);
 
     // 이 메소드는 roomId에 해당하는 RoomUser를 모두 삭제합니다.
     @Transactional

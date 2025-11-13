@@ -27,34 +27,10 @@ public record RoomResponse(
         LocalDateTime serverCurrentTime
 ) {
     public static RoomResponse from(Room room) {
-        LocalDateTime startAt = room.getStartAt();
-        LocalDateTime expireAt = room.getExpireAt();
-        Long timeLimitSeconds = null;
-        if (startAt != null && expireAt != null) {
-            long seconds = Duration.between(startAt, expireAt).getSeconds();
-            if (seconds >= 0) {
-                timeLimitSeconds = seconds;
-            }
-        }
-
-        return RoomResponse.builder()
-                .id(room.getId())
-                .roomName(room.getRoomName())
-                .maxParticipants(room.getMaxParticipants())
-                .currentPart(room.getCurrentPart())
-                .difficulty(room.getDifficulty())
-                .timeLimit(room.getTimeLimit())
-                .isPrivate(room.isPrivate())
-                .itemMode(room.isItemMode())
-                .createdAt(room.getCreatedAt())
-                .status(room.getStatus())
-                .startAt(startAt)
-                .expireAt(expireAt)
-                .timeLimitSeconds(timeLimitSeconds)
-                .serverCurrentTime(LocalDateTime.now(ZoneOffset.UTC))
-                .build();
+        return from(room, null);
     }
-    public static RoomResponse from(Room room,String hostName) {
+
+    public static RoomResponse from(Room room, String hostName) {
         LocalDateTime startAt = room.getStartAt();
         LocalDateTime expireAt = room.getExpireAt();
         Long timeLimitSeconds = null;
