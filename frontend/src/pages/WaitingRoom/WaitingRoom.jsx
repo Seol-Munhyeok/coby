@@ -393,11 +393,14 @@ function WaitingRoom() {
 
     // 소켓 연결 후 아직 방에 참여하지 않았다면 joinRoom 호출
     useEffect(() => {
+        if (forcedOut) {
+            return;
+        }
         // "나가는 중"이 아닐 때만 join을 시도합니다.
         if (isConnected && joinedRoomId !== roomId && !isLeaving.current) {
             joinRoom(roomId, {userId, nickname: currentUser, profileUrl: user?.profileUrl || ''});
         }
-    }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl]);
+    }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl, forcedOut]);
 
     // 강퇴되었을 때 메인 페이지로 이동하며 다시 Leave 이벤트를 보내지 않도록 표시
     useEffect(() => {
