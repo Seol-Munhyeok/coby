@@ -62,14 +62,8 @@ public class Room {
     @JoinColumn(name = "problem_id")
     private Problem problem;              // problem_id
 
-    @Column(unique = true)
-    private String joinCode;              // join_code
-
     @Column(nullable = false)
-    private int currentCapacity = 0;      // current_capacity
-
-    @Column(nullable = false)
-    private int maxCapacity = 4;          // ✅ DB에 존재하므로 필수 추가
+    private int maxCapacity = 4;
 
     @Column(nullable = true)
     private Long winnerId;

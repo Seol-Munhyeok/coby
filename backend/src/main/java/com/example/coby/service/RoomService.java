@@ -140,7 +140,6 @@ public class RoomService {
                 .itemMode(req.isItemMode())
                 .startAt(req.getStartAt())
                 .expireAt(req.getExpireAt())
-                .currentCapacity(0)
                 .maxCapacity(req.getMaxParticipants())
                 .problem(selectedProblem) // ✨ 여기에서 문제를 할당
                 .build();
