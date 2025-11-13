@@ -362,6 +362,9 @@ public class RoomService {
     public Room leaveRoom(Long roomId, Long userId) {
         Room room = roomRepository.findById(roomId).orElse(null);
         if (room == null) return null;
+        if (room.getStatus() == RoomStatus.RESULT) {
+            return room;
+        }
 
         RoomUserId id = new RoomUserId(roomId, userId);
         if (roomUserRepository.existsById(id)) {
@@ -378,9 +381,6 @@ public class RoomService {
                 .registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
-                        // DB 커밋이 완료된 후,
-                        // 그 상태를 기준으로 스케줄링을 업데이트
-                        updateRoomDeletionScheduling(room);
                         broadcastRoomList();
                     }
                 });
@@ -524,7 +524,14 @@ public class RoomService {
                 }
             }
 
-
+            // leaveRoom 후에도 room이 여전히 존재하고, 현재 인원이 0인지 확인
+            if (room != null) {
+                if (room.getCurrentPart() == 0) {
+                    scheduleRoomDeletionIfEmpty(rid);
+                } else {
+                    cancelScheduledRoomDeletion(rid);
+                }
+            }
         } catch (NumberFormatException e) {
             log.warn("올바르지 않은 ID: userId={}, roomId={}", userId, roomId);
         }
@@ -627,18 +634,6 @@ public class RoomService {
                         log.info("방 {} 참여자들에게 GameEnd 메시지 전송 (승자: {})", roomId, winnerUserId);
                     }
                 });
-    }
-
-    private void updateRoomDeletionScheduling(Room room) {
-        if (room == null) {
-            return;
-        }
-
-        if (room.getCurrentPart() == 0) {
-            scheduleRoomDeletionIfEmpty(room.getId());
-        } else {
-            cancelScheduledRoomDeletion(room.getId());
-        }
     }
 
     private void scheduleRoomDeletionIfEmpty(Long roomId) {
