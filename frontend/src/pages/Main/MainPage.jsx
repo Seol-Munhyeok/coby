@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './MainPage.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import RoomSettingsModal from '../../Common/components/RoomSettingsModal';
@@ -49,28 +49,55 @@ function MainPage() {
     const roomSubscriptionRef = useRef(null);
     const isInitialFetched = useRef(false);  // race-condition 방지용
 
+    const fetchRooms = useCallback(async (force = false) => {
+        try {
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms`);
+            if (force || !isInitialFetched.current) {
+                setRooms(response.data);
+            }
+        } catch (error) {
+            console.error('Error fetching rooms:', error);
+        }
+    }, [setRooms]);
+
+    const fetchRankings = useCallback(async () => {
+        try {
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/rankings`);
+            setRankings(response.data);
+        } catch (error) {
+            console.error('Error fetching rankings:', error);
+        }
+    }, [setRankings]);
+
     useEffect(() => {
+        const { kicked, cheated, refreshRooms } = location.state || {};
+
         // 강퇴 처리
-        if (location.state?.kicked) {
+        if (kicked) {
             setNotification({message: "방에서 강퇴되었습니다.", type: "error"});
             setTimeout(() => setNotification(null), 3000);
-            // history state를 초기화하여 새로고침 시 알림이 다시 뜨지 않도록 함
-            navigate(location.pathname, { replace: true, state: {} });
         }
         
         // 부정행위 퇴장 처리
-        if (location.state?.cheated) {
+        if (cheated) {
             setCheatingModalOpen(true); // 부정행위 모달을 엶
-            // history state 초기화
+        }
+
+        if (refreshRooms) {
+            fetchRooms(true);
+        }
+
+        if (kicked || cheated || refreshRooms) {
+            // history state를 초기화하여 새로고침 시 알림이 다시 뜨지 않도록 함
             navigate(location.pathname, { replace: true, state: {} });
         }
 
-    }, [location, navigate]);
+    }, [location, navigate, fetchRooms]);
 
     useEffect(() => {
         fetchRooms();
         fetchRankings(); // 컴포넌트가 마운트될 때 랭킹 정보를 가져오도록 호출
-    }, []);
+    }, [fetchRooms, fetchRankings]);
 
     // 클라이언트는 메시지를 받을 때마다 setRooms(payload)를 실행하여 화면을 새로고침 없이 즉시 갱신
     useEffect(() => {
@@ -129,28 +156,6 @@ function MainPage() {
             document.body.style.overflow = 'auto';
         };
     }, [isRankingModalOpen, isInfoModalOpen, isLogoutModalOpen, isCheatingModalOpen]); // 부정행위 모달 상태도 의존성 배열에 추가
-
-
-    const fetchRooms = async () => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms`);
-            if (!isInitialFetched.current) {
-                setRooms(response.data);
-            }
-        } catch (error) {
-            console.error('Error fetching rooms:', error);
-        }
-    };
-
-    // 랭킹 정보를 가져오는 함수 추가
-    const fetchRankings = async () => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/rankings`);
-            setRankings(response.data);
-        } catch (error) {
-            console.error('Error fetching rankings:', error);
-        }
-    };
 
     const closeCreateRoomModel = () => {
         setNewRoomSettings({ //원상태로

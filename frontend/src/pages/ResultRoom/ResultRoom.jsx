@@ -83,7 +83,7 @@ function ResultRoom() {
     useEffect(() => {
         const handleNavigateToMain = () => {
             sessionStorage.removeItem('isValidNavigation');
-            navigate('/mainpage');
+            navigate('/mainpage', { state: { refreshRooms: true } });
         };
 
         const handleNavigateToWaitingRoom = (event) => {
@@ -172,7 +172,7 @@ function ResultRoom() {
                 setNotification({ message: "방 정보를 불러올 수 없습니다.", type: "error" });
                 setTimeout(() => setNotification(null), 3000);
                 sessionStorage.removeItem('isValidNavigation');
-                navigate('/mainpage');
+                navigate('/mainpage', { state: { refreshRooms: true } });
             } finally {
                 setLoading(false);
             }
@@ -205,7 +205,7 @@ function ResultRoom() {
         alert('방에서 나갑니다!');
         leaveRoom(roomId, userId);
         sessionStorage.removeItem('isValidNavigation');
-        navigate('/mainpage');
+        navigate('/mainpage', { state: { refreshRooms: true } });
     };
 
     const regameBtn = async () => {

@@ -173,7 +173,7 @@ function WaitingRoom() {
         setLeaveModalOpen(false); // 모달 닫기
         sessionStorage.removeItem('isValidNavigation');
         if (hasLeft) {
-            navigate('/mainpage');
+            navigate('/mainpage', { state: { refreshRooms: true } });
             return;
         }
 
@@ -194,7 +194,7 @@ function WaitingRoom() {
             ]);
         } finally {
             clearTimeout(fallbackTimer);
-            navigate('/mainpage');
+            navigate('/mainpage', { state: { refreshRooms: true } });
         }
     };
 
@@ -359,14 +359,14 @@ function WaitingRoom() {
                         setNotification({message: "존재하지 않는 방입니다.", type: "error"});
                         setTimeout(() => setNotification(null), 3000);
                         sessionStorage.removeItem('isValidNavigation');
-                        navigate('/mainpage'); // 방이 없으면 메인으로
+                        navigate('/mainpage', { state: { refreshRooms: true } }); // 방이 없으면 메인으로
                     }
                 } catch (err) {
                     console.error("방 정보를 가져오는 데 실패했습니다:", err);
                     setNotification({message: "방 정보를 불러올 수 없습니다.", type: "error"});
                     setTimeout(() => setNotification(null), 3000);
                     sessionStorage.removeItem('isValidNavigation');
-                    navigate('/mainpage'); // 에러 발생 시 메인으로
+                    navigate('/mainpage', { state: { refreshRooms: true } }); // 에러 발생 시 메인으로
                 }
             };
             fetchRoomDetails();
@@ -399,7 +399,7 @@ function WaitingRoom() {
         if (forcedOut) {
             setHasLeft(true); // 언마운트 시 중복 퇴장 방지
             sessionStorage.removeItem('isValidNavigation');
-            navigate('/mainpage', {state: {kicked: true}});
+            navigate('/mainpage', { state: {kicked: true, refreshRooms: true } });
             resetForcedOut();
         }
     }, [forcedOut, navigate, resetForcedOut]);

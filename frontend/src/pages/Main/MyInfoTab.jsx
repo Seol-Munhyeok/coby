@@ -64,15 +64,22 @@ function MyInfoTab({ onOpenInfoModal }) {
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/rooms/${userId}/history`); 
-                
-                if (!response.ok) {
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/rooms/${userId}/history`);
+
+                // 1. 응답이 200 OK인 경우 (정상)
+                if (response.ok) {
+                    const data = await response.json();
+                    setRecentMatches(data.slice(-5).reverse());
+
+                    // 2. 응답이 404 Not Found인 경우 (기록 없음)
+                } else if (response.status === 404) {
+                    setRecentMatches([]); // "기록 없음"이므로 빈 배열로 설정
+
+                    // 3. 그 외의 모든 실패 (서버 오류 등)
+                } else {
                     throw new Error('최근 대결 정보를 불러오는데 실패했습니다.');
                 }
-                
-                const data = await response.json();
 
-                setRecentMatches(data.slice(-5).reverse()); 
             } catch (err) {
                 setError(err.message);
             } finally {
