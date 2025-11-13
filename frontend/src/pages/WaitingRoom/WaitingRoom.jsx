@@ -402,6 +402,7 @@ function WaitingRoom() {
     // 강퇴되었을 때 메인 페이지로 이동하며 다시 Leave 이벤트를 보내지 않도록 표시
     useEffect(() => {
         if (forcedOut) {
+            isLeaving.current = true;  // 강퇴 시에도 "나가는 중"으로 표시
             setHasLeft(true); // 언마운트 시 중복 퇴장 방지
             sessionStorage.removeItem('isValidNavigation');
             navigate('/mainpage', { state: {kicked: true, refreshRooms: true } });
