@@ -22,8 +22,6 @@ public class Room {
 
     private String roomName;              // room_name
 
-    private String title;
-
     private int maxParticipants;          // max_participants
 
     @Column(nullable = false)
@@ -40,8 +38,6 @@ public class Room {
 
     @Column(nullable = false)
     private boolean itemMode;             // item_mode
-
-    private String language;              // language
 
     @CreatedDate
     private LocalDateTime createdAt;      // created_at
