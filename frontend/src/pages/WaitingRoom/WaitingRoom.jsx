@@ -71,6 +71,7 @@ function WaitingRoom() {
     const [showRoomSettingsModal, setShowRoomSettingsModal] = useState(false);  // 방 설정 모달 표시 여부
     const [isLeaveModalOpen, setLeaveModalOpen] = useState(false); // 방 나가기 확인 모달 상태 추가
     const [notification, setNotification] = useState(null);  // 상단 토스트 알림
+    const isLeaving = useRef(false);
 
 
     // 방 설정 정보
@@ -84,6 +85,7 @@ function WaitingRoom() {
 
     const roomSocketClientRef = useRef(null);
     const roomSubscriptionRef = useRef(null);
+
 
     // 플레이어 카드 우클릭 시 표시되는 커스텀 컨텍스트 메뉴 제어 훅
     const {
@@ -172,6 +174,8 @@ function WaitingRoom() {
     const handleConfirmLeave = async () => {
         setLeaveModalOpen(false); // 모달 닫기
         sessionStorage.removeItem('isValidNavigation');
+        isLeaving.current = true;
+
         if (hasLeft) {
             navigate('/mainpage', { state: { refreshRooms: true } });
             return;
@@ -389,7 +393,8 @@ function WaitingRoom() {
 
     // 소켓 연결 후 아직 방에 참여하지 않았다면 joinRoom 호출
     useEffect(() => {
-        if (isConnected && joinedRoomId !== roomId) {
+        // "나가는 중"이 아닐 때만 join을 시도합니다.
+        if (isConnected && joinedRoomId !== roomId && !isLeaving.current) {
             joinRoom(roomId, {userId, nickname: currentUser, profileUrl: user?.profileUrl || ''});
         }
     }, [isConnected, roomId, currentUser, userId, joinRoom, joinedRoomId, user?.profileUrl]);
