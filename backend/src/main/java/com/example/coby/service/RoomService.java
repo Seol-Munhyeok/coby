@@ -224,7 +224,6 @@ public class RoomService {
             return room;
         }
 
-
         Problem newProblem;
         if (candidateProblems.size() == 1) {
             // 후보가 1개뿐이면 무조건 그것을 선택 (위에서 currentProblem과 같은 경우는 이미 return됨)
