@@ -217,8 +217,8 @@ public class RoomService {
 
         Problem currentProblem = room.getProblem();
 
-        // 후보가 1개뿐이고 그것이 현재 문제인 경우
         List<Problem> candidateProblems = loadCandidateProblems(room.getDifficulty());
+        // 후보가 1개뿐이고 그것이 현재 문제인 경우
         if (candidateProblems.size() == 1 && currentProblem != null
                 && Objects.equals(candidateProblems.get(0).getId(), currentProblem.getId())) {
             log.warn("난이도 '{}'에 등록된 문제가 1개뿐이라 문제를 변경할 수 없습니다.", room.getDifficulty());
