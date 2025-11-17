@@ -178,7 +178,14 @@ public class RoomService {
 
         room.setRoomName(updatedRoomName);
         if (request.getDifficulty() != null) {
-            room.setDifficulty(request.getDifficulty());
+            String requestedDifficulty = request.getDifficulty().trim();
+            boolean difficultyChanged = !Objects.equals(requestedDifficulty, room.getDifficulty());
+            room.setDifficulty(requestedDifficulty);
+
+            if (difficultyChanged) {
+                Problem newProblem = selectProblemForDifficulty(requestedDifficulty);
+                room.setProblem(newProblem);
+            }
         }
         if (request.getTimeLimit() != null) {
             room.setTimeLimit(request.getTimeLimit());
