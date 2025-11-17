@@ -150,10 +150,11 @@ function RoomSettingsModal({
               <select
                   id="difficulty"
                   name="difficulty"
-                  value={settings.difficulty}
+                  value={settings.difficulty || '무작위'}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
+                <option value="무작위">무작위</option>
                 <option value="쉬움">쉬움</option>
                 <option value="보통">보통</option>
                 <option value="어려움">어려움</option>

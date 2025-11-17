@@ -17,6 +17,26 @@ import RankingTab from './RankingTab'; // 랭킹 탭 컴포넌트
 import MyInfoTab from './MyInfoTab'; // 내 정보 탭 컴포넌트
 import CheatingPenaltyModal from './CheatingPenaltyModal'; // 새로 만든 부정행위 모달 import
 
+const RANDOM_ROOM_NAMES = [
+    "코딩 배틀룸",
+    "배틀 코딩방",
+    "코딩 실력 테스트",
+    "오늘의 코드 한 판",
+    "코딩 한판! 들어오세요",
+    "코딩 치킨런",
+    "오늘도 디버깅은 나의 친구",
+    "입력은 받았고, 이제 시작한다",
+    "변수 초기화 완료",
+    "세미콜론 어디 갔지?",
+    "디버그 ON 상태",
+    "괄호 닫는 중…",
+    "Compile 없이 시작하는 방",
+    "코드 리뷰 대기중",
+    "while(true) { Join(); }",
+    "Ctrl + S 했나요?",
+    "Commit 전에 와서 한판!",
+];
+
 function MainPage() {
     const [isCreateModalOpen, showRoomSettingsModal] = useState(false);
     const [isRankingModalOpen, setRankingModalOpen] = useState(false); // 랭킹 모달 상태 관리
@@ -37,7 +57,7 @@ function MainPage() {
 
     const [newRoomSettings, setNewRoomSettings] = useState({
         roomName: '',
-        difficulty: '보통',
+        difficulty: '무작위',
         timeLimit: '30분',
         itemMode : false,
         maxParticipants: 4,
@@ -160,7 +180,7 @@ function MainPage() {
     const closeCreateRoomModel = () => {
         setNewRoomSettings({ //원상태로
             roomName: '',
-            difficulty: '보통',
+            difficulty: '무작위',
             timeLimit: '30분',
             maxParticipants: 4,
             itemMode : false,
@@ -168,6 +188,25 @@ function MainPage() {
             password: '',
         });
         showRoomSettingsModal(false);
+    };
+
+    const handleOpenCreateModal = () => {
+        // 1. 랜덤 방 제목을 선택합니다.
+        const randomName = RANDOM_ROOM_NAMES[Math.floor(Math.random() * RANDOM_ROOM_NAMES.length)];
+
+        // 2. newRoomSettings 상태를 '랜덤 방 제목' 포함 기본값으로 리셋합니다.
+        setNewRoomSettings({
+            roomName: randomName,
+            difficulty: '무작위',
+            timeLimit: '30분',
+            itemMode: false,
+            maxParticipants: 4,
+            isPrivate: false,
+            password: '',
+        });
+
+        // 3. 모달을 엽니다.
+        showRoomSettingsModal(true);
     };
 
     const handleSaveNewRoomSettings = (settings) => {
@@ -316,7 +355,7 @@ function MainPage() {
                                     {activeTab === 'game' && (
                                         <GameTab 
                                             enterRoomBtn={enterRoomBtn}
-                                            showRoomSettingsModal={showRoomSettingsModal}
+                                            showRoomSettingsModal={handleOpenCreateModal}
                                             rooms={rooms}
                                         />
                                     )}

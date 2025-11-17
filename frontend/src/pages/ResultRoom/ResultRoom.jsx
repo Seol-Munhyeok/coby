@@ -277,6 +277,7 @@ function ResultRoom() {
         return <div className="flex justify-center items-center h-screen bg-gray-900 text-white text-2xl">로딩 중...</div>;
     }
 
+    const winnerRewardPoint = problem?.difficultyRewardPoint ?? null;
 
     const currentPlayers = uniqueUsers.map((player) => {
         // winnerId state를 숫자로 변환하여 비교합니다.
@@ -458,6 +459,7 @@ function ResultRoom() {
                                         tierPoint={player.tierPoint}
                                         isWinner={player.isWinner}
                                         startAnimation={triggerScoreAnimation}
+                                        scoreGain={player.isWinner ? winnerRewardPoint : null}
                                     />
                                 ))}
                             </div>

@@ -10,20 +10,26 @@ import React, { useState, useEffect } from 'react';
 import '../WaitingRoom.css';
 import { DEFAULT_TIER_NAME, TierBadge } from '../../Main/TierInfo';
 
-function PlayerCard({ 
-  player, 
-  handlePlayerCardClick, 
-  showReadyStatus = true,
-  // --- 애니메이션을 위한 props 수정 ---
-  tierPoint,
-  isWinner = false,
-  startAnimation = false 
+const DEFAULT_SCORE_GAIN = 200;
+
+function PlayerCard({
+    player,
+    handlePlayerCardClick,
+    showReadyStatus = true,
+    // --- 애니메이션을 위한 props 수정 ---
+    tierPoint,
+    isWinner = false,
+    startAnimation = false,
+    scoreGain = DEFAULT_SCORE_GAIN
 }) {
   // --- 애니메이션 상태 관리 ---
   const [animationStep, setAnimationStep] = useState('idle'); // 'idle', 'gain', 'countUp', 'done'
   const [displayScore, setDisplayScore] = useState(tierPoint);
 
-  const scoreGain = 200; // 승리 시 획득 점수는 200점으로 고정
+  const effectiveScoreGain = typeof scoreGain === 'number' && scoreGain > 0
+      ? scoreGain
+      : DEFAULT_SCORE_GAIN;
+
 
   useEffect(() => {
     // startAnimation prop이 true이고, 승리자일 때만 애니메이션 시작
@@ -35,12 +41,12 @@ function PlayerCard({
       setTimeout(() => {
         setAnimationStep('countUp');
         
-        const oldScore = Math.max(0, tierPoint - scoreGain); //0 미만으로 떨어지지 않게
+        const oldScore = Math.max(0, tierPoint - effectiveScoreGain); //0 미만으로 떨어지지 않게
         const newScore = tierPoint;
 
         // 점수 카운트업 애니메이션
         let currentScore = oldScore;
-        const increment = Math.ceil(scoreGain / 50); // 50프레임에 걸쳐 증가
+        const increment = Math.ceil(effectiveScoreGain / 50); // 50프레임에 걸쳐 증가
 
         const counter = setInterval(() => {
           currentScore += increment;
@@ -59,7 +65,7 @@ function PlayerCard({
         }, 20); // 약 20ms 간격으로 업데이트
       }, 1000);
     }
-  }, [startAnimation, player.isEmpty, isWinner, tierPoint, scoreGain]);
+  }, [startAnimation, player.isEmpty, isWinner, tierPoint, effectiveScoreGain]);
 
 
   if (player.isEmpty) {
@@ -104,7 +110,7 @@ function PlayerCard({
           {/* "+N" 텍스트 애니메이션 */}
           {animationStep === 'gain' && (
             <div className="score-gain">
-              +{scoreGain}
+              +{effectiveScoreGain}
             </div>
           )}
           {/* 점수 카운트업 및 페이드 아웃 */}

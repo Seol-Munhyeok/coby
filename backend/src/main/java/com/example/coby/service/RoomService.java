@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class RoomService {
     private static final long ROOM_DELETION_DELAY_SECONDS = 5L;
     private static final long GAME_START_DELAY_SECONDS = 5L;  // 게임 시작 전 카운트다운 하는 시간
-    private static final int WINNER_ADDITIONAL_POINTS = 200;  // 승리자의 증가 포인트 양
+    private static final int DEFAULT_WINNER_REWARD_POINTS = 200;  // 난이도 정보를 찾을 수 없을 때 사용할 기본 포인트
     private static final Pattern TIME_TOKEN_PATTERN = Pattern.compile("(\\d+)(시간|분|초|h|m|s)?");
 
     private final RoomRepository roomRepository;
@@ -120,12 +120,7 @@ public class RoomService {
 
         validateRoomSettings(roomName, req.isPrivate(), password, req.getMaxParticipants(), req.getCurrentPart());
 
-        // 1. 모든 문제 목록을 가져와서 랜덤으로 하나를 선택합니다.
-        List<Problem> problems = problemRepository.findAll();
-        if (problems.isEmpty()) {
-            throw new IllegalStateException("문제 데이터가 없습니다.");
-        }
-        Problem selectedProblem = problems.get(new Random().nextInt(problems.size()));
+        Problem selectedProblem = selectProblemForDifficulty(req.getDifficulty());
 
         // 2. Room을 빌드할 때 선택된 문제를 할당합니다.
         Room room = Room.builder()
@@ -222,18 +217,24 @@ public class RoomService {
 
         Problem currentProblem = room.getProblem();
 
-        // 현재 문제와 다른 새로운 문제를 찾기
-        List<Problem> allProblems = problemRepository.findAll();
-        if (allProblems.size() <= 1) {
-            // 문제가 1개 이하일 경우 변경 불가
-            log.warn("문제 DB에 문제 수가 부족하여 문제를 변경할 수 없습니다.");
+        List<Problem> candidateProblems = loadCandidateProblems(room.getDifficulty());
+        // 후보가 1개뿐이고 그것이 현재 문제인 경우
+        if (candidateProblems.size() == 1 && currentProblem != null
+                && Objects.equals(candidateProblems.get(0).getId(), currentProblem.getId())) {
+            log.warn("난이도 '{}'에 등록된 문제가 1개뿐이라 문제를 변경할 수 없습니다.", room.getDifficulty());
             return room;
         }
 
         Problem newProblem;
-        do {
-            newProblem = allProblems.get(new Random().nextInt(allProblems.size()));
-        } while (newProblem.equals(currentProblem)); // 현재 문제와 동일하면 다시 찾기
+        if (candidateProblems.size() == 1) {
+            // 후보가 1개뿐이면 무조건 그것을 선택 (위에서 currentProblem과 같은 경우는 이미 return됨)
+            newProblem = candidateProblems.get(0);
+        } else {
+            // 후보가 여러 개면 현재 문제가 아닌 것을 선택
+            do {
+                newProblem = selectRandomProblem(candidateProblems);
+            } while (currentProblem != null && Objects.equals(newProblem.getId(), currentProblem.getId()));
+        }
 
         room.setProblem(newProblem);
         Room updatedRoom = roomRepository.save(room);
@@ -601,9 +602,11 @@ public class RoomService {
         User winnerUser = userRepository.findById(winnerUserId)
                 .orElseThrow(() -> new IllegalStateException("승자 유저를 찾을 수 없습니다: " + winnerUserId));
 
+        int rewardPoints = resolveRewardPoints(room);
+
         winnerUser.incrementTotalGame(); // 총 게임 수 증가
         winnerUser.incrementWinGame();   // 승리 수 증가
-        winnerUser.addTierPoints(WINNER_ADDITIONAL_POINTS);   // 티어 포인트 증가 (기존 finishRoom과 동일하게 200점)
+        winnerUser.addTierPoints(rewardPoints);   // 티어 포인트 증가 (난이도 기반)
 
         Tier resolvedTier = resolveTier(winnerUser.getTierPoint());
         if (resolvedTier != null) {
@@ -850,6 +853,11 @@ public class RoomService {
     private void finalizeRoom(Long roomId, Long winId) {
         cancelScheduledRoomExpiration(roomId);
 
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("방을 찾을 수 없습니다: " + roomId));
+
+        int rewardPoints = resolveRewardPoints(room);
+
         roomRepository.updateWinnerAndFinish(roomId, winId, LocalDateTime.now(), RoomStatus.RESULT);
 
         Long winnerUserId;
@@ -882,7 +890,7 @@ public class RoomService {
 
             if (winnerUserId != null && participantId.equals(winnerUserId)) {
                 user.incrementWinGame();
-                user.addTierPoints(200);
+                user.addTierPoints(rewardPoints);
                 Tier resolvedTier = resolveTier(user.getTierPoint());
                 if (resolvedTier != null) {
                     user.setTier(resolvedTier);
@@ -912,6 +920,54 @@ public class RoomService {
                     return null;
                 });
     }
+
+    private int resolveRewardPoints(Room room) {
+        if (room != null && room.getProblem() != null && room.getProblem().getDifficulty() != null) {
+            return room.getProblem().getDifficulty().getRewardPoint();
+        }
+        return DEFAULT_WINNER_REWARD_POINTS;
+    }
+
+    private Problem selectProblemForDifficulty(String difficultySetting) {
+        return selectRandomProblem(loadCandidateProblems(difficultySetting));
+    }
+
+    private List<Problem> loadCandidateProblems(String difficultySetting) {
+        List<Problem> problems;
+        if (isRandomDifficulty(difficultySetting)) {
+            problems = problemRepository.findAll();
+        } else {
+            String normalized = difficultySetting.trim();
+            problems = problemRepository.findByDifficulty_Label(normalized);
+            if (problems.isEmpty()) {
+                log.warn("난이도 '{}'에 해당하는 문제가 없어 전체 문제에서 선택합니다.", normalized);
+                problems = problemRepository.findAll();
+            }
+        }
+
+        if (problems.isEmpty()) {
+            throw new IllegalStateException("문제 데이터가 없습니다.");
+        }
+
+        return problems;
+    }
+
+    private Problem selectRandomProblem(List<Problem> candidates) {
+        return candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+    }
+
+    private boolean isRandomDifficulty(String difficultySetting) {
+        if (difficultySetting == null) {
+            return true;
+        }
+        String normalized = difficultySetting.trim();
+        if (normalized.isEmpty()) {
+            return true;
+        }
+        String lower = normalized.toLowerCase(Locale.ROOT);
+        return normalized.equals("무작위") || normalized.equals("랜덤") || lower.equals("random");
+    }
+
 
     private void broadcastRoomList() {
         List<Room> rooms = roomRepository.findByStatusNot(RoomStatus.RESULT);
