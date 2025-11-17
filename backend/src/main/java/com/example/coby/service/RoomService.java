@@ -218,19 +218,23 @@ public class RoomService {
         Problem currentProblem = room.getProblem();
 
         List<Problem> candidateProblems = loadCandidateProblems(room.getDifficulty());
-        if (candidateProblems.size() == 1 && currentProblem != null) {
-            Problem onlyProblem = candidateProblems.get(0);
-            if (Objects.equals(onlyProblem.getId(), currentProblem.getId())) {
-                log.warn("난이도 '{}'에 등록된 문제가 1개뿐이라 문제를 변경할 수 없습니다.", room.getDifficulty());
-                return room;
-            }
+        if (candidateProblems.size() == 1 && currentProblem != null
+                && Objects.equals(candidateProblems.get(0).getId(), currentProblem.getId())) {
+            log.warn("난이도 '{}'에 등록된 문제가 1개뿐이라 문제를 변경할 수 없습니다.", room.getDifficulty());
+            return room;
         }
 
 
         Problem newProblem;
-        do {
-            newProblem = selectRandomProblem(candidateProblems);
-        } while (currentProblem != null && Objects.equals(newProblem.getId(), currentProblem.getId()));
+        if (candidateProblems.size() == 1) {
+            // 후보가 1개뿐이면 무조건 그것을 선택 (위에서 currentProblem과 같은 경우는 이미 return됨)
+            newProblem = candidateProblems.get(0);
+        } else {
+            // 후보가 여러 개면 현재 문제가 아닌 것을 선택
+            do {
+                newProblem = selectRandomProblem(candidateProblems);
+            } while (currentProblem != null && Objects.equals(newProblem.getId(), currentProblem.getId()));
+        }
 
         room.setProblem(newProblem);
         Room updatedRoom = roomRepository.save(room);
