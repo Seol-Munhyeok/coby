@@ -293,7 +293,7 @@ function WaitingRoom() {
         }
 
         setRoomName(currentRoom.roomName ?? "");
-        setDifficulty(currentRoom.difficulty ?? "");
+        setDifficulty(currentRoom.difficulty ?? "무작위");
         setTimeLimit(currentRoom.timeLimit ?? "");
         setMaxParticipants(currentRoom.maxParticipants ?? 4);
         setItemMode(Boolean(currentRoom.itemMode));

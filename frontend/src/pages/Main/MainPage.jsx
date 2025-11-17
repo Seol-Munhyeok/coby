@@ -37,7 +37,7 @@ function MainPage() {
 
     const [newRoomSettings, setNewRoomSettings] = useState({
         roomName: '',
-        difficulty: '보통',
+        difficulty: '무작위',
         timeLimit: '30분',
         itemMode : false,
         maxParticipants: 4,
@@ -160,7 +160,7 @@ function MainPage() {
     const closeCreateRoomModel = () => {
         setNewRoomSettings({ //원상태로
             roomName: '',
-            difficulty: '보통',
+            difficulty: '무작위',
             timeLimit: '30분',
             maxParticipants: 4,
             itemMode : false,
