@@ -217,6 +217,7 @@ public class RoomService {
 
         Problem currentProblem = room.getProblem();
 
+        // 후보가 1개뿐이고 그것이 현재 문제인 경우
         List<Problem> candidateProblems = loadCandidateProblems(room.getDifficulty());
         if (candidateProblems.size() == 1 && currentProblem != null
                 && Objects.equals(candidateProblems.get(0).getId(), currentProblem.getId())) {
