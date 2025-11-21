@@ -812,11 +812,11 @@ int main() {
     // Monaco Editor 마운트 시 붙여넣기 방지 이벤트 리스너 추가
     const handleEditorDidMount = useCallback((editor, monacoInstance) => {
         editorRef.current = editor;
-        /*
+
         editor.addCommand(monacoInstance.KeyMod.CtrlCmd | monacoInstance.KeyCode.KeyV, () => {
             showModal("경고", "코드 에디터에 붙여넣기 기능을 사용할 수 없습니다. (Monaco Command Block)", "warning");
         });
-        */
+
         editor.getContainerDomNode().addEventListener('paste', (event) => {
             console.log('Monaco Editor 컨테이너에서 paste 이벤트 감지');
             event.preventDefault();
